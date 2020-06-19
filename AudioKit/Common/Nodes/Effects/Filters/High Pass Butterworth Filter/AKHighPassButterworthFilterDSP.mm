@@ -1,52 +1,20 @@
-//
-//  AKHighPassButterworthFilterDSP.mm
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #include "AKHighPassButterworthFilterDSP.hpp"
-#import "AKLinearParameterRamp.hpp"
+#include "ParameterRamper.hpp"
 
-extern "C" AKDSPRef createHighPassButterworthFilterDSP(int channelCount, double sampleRate) {
-    AKHighPassButterworthFilterDSP *dsp = new AKHighPassButterworthFilterDSP();
-    dsp->init(channelCount, sampleRate);
-    return dsp;
+extern "C" AKDSPRef createHighPassButterworthFilterDSP() {
+    return new AKHighPassButterworthFilterDSP();
 }
 
 struct AKHighPassButterworthFilterDSP::InternalData {
     sp_buthp *buthp0;
     sp_buthp *buthp1;
-    AKLinearParameterRamp cutoffFrequencyRamp;
+    ParameterRamper cutoffFrequencyRamp;
 };
 
 AKHighPassButterworthFilterDSP::AKHighPassButterworthFilterDSP() : data(new InternalData) {
-    data->cutoffFrequencyRamp.setTarget(defaultCutoffFrequency, true);
-    data->cutoffFrequencyRamp.setDurationInSamples(defaultRampDurationSamples);
-}
-
-// Uses the ParameterAddress as a key
-void AKHighPassButterworthFilterDSP::setParameter(AUParameterAddress address, AUValue value, bool immediate) {
-    switch (address) {
-        case AKHighPassButterworthFilterParameterCutoffFrequency:
-            data->cutoffFrequencyRamp.setTarget(clamp(value, cutoffFrequencyLowerBound, cutoffFrequencyUpperBound), immediate);
-            break;
-        case AKHighPassButterworthFilterParameterRampDuration:
-            data->cutoffFrequencyRamp.setRampDuration(value, sampleRate);
-            break;
-    }
-}
-
-// Uses the ParameterAddress as a key
-float AKHighPassButterworthFilterDSP::getParameter(uint64_t address) {
-    switch (address) {
-        case AKHighPassButterworthFilterParameterCutoffFrequency:
-            return data->cutoffFrequencyRamp.getTarget();
-        case AKHighPassButterworthFilterParameterRampDuration:
-            return data->cutoffFrequencyRamp.getRampDuration(sampleRate);
-    }
-    return 0;
+    parameters[AKHighPassButterworthFilterParameterCutoffFrequency] = &data->cutoffFrequencyRamp;
 }
 
 void AKHighPassButterworthFilterDSP::init(int channelCount, double sampleRate) {
@@ -55,13 +23,19 @@ void AKHighPassButterworthFilterDSP::init(int channelCount, double sampleRate) {
     sp_buthp_init(sp, data->buthp0);
     sp_buthp_create(&data->buthp1);
     sp_buthp_init(sp, data->buthp1);
-    data->buthp0->freq = defaultCutoffFrequency;
-    data->buthp1->freq = defaultCutoffFrequency;
 }
 
 void AKHighPassButterworthFilterDSP::deinit() {
+    AKSoundpipeDSPBase::deinit();
     sp_buthp_destroy(&data->buthp0);
     sp_buthp_destroy(&data->buthp1);
+}
+
+void AKHighPassButterworthFilterDSP::reset() {
+    AKSoundpipeDSPBase::reset();
+    if (!isInitialized) return;
+    sp_buthp_init(sp, data->buthp0);
+    sp_buthp_init(sp, data->buthp1);
 }
 
 void AKHighPassButterworthFilterDSP::process(AUAudioFrameCount frameCount, AUAudioFrameCount bufferOffset) {
@@ -69,19 +43,15 @@ void AKHighPassButterworthFilterDSP::process(AUAudioFrameCount frameCount, AUAud
     for (int frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
         int frameOffset = int(frameIndex + bufferOffset);
 
-        // do ramping every 8 samples
-        if ((frameOffset & 0x7) == 0) {
-            data->cutoffFrequencyRamp.advanceTo(now + frameOffset);
-        }
-
-        data->buthp0->freq = data->cutoffFrequencyRamp.getValue();
-        data->buthp1->freq = data->cutoffFrequencyRamp.getValue();
+        float cutoffFrequency = data->cutoffFrequencyRamp.getAndStep();
+        data->buthp0->freq = cutoffFrequency;
+        data->buthp1->freq = cutoffFrequency;
 
         float *tmpin[2];
         float *tmpout[2];
         for (int channel = 0; channel < channelCount; ++channel) {
-            float *in  = (float *)inBufferListPtr->mBuffers[channel].mData  + frameOffset;
-            float *out = (float *)outBufferListPtr->mBuffers[channel].mData + frameOffset;
+            float *in  = (float *)inputBufferLists[0]->mBuffers[channel].mData  + frameOffset;
+            float *out = (float *)outputBufferLists[0]->mBuffers[channel].mData + frameOffset;
             if (channel < 2) {
                 tmpin[channel] = in;
                 tmpout[channel] = out;

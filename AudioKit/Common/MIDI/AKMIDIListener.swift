@@ -1,10 +1,4 @@
-//
-//  AKMIDIListener.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Protocol that must be adhered to if you want your class to respond to MIDI
 ///
@@ -155,7 +149,8 @@ public extension AKMIDIListener {
                             portID: MIDIUniqueID? = nil,
                             offset: MIDITimeStamp = 0) {
         if AKMIDIListenerLogging {
-            AKLog("channel: \(channel) noteOn: \(noteNumber) velocity: \(velocity) port: \(portID ?? 0) offset: \(offset)", log: OSLog.midi)
+            AKLog("channel: \(channel) noteOn:\(noteNumber) velocity:\(velocity) port:\(portID ?? 0) offset:\(offset)",
+                log: OSLog.midi)
         }
     }
 
@@ -174,7 +169,8 @@ public extension AKMIDIListener {
                              portID: MIDIUniqueID? = nil,
                              offset: MIDITimeStamp = 0) {
         if AKMIDIListenerLogging {
-            AKLog("channel: \(channel) noteOff: \(noteNumber) velocity: \(velocity) port: \(portID ?? 0) offset: \(offset)", log: OSLog.midi)
+            AKLog("channel: \(channel) noteOff:\(noteNumber) velocity:\(velocity) port:\(portID ?? 0) offset:\(offset)",
+                log: OSLog.midi)
         }
     }
 
@@ -249,7 +245,8 @@ public extension AKMIDIListener {
                                 portID: MIDIUniqueID? = nil,
                                 offset: MIDITimeStamp = 0) {
         if AKMIDIListenerLogging {
-          AKLog("channel: \(channel) pitchWheel: \(pitchWheelValue) port: \(portID ?? 0) offset: \(offset)", log: OSLog.midi)
+          AKLog("channel: \(channel) pitchWheel:\(pitchWheelValue) port:\(portID ?? 0) offset:\(offset)",
+            log: OSLog.midi)
         }
     }
 
@@ -266,7 +263,8 @@ public extension AKMIDIListener {
                                    portID: MIDIUniqueID? = nil,
                                    offset: MIDITimeStamp = 0) {
         if AKMIDIListenerLogging {
-          AKLog("channel: \(channel) programChange: \(program) port: \(portID ?? 0) offset: \(offset)", log: OSLog.midi)
+          AKLog("channel: \(channel) programChange:\(program) port:\(portID ?? 0) offset:\(offset)",
+            log: OSLog.midi)
         }
     }
 

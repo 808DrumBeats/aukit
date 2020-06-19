@@ -1,10 +1,4 @@
-//
-//  AKMIDITimeout.swift
-//  AudioKit
-//
-//  Created by Kurt Arnlund on 1/21/19.
-//  Copyright © 2019 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import Foundation
 
@@ -27,7 +21,10 @@ import Foundation
     var disableSuccess = false
     var disableFailure = false
 
-    public init(timeoutInterval time: TimeInterval, onMainThread: Bool = true, success: @escaping ActionClosureType, timeout: @escaping ActionClosureType) {
+    public init(timeoutInterval time: TimeInterval,
+                onMainThread: Bool = true,
+                success: @escaping ActionClosureType,
+                timeout: @escaping ActionClosureType) {
         mainThread = onMainThread
         timeoutInterval = time
         onSuccess = success
@@ -52,7 +49,9 @@ import Foundation
 
     @objc func mainthreadSuccessCall() {
         let action: ActionClosureType = {
-            NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.messageTimeout), object: nil)
+            NSObject.cancelPreviousPerformRequests(withTarget: self,
+                                                   selector: #selector(self.messageTimeout),
+                                                   object: nil)
             if self.disableSuccess == false {
                 self.onSuccess?()
             }

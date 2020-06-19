@@ -1,17 +1,11 @@
-//
-//  AKDelay.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// AudioKit version of Apple's Delay Audio Unit
 ///
 open class AKDelay: AKNode, AKToggleable, AKInput {
     let delayAU = AVAudioUnitDelay()
 
-    fileprivate var lastKnownMix: Double = 0.5
+    fileprivate var lastKnownMix: AUValue = 0.5
 
     /// Delay time in seconds (Default: 1)
     @objc open dynamic var time: TimeInterval = 1 {
@@ -22,31 +16,31 @@ open class AKDelay: AKNode, AKToggleable, AKInput {
     }
 
     /// Feedback (Normalized Value) ranges from 0 to 1 (Default: 0.5)
-    @objc open dynamic var feedback: Double = 0.5 {
+    @objc open dynamic var feedback: AUValue = 0.5 {
         didSet {
             feedback = (0...1).clamp(feedback)
-            delayAU.feedback = Float(feedback) * 100.0
+            delayAU.feedback = feedback * 100.0
         }
     }
 
     /// Low pass cut-off frequency in Hertz (Default: 15000)
-    @objc open dynamic var lowPassCutoff: Double = 15_000.00 {
+    @objc open dynamic var lowPassCutoff: AUValue = 15_000.00 {
         didSet {
             lowPassCutoff = max(lowPassCutoff, 0)
-            delayAU.lowPassCutoff = Float(lowPassCutoff)
+            delayAU.lowPassCutoff = lowPassCutoff
         }
     }
 
     /// Dry/Wet Mix (Normalized Value) ranges from 0 to 1 (Default: 0.5)
-    @objc open dynamic var dryWetMix: Double = 0.5 {
+    @objc open dynamic var dryWetMix: AUValue = 0.5 {
         didSet {
             internalSetDryWetMix(dryWetMix)
         }
     }
 
-    internal func internalSetDryWetMix(_ value: Double) {
+    internal func internalSetDryWetMix(_ value: AUValue) {
         let newValue = (0...1).clamp(value)
-        delayAU.wetDryMix = AUValue(newValue) * 100.0
+        delayAU.wetDryMix = newValue * 100.0
     }
 
     /// Tells whether the node is processing (ie. started, playing, or active)
@@ -63,12 +57,12 @@ open class AKDelay: AKNode, AKToggleable, AKInput {
     ///
     @objc public init(
         _ input: AKNode? = nil,
-        time: Double = 1,
-        feedback: Double = 0.5,
-        lowPassCutoff: Double = 15_000,
-        dryWetMix: Double = 0.5) {
+        time: AUValue = 1,
+        feedback: AUValue = 0.5,
+        lowPassCutoff: AUValue = 15_000,
+        dryWetMix: AUValue = 0.5) {
 
-        self.time = TimeInterval(Double(time))
+        self.time = TimeInterval(AUValue(time))
         self.feedback = feedback
         self.lowPassCutoff = lowPassCutoff
         self.dryWetMix = dryWetMix
@@ -77,8 +71,8 @@ open class AKDelay: AKNode, AKToggleable, AKInput {
         input?.connect(to: self)
 
         delayAU.delayTime = self.time
-        delayAU.feedback = Float(feedback) * 100.0
-        delayAU.lowPassCutoff = Float(lowPassCutoff)
+        delayAU.feedback = feedback * 100.0
+        delayAU.lowPassCutoff = lowPassCutoff
         internalSetDryWetMix(dryWetMix)
     }
 

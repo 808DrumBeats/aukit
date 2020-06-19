@@ -1,16 +1,9 @@
-//
-//  AKClipMerger.swift
-//  AudioKit
-//
-//  Created by David O'Neill, revision history on GitHub.
-//  Copyright © 2017 Audive Inc. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// The protocol for the AKClipMerger's delegate
 /// It is the responsibility of the delegate to create a new clip when a an existing clip
 /// has been altered or split.
 @objc public protocol ClipMergeDelegate: AnyObject {
-
     /// A new clip, derived from an existing clip, with specified values.
     ///
     /// - Parameters:
@@ -49,7 +42,6 @@ public enum ClipMergeError: Error {
 /// removed, the delegate's clipWillBeRemoved function will be called (if implemented).
 ///
 open class AKClipMerger: NSObject {
-
     /// The delegate used for clip editing and creation.
     open weak var mergeDelegate: ClipMergeDelegate?
 
@@ -61,7 +53,6 @@ open class AKClipMerger: NSObject {
     /// - Returns: A validated array of clips containing the new clip merged with clips.
     ///
     @objc open func merge(clip: AKClip, clips: [AKClip]) -> [AKClip] {
-
         guard clip.isValid else {
             AKLog("AudioSequence.add - clip invalid")
             return clips
@@ -85,12 +76,12 @@ open class AKClipMerger: NSObject {
                     let duration = existingClip.duration - diff
 
                     if let editedClip = mergeDelegate?.newClip(from: existingClip,
-                                          time: time,
-                                          offset: offset,
-                                          duration: duration) {
-                        if editedClip.isValid &&
-                            editedClip.time == time &&
-                            editedClip.offset == offset &&
+                                                               time: time,
+                                                               offset: offset,
+                                                               duration: duration) {
+                        if editedClip.isValid,
+                            editedClip.time == time,
+                            editedClip.offset == offset,
                             editedClip.duration == duration {
                             merged.append(editedClip)
                         } else {
@@ -101,7 +92,6 @@ open class AKClipMerger: NSObject {
                     }
                 }
                 if overlapsEnd || overlapsMiddle {
-
                     let time = existingClip.time
                     let offset = existingClip.offset
                     let duration = clip.time - existingClip.time
@@ -110,9 +100,9 @@ open class AKClipMerger: NSObject {
                                                                time: time,
                                                                offset: offset,
                                                                duration: duration) {
-                        if editedClip.isValid &&
-                            editedClip.time == time &&
-                            editedClip.offset == offset &&
+                        if editedClip.isValid,
+                            editedClip.time == time,
+                            editedClip.offset == offset,
                             editedClip.duration == duration {
                             merged.append(editedClip)
                         } else {
@@ -138,9 +128,8 @@ open class AKClipMerger: NSObject {
     /// - Throws: ClipMergeError if clips are not valid.
     ///
     open class func validateClips(_ clips: [AKClip]) throws -> [AKClip] {
-
         let sorted = clips.sorted { (a, b) -> Bool in
-            return a.time < b.time
+            a.time < b.time
         }
         var lastEndTime: Double = 0
         for clip in sorted {
@@ -159,7 +148,6 @@ open class AKClipMerger: NSObject {
 
 /// A class that manages the merging of AKFileClips.
 open class AKFileClipSequence: NSObject, ClipMergeDelegate {
-
     /// Clip merger delegate function
     @objc open func newClip(from clip: AKClip, time: Double, offset: Double, duration: Double) -> AKClip? {
         guard let oldClip = clip as? AKFileClip else {
@@ -181,8 +169,9 @@ open class AKFileClipSequence: NSObject, ClipMergeDelegate {
         }
         set {
             do {
-                let clips = try AKClipMerger.validateClips(newValue) as! [AKFileClip]
-                _clips = clips
+                let clips = try AKClipMerger.validateClips(newValue) // as! [AKFileClip]
+                guard let fileClips = clips as? [AKFileClip] else { throw ClipMergeError.clipInvalid }
+                _clips = fileClips
             } catch {
                 AKLog(error.localizedDescription)
             }
@@ -191,7 +180,9 @@ open class AKFileClipSequence: NSObject, ClipMergeDelegate {
 
     /// Merges a clip into existing clips.  Fails if clip is invalid.
     @objc open func add(clip: AKFileClip) {
-        _clips = clipMerger.merge(clip: clip, clips: _clips) as! [AKFileClip]
+        if let fileClips = clipMerger.merge(clip: clip, clips: _clips) as? [AKFileClip] {
+            _clips = fileClips
+        }
     }
 
     /// Initialize a clip sequence with an array of clips.

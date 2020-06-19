@@ -1,10 +1,4 @@
-//
-//  ViewController.swift
-//  iOSDevelopment
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 import AudioKitUI
@@ -54,11 +48,11 @@ class ViewController: UIViewController {
         } else {
             oscillator.start()
             button1.titleLabel?.text = "Stop"
-            updateText("Playing \(Int(oscillator.frequency))Hz")
+            updateText("Playing \(Int(oscillator.frequency.value))Hz")
         }
     }
     @IBAction func slid1(_ sender: UISlider) {
-        booster.gain = Double(slider1.value)
+        booster.gain = AUValue(slider1.value)
         updateText("booster gain = \(booster.gain)")
     }
 

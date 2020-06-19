@@ -1,10 +1,4 @@
-//
-//  AKTimePitch.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// AudioKit version of Apple's TimePitch Audio Unit
 ///
@@ -13,10 +7,10 @@ open class AKTimePitch: AKNode, AKToggleable, AKInput {
     fileprivate let timePitchAU = AVAudioUnitTimePitch()
 
     /// Rate (rate) ranges from 0.03125 to 32.0 (Default: 1.0)
-    @objc open dynamic var rate: Double = 1.0 {
+    @objc open dynamic var rate: AUValue = 1.0 {
         didSet {
             rate = (0.031_25...32).clamp(rate)
-            timePitchAU.rate = Float(rate)
+            timePitchAU.rate = rate
         }
     }
 
@@ -26,18 +20,18 @@ open class AKTimePitch: AKNode, AKToggleable, AKInput {
     }
 
     /// Pitch (Cents) ranges from -2400 to 2400 (Default: 0.0)
-    @objc open dynamic var pitch: Double = 0.0 {
+    @objc open dynamic var pitch: AUValue = 0.0 {
         didSet {
             pitch = (-2_400...2_400).clamp(pitch)
-            timePitchAU.pitch = Float(pitch)
+            timePitchAU.pitch = pitch
         }
     }
 
     /// Overlap (generic) ranges from 3.0 to 32.0 (Default: 8.0)
-    @objc open dynamic var overlap: Double = 8.0 {
+    @objc open dynamic var overlap: AUValue = 8.0 {
         didSet {
             overlap = (3...32).clamp(overlap)
-            timePitchAU.overlap = Float(overlap)
+            timePitchAU.overlap = overlap
         }
     }
 
@@ -51,15 +45,15 @@ open class AKTimePitch: AKNode, AKToggleable, AKInput {
     ///
     @objc public init(
         _ input: AKNode? = nil,
-        rate: Double = 1.0,
-        pitch: Double = 0.0,
-        overlap: Double = 8.0) {
+        rate: AUValue = 1.0,
+        pitch: AUValue = 0.0,
+        overlap: AUValue = 8.0) {
 
         self.rate = rate
         self.pitch = pitch
         self.overlap = overlap
 
-        super.init()
+        super.init(avAudioNode: AVAudioNode())
         avAudioUnit = timePitchAU
         avAudioNode = timePitchAU
         AKManager.engine.attach(avAudioUnitOrNode)

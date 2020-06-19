@@ -1,53 +1,32 @@
-//
-//  AKToneComplementFilter.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// A complement to the AKLowPassFilter.
 ///
-open class AKToneComplementFilter: AKNode, AKToggleable, AKComponent, AKInput {
-    public typealias AKAudioUnitType = AKToneComplementFilterAudioUnit
+open class AKToneComplementFilter: AKNode, AKToggleable, AKComponent, AKInput, AKAutomatable {
+
+    // MARK: - AKComponent
+
     /// Four letter unique description of the node
     public static let ComponentDescription = AudioComponentDescription(effect: "aton")
 
-    // MARK: - Properties
-    private var internalAU: AKAudioUnitType?
+    public typealias AKAudioUnitType = AKToneComplementFilterAudioUnit
 
-    fileprivate var halfPowerPointParameter: AUParameter?
+    public private(set) var internalAU: AKAudioUnitType?
+
+    // MARK: - AKAutomatable
+
+    public private(set) var parameterAutomation: AKParameterAutomation?
+
+    // MARK: - Parameters
 
     /// Lower and upper bounds for Half Power Point
-    public static let halfPowerPointRange = 12.0 ... 20_000.0
+    public static let halfPowerPointRange: ClosedRange<AUValue> = 12.0 ... 20_000.0
 
     /// Initial value for Half Power Point
-    public static let defaultHalfPowerPoint = 1_000.0
-
-    /// Ramp Duration represents the speed at which parameters are allowed to change
-    @objc open dynamic var rampDuration: Double = AKSettings.rampDuration {
-        willSet {
-            internalAU?.rampDuration = newValue
-        }
-    }
+    public static let defaultHalfPowerPoint: AUValue = 1_000.0
 
     /// Half-Power Point in Hertz. Half power is defined as peak power / square root of 2.
-    @objc open dynamic var halfPowerPoint: Double = defaultHalfPowerPoint {
-        willSet {
-            guard halfPowerPoint != newValue else { return }
-            if internalAU?.isSetUp == true {
-                halfPowerPointParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.setParameterImmediately(.halfPowerPoint, value: newValue)
-        }
-    }
-
-    /// Tells whether the node is processing (ie. started, playing, or active)
-    @objc open dynamic var isStarted: Bool {
-        return internalAU?.isPlaying ?? false
-    }
+    public let halfPowerPoint = AKNodeParameter(identifier: "halfPowerPoint")
 
     // MARK: - Initialization
 
@@ -57,46 +36,22 @@ open class AKToneComplementFilter: AKNode, AKToggleable, AKComponent, AKInput {
     ///   - input: Input node to process
     ///   - halfPowerPoint: Half-Power Point in Hertz. Half power is defined as peak power / square root of 2.
     ///
-    @objc public init(
+    public init(
         _ input: AKNode? = nil,
-        halfPowerPoint: Double = defaultHalfPowerPoint
+        halfPowerPoint: AUValue = defaultHalfPowerPoint
         ) {
+        super.init(avAudioNode: AVAudioNode())
 
-        self.halfPowerPoint = halfPowerPoint
+        instantiateAudioUnit { avAudioUnit in
+            self.avAudioUnit = avAudioUnit
+            self.avAudioNode = avAudioUnit
 
-        _Self.register()
+            self.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
+            self.parameterAutomation = AKParameterAutomation(avAudioUnit)
 
-        super.init()
-        AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
-            guard let strongSelf = self else {
-                AKLog("Error: self is nil")
-                return
-            }
-            strongSelf.avAudioUnit = avAudioUnit
-            strongSelf.avAudioNode = avAudioUnit
-            strongSelf.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
-            input?.connect(to: strongSelf)
+            self.halfPowerPoint.associate(with: self.internalAU, value: halfPowerPoint)
+
+            input?.connect(to: self)
         }
-
-        guard let tree = internalAU?.parameterTree else {
-            AKLog("Parameter Tree Failed")
-            return
-        }
-
-        halfPowerPointParameter = tree["halfPowerPoint"]
-
-        internalAU?.setParameterImmediately(.halfPowerPoint, value: halfPowerPoint)
-    }
-
-    // MARK: - Control
-
-    /// Function to start, play, or activate the node, all do the same thing
-    @objc open func start() {
-        internalAU?.start()
-    }
-
-    /// Function to stop or bypass the node, both are equivalent
-    @objc open func stop() {
-        internalAU?.stop()
     }
 }

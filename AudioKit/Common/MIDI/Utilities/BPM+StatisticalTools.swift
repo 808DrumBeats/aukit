@@ -1,10 +1,4 @@
-//
-//  BPM+StatisticalTools.swift
-//  AudioKit
-//
-//  Created by Kurt Arnlund on 1/21/19.
-//  Copyright © 2019 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import Foundation
 
@@ -23,29 +17,29 @@ extension Double {
 // MARK: - Tools for obtaining average and std_dev arrays of floating points
 extension Array where Element: Numeric {
 
-    func sum() -> Float64 {
-        return self.reduce( Float64(0), +)
+    func sum() -> Double {
+        return self.reduce( Double(0), +)
     }
 
-    func avg() -> Float64 {
-        guard self.count > 0 else { return 0 }
-        return Float64(self.sum()) / Float64(self.count)
+    func avg() -> Double {
+        guard !isEmpty else { return 0 }
+        return Double(self.sum()) / Double(self.count)
     }
 
-    func std() -> Float64 {
-        guard self.count > 1 else { return 0 }
+    func std() -> Double {
+        guard count > 1 else { return 0 }
         let mean = self.avg()
-        let start = Float64(0)
-        let v = self.reduce(start) { (priorResult, item) -> Float64 in
-            let accumulator = Float64(priorResult)
-            let floatItem = item as! Float64
+        let start = Double(0)
+        let v = self.reduce(start) { (priorResult, item) -> Double in
+            let accumulator = Double(priorResult)
+            let floatItem = (item as? Double) ?? 0
             let diff = floatItem - mean
             return accumulator + diff * diff
         }
-        return sqrt(v / (Float64(self.count) - 1))
+        return sqrt(v / (Double(self.count) - 1))
     }
 
-    func meanAndStdDev() -> (mean: Float64, std: Float64) {
+    func meanAndStdDev() -> (mean: Double, std: Double) {
         // Peform Statistics
         let meanCalc = avg()
         let stdDev = std()
@@ -68,7 +62,7 @@ struct BPMHistoryStatistics {
 
     var bpmHistory: [BPMType]
     var actualTimeHistory: [UInt64]
-    var timeHistory: [Float64]
+    var timeHistory: [Double]
     var bpmStats: [BPMStats]
     var timeStats: [TimeStats]
 
@@ -83,11 +77,11 @@ struct BPMHistoryStatistics {
     }
 
     func timeAt(ratio: Float) -> UInt64 {
-        guard timeHistory.count != 0 else { return 0 }
-        guard timeHistory.count != 1 else { return UInt64(timeHistory.first!) }
+        guard timeHistory.isNotEmpty else { return 0 }
+        guard timeHistory.count != 1 else { return UInt64(timeHistory.first ?? 0) }
         let firstIndex = max(timeHistory.count - historyCounts[regressionCountIndex], 0)
         let first = timeHistory[firstIndex]
-        let last = timeHistory.last!
+        let last = timeHistory.last ?? first
         let value = first + ((last - first) * ratio)
         return UInt64(value)
     }
@@ -96,7 +90,7 @@ struct BPMHistoryStatistics {
 
         let maxCount = historyCounts.max() ?? 1
         if maxCount > 1 {
-            if (bpmHistory.count > maxCount) {
+            if bpmHistory.count > maxCount {
                 bpmHistory = bpmHistory.dropFirst(1).compactMap({ $0 })
             }
         }
@@ -109,18 +103,18 @@ struct BPMHistoryStatistics {
 
         let maxCount = historyCounts.max() ?? 1
         if maxCount > 1 {
-            if (bpmHistory.count > maxCount) {
+            if bpmHistory.count > maxCount {
                 bpmHistory = bpmHistory.dropFirst().compactMap({ $0 })
             }
-            if (timeHistory.count > maxCount) {
+            if timeHistory.count > maxCount {
                 timeHistory = timeHistory.dropFirst().compactMap({ $0 })
             }
-            if (actualTimeHistory.count > maxCount) {
+            if actualTimeHistory.count > maxCount {
                 actualTimeHistory = actualTimeHistory.dropFirst().compactMap({ $0 })
             }
         }
         bpmHistory.append(bpm)
-        timeHistory.append(Float64(time))
+        timeHistory.append(Double(time))
         actualTimeHistory.append(time)
 
         calculateBPMMeanAndStdDev()
@@ -185,7 +179,8 @@ struct BPMHistoryStatistics {
     /// by searching through its most recent BPM history sets for
     /// the sequence with the least deviation from that sets mean.
     ///
-    /// - Returns: A tuple with Average BPM, Standard Deviation, index of the BTM history set it used, and the count of recent BPMs used to obtain the average
+    /// - Returns: A tuple with Average BPM, Standard Deviation, index of the BTM history set it used,
+    ///     and the number of BPMs used to obtain the average
     func avgFromSmallestDeviatingHistory() -> (avg: BPMType, std: BPMType, index: Int, count: Int, accuracy: Double) {
 
         guard let results = bpmStats.min(by: { (left, right) -> Bool in
@@ -236,17 +231,17 @@ struct BPMHistoryAveraging {
 /// It simply applies a weight between a new value and a
 /// prior stored smoothed value using a factor give at initialization.
 struct ValueSmoothing {
-    var smoothed: Float64
-    let factor: Float64
-    let priorDataFactor: Float64
+    var smoothed: Double
+    let factor: Double
+    let priorDataFactor: Double
 
-    init(factor fact: Float64) {
+    init(factor fact: Double) {
         factor = fact
-        priorDataFactor = Float64(1.0) - factor
+        priorDataFactor = Double(1.0) - factor
         smoothed = 0
     }
 
-    mutating func smoothed(_ newValue: Float64) -> Float64 {
+    mutating func smoothed(_ newValue: Double) -> Double {
         if smoothed == 0 {
             smoothed = newValue
         } else {

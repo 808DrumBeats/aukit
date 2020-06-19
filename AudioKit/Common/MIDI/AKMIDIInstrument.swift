@@ -1,10 +1,4 @@
-//
-//  AKMIDIInstrument.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AVFoundation
 import CoreAudio
@@ -28,7 +22,7 @@ open class AKMIDIInstrument: AKPolyphonicNode, AKMIDIListener {
     /// - Parameter midiInputName: Name of the instrument's MIDI input
     ///
     public init(midiInputName: String? = nil) {
-        super.init()
+        super.init(avAudioNode: AVAudioNode())
         name = midiInputName ?? name
         enableMIDI(name: midiInputName ?? name)
         hideVirtualMIDIPort()

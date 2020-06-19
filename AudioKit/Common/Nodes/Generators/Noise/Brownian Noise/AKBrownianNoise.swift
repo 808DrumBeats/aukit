@@ -1,54 +1,32 @@
-//
-//  AKBrownianNoise.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Brownian noise generator
 ///
-open class AKBrownianNoise: AKNode, AKToggleable, AKComponent {
-    public typealias AKAudioUnitType = AKBrownianNoiseAudioUnit
+open class AKBrownianNoise: AKNode, AKToggleable, AKComponent, AKAutomatable {
+
+    // MARK: - AKComponent
+
     /// Four letter unique description of the node
     public static let ComponentDescription = AudioComponentDescription(generator: "bron")
 
-    // MARK: - Properties
+    public typealias AKAudioUnitType = AKBrownianNoiseAudioUnit
 
-    private var internalAU: AKAudioUnitType?
+    public private(set) var internalAU: AKAudioUnitType?
 
-    fileprivate var amplitudeParameter: AUParameter?
+    // MARK: - AKAutomatable
+
+    public private(set) var parameterAutomation: AKParameterAutomation?
+
+    // MARK: - Parameters
 
     /// Lower and upper bounds for Amplitude
-    public static let amplitudeRange = 0.0 ... 1.0
+    public static let amplitudeRange: ClosedRange<AUValue> = 0.0 ... 1.0
 
     /// Initial value for Amplitude
-    public static let defaultAmplitude = 1.0
-
-    /// Ramp Duration represents the speed at which parameters are allowed to change
-    @objc open dynamic var rampDuration: Double = AKSettings.rampDuration {
-        willSet {
-            internalAU?.rampDuration = newValue
-        }
-    }
+    public static let defaultAmplitude: AUValue = 1.0
 
     /// Amplitude. (Value between 0-1).
-    @objc open dynamic var amplitude: Double = defaultAmplitude {
-        willSet {
-            guard amplitude != newValue else { return }
-            if internalAU?.isSetUp == true {
-                amplitudeParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.setParameterImmediately(.amplitude, value: newValue)
-        }
-    }
-
-    /// Tells whether the node is processing (ie. started, playing, or active)
-    @objc open dynamic var isStarted: Bool {
-        return internalAU?.isPlaying ?? false
-    }
+    public let amplitude = AKNodeParameter(identifier: "amplitude")
 
     // MARK: - Initialization
 
@@ -57,43 +35,20 @@ open class AKBrownianNoise: AKNode, AKToggleable, AKComponent {
     /// - Parameters:
     ///   - amplitude: Amplitude. (Value between 0-1).
     ///
-    @objc public init(amplitude: Double = defaultAmplitude) {
+    public init(
+        amplitude: AUValue = defaultAmplitude
+    ) {
+        super.init(avAudioNode: AVAudioNode())
 
-        self.amplitude = amplitude
+        instantiateAudioUnit { avAudioUnit in
+            self.avAudioUnit = avAudioUnit
+            self.avAudioNode = avAudioUnit
 
-        _Self.register()
+            self.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
+            self.parameterAutomation = AKParameterAutomation(avAudioUnit)
 
-        super.init()
-        AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
-            guard let strongSelf = self else {
-                AKLog("Error: self is nil")
-                return
-            }
-            strongSelf.avAudioUnit = avAudioUnit
-            strongSelf.avAudioNode = avAudioUnit
-            strongSelf.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
+            self.amplitude.associate(with: self.internalAU, value: amplitude)
         }
 
-        guard let tree = internalAU?.parameterTree else {
-            AKLog("Parameter Tree Failed")
-            return
-        }
-
-        amplitudeParameter = tree["amplitude"]
-        internalAU?.setParameterImmediately(.amplitude, value: amplitude)
-    }
-
-    @objc override convenience public init() {
-        self.init(amplitude: AKBrownianNoise.defaultAmplitude)
-    }
-    
-    /// Function to start, play, or activate the node, all do the same thing
-    @objc open func start() {
-        internalAU?.start()
-    }
-
-    /// Function to stop or bypass the node, both are equivalent
-    @objc open func stop() {
-        internalAU?.stop()
     }
 }

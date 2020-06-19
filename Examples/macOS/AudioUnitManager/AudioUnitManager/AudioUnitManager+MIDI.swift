@@ -1,10 +1,4 @@
-//
-//  AudioUnitManager+MIDI.swift
-//  AudioUnitManager
-//
-//  Created by Ryan Francesconi, revision history on Githbub.
-//  Copyright © 2017 Ryan Francesconi. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 
@@ -56,7 +50,7 @@ extension AudioUnitManager: AKMIDIListener {
                 fmTimer?.invalidate()
             }
             let frequency = AKPolyphonicNode.tuningTable.frequency(forNoteNumber: noteNumber)
-            fmOscillator.baseFrequency = frequency
+            fmOscillator.baseFrequency.value = AUValue(frequency)
         }
         lastMIDIEvent = currentTime
     }
@@ -85,14 +79,14 @@ extension AudioUnitManager: AKMIDIListener {
             }
             internalManager.connectEffects(firstNode: fmOscillator, lastNode: mixer)
 
-            startEngine(completionHandler: {
+            startEngine {
                 self.fmOscillator.start()
                 self.fmTimer = Timer.scheduledTimer(timeInterval: 0.2,
                                                     target: self,
                                                     selector: #selector(self.randomFM),
                                                     userInfo: nil,
                                                     repeats: true)
-            })
+            }
         } else {
             fmOscillator.stop()
         }
@@ -101,9 +95,9 @@ extension AudioUnitManager: AKMIDIListener {
     @objc func randomFM() {
         let noteNumber = randomNumber(range: 0...127)
         let frequency = AKPolyphonicNode.tuningTable.frequency(forNoteNumber: MIDINoteNumber(noteNumber))
-        fmOscillator.baseFrequency = Double(frequency)
-        fmOscillator.carrierMultiplier = Double(randomNumber(range: 10...100)) / 100
-        fmOscillator.amplitude = Double(randomNumber(range: 10...100)) / 100
+        fmOscillator.baseFrequency.value = AUValue(frequency)
+        fmOscillator.carrierMultiplier.value = AUValue(randomNumber(range: 10...100) / 100)
+        fmOscillator.amplitude.value = AUValue(randomNumber(range: 10...100)) / 100
     }
 
     func randomNumber(range: ClosedRange<Int> = 100...500) -> Int {

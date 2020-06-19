@@ -1,13 +1,9 @@
-//
-// ParameterRamper.cpp
-// AudioKit
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
+
 // Utility class to manage DSP parameters which can change value smoothly (be ramped) while rendering, without introducing clicks or other distortion into the signal.
 //
 // Originally based on Apple sample code, but significantly altered by Aurelius Prochazka
-//
-//  Copyright © 2020 AudioKit. All rights reserved.
-//
+
 
 #import <cstdint>
 
@@ -21,6 +17,8 @@
 struct ParameterRamper::InternalData {
     float clampLow, clampHigh;
     float uiValue;
+    float sampleRate;
+    float defaultRampDuration = 0.02;
     float taper = 1;
     float skew = 0;
     uint32_t offset = 0;
@@ -37,10 +35,12 @@ ParameterRamper::ParameterRamper(float value) : data(new InternalData)
     setImmediate(value);
 }
 
-ParameterRamper::~ParameterRamper()
+ParameterRamper::ParameterRamper(const ParameterRamper& other)
+: data(new InternalData(*other.data))
 {
-    delete data;
 }
+
+ParameterRamper::~ParameterRamper() = default;
 
 void ParameterRamper::setImmediate(float value)
 {
@@ -49,18 +49,21 @@ void ParameterRamper::setImmediate(float value)
     data->samplesRemaining = 0;
 }
 
-void ParameterRamper::init()
+/// Call this from AUAudioUnit's allocateRenderResources
+void ParameterRamper::init(float sampleRate)
 {
-    /*
-     Call this from the kernel init.
-     Updates the internal value from the UI value.
-     */
+    data->sampleRate = sampleRate;
     setImmediate(data->uiValue);
 }
 
 void ParameterRamper::reset()
 {
     data->changeCounter = data->updateCounter = 0;
+}
+
+void ParameterRamper::setDefaultRampDuration(float duration)
+{
+    data->defaultRampDuration = duration;
 }
 
 void ParameterRamper::setTaper(float taper)
@@ -116,12 +119,18 @@ float ParameterRamper::getUIValue() const
     return data->uiValue;
 }
 
+void ParameterRamper::dezipperCheck()
+{
+    dezipperCheck(data->defaultRampDuration * data->sampleRate);
+}
+
 void ParameterRamper::dezipperCheck(uint32_t rampDuration)
 {
     // check to see if the UI has changed and if so, start a ramp to dezipper it.
     int32_t changeCounterSnapshot = data->changeCounter;
     if (data->updateCounter != changeCounterSnapshot) {
         data->updateCounter = changeCounterSnapshot;
+        data->offset = 0; // only use offset for automation
         startRamp(data->uiValue, rampDuration);
     }
 }

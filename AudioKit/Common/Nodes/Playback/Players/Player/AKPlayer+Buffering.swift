@@ -1,10 +1,4 @@
-//
-//  AKPlayer+Buffering.swift
-//  AudioKit
-//
-//  Created by Ryan Francesconi on 6/12/18.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Functions specific to buffering audio
 extension AKPlayer {
@@ -61,7 +55,8 @@ extension AKPlayer {
         // AVAudioFrameCount is unsigned so cast it after the zero check
         frameCount = AVAudioFrameCount(framesToRead)
 
-        guard let pcmBuffer = AVAudioPCMBuffer(pcmFormat: processingFormat, frameCapacity: frameCount) else { return }
+        guard let pcmBuffer = AVAudioPCMBuffer(pcmFormat: processingFormat,
+                                               frameCapacity: frameCount) else { return }
 
         do {
             audioFile.framePosition = startFrame

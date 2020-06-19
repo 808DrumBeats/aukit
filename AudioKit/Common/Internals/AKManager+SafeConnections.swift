@@ -1,16 +1,9 @@
-//
-//  AudioKit+SafeConnections.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper on 4/20/18.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import Foundation
 
 /// This extension makes connect calls shorter, and safer by attaching nodes if not already attached.
 extension AKManager {
-
     // Attaches nodes if node.engine == nil
     private static func safeAttach(_ nodes: [AVAudioNode]) {
         _ = nodes.filter { $0.engine == nil }.map { engine.attach($0) }
@@ -25,13 +18,11 @@ extension AKManager {
     // bus to connect to.
     //
     private static func checkMixerInputs(_ connectionPoints: [AVAudioConnectionPoint]) {
-
         if !engine.isRunning { return }
 
         for connection in connectionPoints {
             if let mixer = connection.node as? AVAudioMixerNode,
                 connection.bus >= mixer.numberOfInputs {
-
                 var dummyNodes = [AVAudioNode]()
                 while connection.bus >= mixer.numberOfInputs {
                     let dummyNode = AVAudioUnitSampler()
@@ -41,7 +32,6 @@ extension AKManager {
                 for dummyNode in dummyNodes {
                     dummyNode.disconnectOutput()
                 }
-
             }
         }
     }
@@ -51,27 +41,25 @@ extension AKManager {
     // node to the mixer prior to making a connection, then removing the dummy node after the connection has been made.
     //
     private static func addDummyOnEmptyMixer(_ node: AVAudioNode) -> AVAudioNode? {
-
         // Only an issue if engine is running, node is a mixer, and mixer has no inputs
         guard let mixer = node as? AVAudioMixerNode,
             engine.isRunning,
             !engine.mixerHasInputs(mixer: mixer) else {
-                return nil
+            return nil
         }
 
         let dummy = AVAudioUnitSampler()
         engine.attach(dummy)
-        engine.connect(dummy, to: mixer, format: AKManager.format)
+        engine.connect(dummy, to: mixer, format: AKSettings.audioFormat)
         return dummy
     }
 
     @objc public static func connect(_ sourceNode: AVAudioNode,
-                                   to destNodes: [AVAudioConnectionPoint],
-                                   fromBus sourceBus: AVAudioNodeBus,
-                                   format: AVAudioFormat?) {
-
+                                     to destNodes: [AVAudioConnectionPoint],
+                                     fromBus sourceBus: AVAudioNodeBus,
+                                     format: AVAudioFormat?) {
         let connectionsWithNodes = destNodes.filter { $0.node != nil }
-        safeAttach([sourceNode] + connectionsWithNodes.map { $0.node! })
+        safeAttach([sourceNode] + connectionsWithNodes.compactMap { $0.node })
         // See addDummyOnEmptyMixer for dummyNode explanation.
         let dummyNode = addDummyOnEmptyMixer(sourceNode)
         checkMixerInputs(connectionsWithNodes)
@@ -80,11 +68,10 @@ extension AKManager {
     }
 
     @objc public static func connect(_ node1: AVAudioNode,
-                                   to node2: AVAudioNode,
-                                   fromBus bus1: AVAudioNodeBus,
-                                   toBus bus2: AVAudioNodeBus,
-                                   format: AVAudioFormat?) {
-
+                                     to node2: AVAudioNode,
+                                     fromBus bus1: AVAudioNodeBus,
+                                     toBus bus2: AVAudioNodeBus,
+                                     format: AVAudioFormat?) {
         safeAttach([node1, node2])
         // See addDummyOnEmptyMixer for dummyNode explanation.
         let dummyNode = addDummyOnEmptyMixer(node1)
@@ -96,9 +83,10 @@ extension AKManager {
         connect(node1, to: node2, fromBus: 0, toBus: 0, format: format)
     }
 
-    //Convenience
+    // Convenience
     @objc public static func detach(nodes: [AVAudioNode]) {
         for node in nodes {
+            guard node.engine != nil else { continue }
             engine.detach(node)
         }
     }
@@ -109,28 +97,30 @@ extension AKManager {
     /// MIDI content will need to be recorded in real time
     ///
     ///     - Parameters:
-    ///         - audioFile: An file initialized for writing
+    ///         - audioFile: A file initialized for writing
     ///         - duration: Duration to render, in seconds
-    ///         - prerender: A closure called before rendering starts, use this to start players, set initial parameters, etc...
-    ///         - progress: A closure called while rendering, use this to fetch render progress
+    ///         - prerender: Closure called before rendering starts, used to start players, set initial parameters, etc.
+    ///         - progress: Closure called while rendering, use this to fetch render progress
     ///
     @available(iOS 11, macOS 10.13, tvOS 11, *)
     @objc public static func renderToFile(_ audioFile: AVAudioFile,
                                           duration: Double,
                                           prerender: (() -> Void)? = nil,
                                           progress: ((Double) -> Void)? = nil) throws {
-
         try engine.renderToFile(audioFile, duration: duration, prerender: prerender, progress: progress)
     }
 
     @available(iOS 11, macOS 10.13, tvOS 11, *)
     public static func printConnections() {
-
         let nodes: [AVAudioNode] = {
             var nodes = Set<AVAudioNode>()
             func addInputs(_ node: AVAudioNode) {
                 nodes.insert(node)
-                node.inputConnections().filter { $0.node != nil }.forEach { addInputs($0.node!) }
+                node.inputConnections().filter { $0.node != nil }.forEach {
+                    if let node = $0.node {
+                        addInputs(node)
+                    }
+                }
             }
             addInputs(engine.outputNode)
             return Array(nodes)
@@ -141,7 +131,9 @@ extension AKManager {
         }
 
         func formatDescription(_ format: AVAudioFormat) -> String {
-            guard let description = format.description.components(separatedBy: ":  ").dropFirst().first else { return format.description }
+            guard let description = format.description.components(separatedBy: ":  ").dropFirst().first else {
+                return format.description
+            }
             return "<" + description
         }
 
@@ -150,7 +142,7 @@ extension AKManager {
             return string.count >= padLength ? string : string + String(repeating: " ", count: padLength - string.count)
         }
 
-        nodes.enumerated().forEach { (id, node) in
+        nodes.enumerated().forEach { id, node in
 
             let outputs: [(id: Int, node: AVAudioNode, bus: Int)] = node.connectionPoints.compactMap {
                 guard let node = $0.node, let id = nodes.firstIndex(of: node) else { return nil }
@@ -166,5 +158,4 @@ extension AKManager {
             }
         }
     }
-
 }

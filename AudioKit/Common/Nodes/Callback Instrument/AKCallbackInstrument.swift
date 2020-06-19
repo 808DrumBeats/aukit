@@ -1,10 +1,4 @@
-//
-//  AKCallbackInstrument.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import Foundation
 
@@ -19,7 +13,7 @@ open class AKCallbackInstrument: AKPolyphonicNode, AKComponent {
 
     // MARK: - Properties
 
-    private var internalAU: AKAudioUnitType?
+    public private(set) var internalAU: AKAudioUnitType?
 
     open var callback: AKMIDICallback = { status, data1, data2 in } {
         willSet {
@@ -28,11 +22,11 @@ open class AKCallbackInstrument: AKPolyphonicNode, AKComponent {
     }
     // MARK: - Initialization
 
-    @objc public override init() {
+    @objc public init(midiCallback: AKMIDICallback? = nil) {
 
         _Self.register()
 
-        super.init()
+        super.init(avAudioNode: AVAudioNode())
 
         AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
             guard let strongSelf = self else {
@@ -43,6 +37,10 @@ open class AKCallbackInstrument: AKPolyphonicNode, AKComponent {
             strongSelf.avAudioNode = avAudioUnit
             self?.midiInstrument = avAudioUnit as? AVAudioUnitMIDIInstrument
             strongSelf.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
+
+        }
+        if let callback = midiCallback {
+            self.callback = callback
         }
     }
 

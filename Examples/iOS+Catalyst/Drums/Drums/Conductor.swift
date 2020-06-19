@@ -1,10 +1,4 @@
-//
-//  Conductor.swift
-//  Drums
-//
-//  Created by Matthias Frick on 11/09/2019.
-//  Copyright © 2019 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 import AudioKitUI
@@ -44,7 +38,7 @@ class Conductor: ObservableObject {
       DrumSample("HI HAT", file: "Samples/Drums/closed_hi_hat_F#1.wav", note: 30),
       DrumSample("CLAP", file: "Samples/Drums/clap_D#1.wav", note: 27),
       DrumSample("SNARE", file: "Samples/Drums/snare_D1.wav", note: 26),
-      DrumSample("KICK", file: "Samples/Drums/bass_drum_C1.wav", note: 24),
+      DrumSample("KICK", file: "Samples/Drums/bass_drum_C1.wav", note: 24)
   ]
 
   let drums = AKAppleSampler()

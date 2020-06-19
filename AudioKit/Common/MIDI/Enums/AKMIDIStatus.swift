@@ -1,10 +1,4 @@
-//
-//  AKMIDIStatusType.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 public struct AKMIDIStatus: AKMIDIMessage {
 
@@ -23,7 +17,7 @@ public struct AKMIDIStatus: AKMIDIMessage {
     }
 
     public init?(byte: MIDIByte) {
-        if let _ = AKMIDIStatusType.from(byte: byte) {
+        if AKMIDIStatusType.from(byte: byte) != nil {
             self.byte = byte
         } else {
             return nil

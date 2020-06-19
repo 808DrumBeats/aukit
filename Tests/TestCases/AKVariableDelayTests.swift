@@ -1,13 +1,6 @@
-//
-//  AKVariableDelayTests.swift
-//  AudioKitTestSuite
-//
-//  Created by Aurelius Prochazka, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
-import XCTest
 
 class AKVariableDelayTests: AKTestCase {
 
@@ -29,8 +22,8 @@ class AKVariableDelayTests: AKTestCase {
     func testParametersSetAfterInit() {
         let effect = AKVariableDelay(input)
         effect.rampDuration = 0.0
-        effect.time = 0.123_4
-        effect.feedback = 0.95
+        effect.time.value = 0.123_4
+        effect.feedback.value = 0.95
         output = effect
         AKTestMD5("5024a7ef59a303c6f7a6fbebf0486d5e")
     }

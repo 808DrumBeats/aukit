@@ -1,70 +1,24 @@
-//
-//  AKEqualizerFilterDSP.mm
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #include "AKEqualizerFilterDSP.hpp"
-#import "AKLinearParameterRamp.hpp"
+#include "ParameterRamper.hpp"
 
-extern "C" AKDSPRef createEqualizerFilterDSP(int channelCount, double sampleRate) {
-    AKEqualizerFilterDSP *dsp = new AKEqualizerFilterDSP();
-    dsp->init(channelCount, sampleRate);
-    return dsp;
+extern "C" AKDSPRef createEqualizerFilterDSP() {
+    return new AKEqualizerFilterDSP();
 }
 
 struct AKEqualizerFilterDSP::InternalData {
     sp_eqfil *eqfil0;
     sp_eqfil *eqfil1;
-    AKLinearParameterRamp centerFrequencyRamp;
-    AKLinearParameterRamp bandwidthRamp;
-    AKLinearParameterRamp gainRamp;
+    ParameterRamper centerFrequencyRamp;
+    ParameterRamper bandwidthRamp;
+    ParameterRamper gainRamp;
 };
 
 AKEqualizerFilterDSP::AKEqualizerFilterDSP() : data(new InternalData) {
-    data->centerFrequencyRamp.setTarget(defaultCenterFrequency, true);
-    data->centerFrequencyRamp.setDurationInSamples(defaultRampDurationSamples);
-    data->bandwidthRamp.setTarget(defaultBandwidth, true);
-    data->bandwidthRamp.setDurationInSamples(defaultRampDurationSamples);
-    data->gainRamp.setTarget(defaultGain, true);
-    data->gainRamp.setDurationInSamples(defaultRampDurationSamples);
-}
-
-// Uses the ParameterAddress as a key
-void AKEqualizerFilterDSP::setParameter(AUParameterAddress address, AUValue value, bool immediate) {
-    switch (address) {
-        case AKEqualizerFilterParameterCenterFrequency:
-            data->centerFrequencyRamp.setTarget(clamp(value, centerFrequencyLowerBound, centerFrequencyUpperBound), immediate);
-            break;
-        case AKEqualizerFilterParameterBandwidth:
-            data->bandwidthRamp.setTarget(clamp(value, bandwidthLowerBound, bandwidthUpperBound), immediate);
-            break;
-        case AKEqualizerFilterParameterGain:
-            data->gainRamp.setTarget(clamp(value, gainLowerBound, gainUpperBound), immediate);
-            break;
-        case AKEqualizerFilterParameterRampDuration:
-            data->centerFrequencyRamp.setRampDuration(value, sampleRate);
-            data->bandwidthRamp.setRampDuration(value, sampleRate);
-            data->gainRamp.setRampDuration(value, sampleRate);
-            break;
-    }
-}
-
-// Uses the ParameterAddress as a key
-float AKEqualizerFilterDSP::getParameter(uint64_t address) {
-    switch (address) {
-        case AKEqualizerFilterParameterCenterFrequency:
-            return data->centerFrequencyRamp.getTarget();
-        case AKEqualizerFilterParameterBandwidth:
-            return data->bandwidthRamp.getTarget();
-        case AKEqualizerFilterParameterGain:
-            return data->gainRamp.getTarget();
-        case AKEqualizerFilterParameterRampDuration:
-            return data->centerFrequencyRamp.getRampDuration(sampleRate);
-    }
-    return 0;
+    parameters[AKEqualizerFilterParameterCenterFrequency] = &data->centerFrequencyRamp;
+    parameters[AKEqualizerFilterParameterBandwidth] = &data->bandwidthRamp;
+    parameters[AKEqualizerFilterParameterGain] = &data->gainRamp;
 }
 
 void AKEqualizerFilterDSP::init(int channelCount, double sampleRate) {
@@ -73,17 +27,19 @@ void AKEqualizerFilterDSP::init(int channelCount, double sampleRate) {
     sp_eqfil_init(sp, data->eqfil0);
     sp_eqfil_create(&data->eqfil1);
     sp_eqfil_init(sp, data->eqfil1);
-    data->eqfil0->freq = defaultCenterFrequency;
-    data->eqfil1->freq = defaultCenterFrequency;
-    data->eqfil0->bw = defaultBandwidth;
-    data->eqfil1->bw = defaultBandwidth;
-    data->eqfil0->gain = defaultGain;
-    data->eqfil1->gain = defaultGain;
 }
 
 void AKEqualizerFilterDSP::deinit() {
+    AKSoundpipeDSPBase::deinit();
     sp_eqfil_destroy(&data->eqfil0);
     sp_eqfil_destroy(&data->eqfil1);
+}
+
+void AKEqualizerFilterDSP::reset() {
+    AKSoundpipeDSPBase::reset();
+    if (!isInitialized) return;
+    sp_eqfil_init(sp, data->eqfil0);
+    sp_eqfil_init(sp, data->eqfil1);
 }
 
 void AKEqualizerFilterDSP::process(AUAudioFrameCount frameCount, AUAudioFrameCount bufferOffset) {
@@ -91,25 +47,23 @@ void AKEqualizerFilterDSP::process(AUAudioFrameCount frameCount, AUAudioFrameCou
     for (int frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
         int frameOffset = int(frameIndex + bufferOffset);
 
-        // do ramping every 8 samples
-        if ((frameOffset & 0x7) == 0) {
-            data->centerFrequencyRamp.advanceTo(now + frameOffset);
-            data->bandwidthRamp.advanceTo(now + frameOffset);
-            data->gainRamp.advanceTo(now + frameOffset);
-        }
+        float centerFrequency = data->centerFrequencyRamp.getAndStep();
+        data->eqfil0->freq = centerFrequency;
+        data->eqfil1->freq = centerFrequency;
 
-        data->eqfil0->freq = data->centerFrequencyRamp.getValue();
-        data->eqfil1->freq = data->centerFrequencyRamp.getValue();
-        data->eqfil0->bw = data->bandwidthRamp.getValue();
-        data->eqfil1->bw = data->bandwidthRamp.getValue();
-        data->eqfil0->gain = data->gainRamp.getValue();
-        data->eqfil1->gain = data->gainRamp.getValue();
+        float bandwidth = data->bandwidthRamp.getAndStep();
+        data->eqfil0->bw = bandwidth;
+        data->eqfil1->bw = bandwidth;
+
+        float gain = data->gainRamp.getAndStep();
+        data->eqfil0->gain = gain;
+        data->eqfil1->gain = gain;
 
         float *tmpin[2];
         float *tmpout[2];
         for (int channel = 0; channel < channelCount; ++channel) {
-            float *in  = (float *)inBufferListPtr->mBuffers[channel].mData  + frameOffset;
-            float *out = (float *)outBufferListPtr->mBuffers[channel].mData + frameOffset;
+            float *in  = (float *)inputBufferLists[0]->mBuffers[channel].mData  + frameOffset;
+            float *out = (float *)outputBufferLists[0]->mBuffers[channel].mData + frameOffset;
             if (channel < 2) {
                 tmpin[channel] = in;
                 tmpout[channel] = out;

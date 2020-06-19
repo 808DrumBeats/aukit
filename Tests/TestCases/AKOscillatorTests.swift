@@ -1,13 +1,6 @@
-//
-//  AKOscillatorTests.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
-import XCTest
 
 class AKOscillatorTests: AKTestCase {
 
@@ -43,8 +36,8 @@ class AKOscillatorTests: AKTestCase {
     func testParametersSetAfterInit() {
         input = AKOscillator(waveform: AKTable(.square))
         input.rampDuration = 0.0
-        input.frequency = 400
-        input.amplitude = 0.5
+        input.frequency.value = 400
+        input.amplitude.value = 0.5
         output = input
         AKTestMD5("615e742bc1412c15237a453c5b49d5e0")
     }

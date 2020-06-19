@@ -1,10 +1,4 @@
-//
-//  AKAudioUnitManager+Utilities.swift
-//  AudioKit
-//
-//  Created by Ryan Francesconi on 5/10/18.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Utility methods for common tasks related to Audio Units
 extension AKAudioUnitManager {
@@ -25,7 +19,6 @@ extension AKAudioUnitManager {
                                                           "AKDelay",
                                                           "AKDistortion",
                                                           "AKDynamicRangeCompressor",
-                                                          "AKDynaRageCompressor",
                                                           "AKEqualizerFilter",
                                                           "AKFader",
                                                           "AKFlanger",
@@ -48,7 +41,6 @@ extension AKAudioUnitManager {
                                                           "AKPhaser",
                                                           "AKPitchShifter",
                                                           "AKResonantFilter",
-                                                          "AKRhinoGuitarProcessor",
                                                           "AKRingModulator",
                                                           "AKRolandTB303Filter",
                                                           "AKStereoDelay",
@@ -196,8 +188,6 @@ extension AKAudioUnitManager {
             node = AKRingModulator()
         case "AKDynamicRangeCompressor":
             node = AKDynamicRangeCompressor()
-        case "AKDynaRageCompressor":
-            node = AKDynaRageCompressor()
         case "AKAmplitudeEnvelope":
             node = AKAmplitudeEnvelope()
         case "AKTremolo":
@@ -244,8 +234,6 @@ extension AKAudioUnitManager {
             node = AKToneComplementFilter()
         case "AKToneFilter":
             node = AKToneFilter()
-        case "AKRhinoGuitarProcessor":
-            node = AKRhinoGuitarProcessor()
         case "AKPhaser":
             node = AKPhaser()
         case "AKPitchShifter":

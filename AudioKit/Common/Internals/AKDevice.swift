@@ -1,10 +1,4 @@
-//
-//  AKDevice.swift
-//  AudioKit
-//
-//  Created by Stéphane Peter, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #if os(macOS)
 public typealias DeviceID = AudioDeviceID
@@ -42,8 +36,8 @@ open class AKDevice: NSObject {
     #if os(macOS)
     public convenience init(ezAudioDevice: EZAudioDevice) {
         self.init(name: ezAudioDevice.name, deviceID: ezAudioDevice.deviceID)
-        self.nInputChannels = ezAudioDevice.inputChannelCount
-        self.nOutputChannels = ezAudioDevice.outputChannelCount
+        nInputChannels = ezAudioDevice.inputChannelCount
+        nOutputChannels = ezAudioDevice.outputChannelCount
     }
     #endif
 

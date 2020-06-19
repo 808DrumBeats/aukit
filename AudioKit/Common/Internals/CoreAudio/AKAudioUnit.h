@@ -1,11 +1,4 @@
-//
-//  AKAudioUnit.h
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
-
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #import <AVFoundation/AVFoundation.h>
 
@@ -199,7 +192,7 @@
                               AudioBufferList            *outputData, \
                               const AURenderEvent        *realtimeEventListHead, \
                               AURenderPullInputBlock      pullInputBlock) { \
-        _outputBusBuffer.prepareOutputBufferList(outputData, frameCount, true); \
+        self->_outputBusBuffer.prepareOutputBufferList(outputData, frameCount, true); \
         state->setBuffer(outputData); \
         state->processWithEvents(timestamp, frameCount, realtimeEventListHead); \
         return noErr; \

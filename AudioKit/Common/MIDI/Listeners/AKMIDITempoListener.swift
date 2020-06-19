@@ -1,10 +1,5 @@
-//
-//  AKMIDITempoListener.swift
-//  AudioKit
-//
-//  Created by Kurt Arnlund on 1/18/19.
-//  Copyright © 2019 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
+
 //  MIDI Spec
 //      24 clocks/quarternote
 //      96 clocks/4_beat_measure
@@ -127,12 +122,13 @@ public extension AKMIDITempoListener {
         if timebaseInfo.denom == 0 {
             _ = mach_timebase_info(&timebaseInfo)
         }
-        let intervalNanos = Float64(clockDelta * UInt64(timebaseInfo.numer)) / Float64(UInt64(oneThousand) * UInt64(timebaseInfo.denom))
+        let numerator = Float64(clockDelta * UInt64(timebaseInfo.numer))
+        let denominator = Float64(UInt64(oneThousand) * UInt64(timebaseInfo.denom))
+        let intervalNanos = numerator / denominator
 
         //NSEC_PER_SEC
         let oneMillion = Float64(USEC_PER_SEC)
         let bpmCalc = ((oneMillion / intervalNanos / Float64(BEAT_TICKS)) * Float64(60.0)) + 0.055
-        //debugPrint("interval: ",intervalNanos)
 
         resetClockEventsLeavingOne()
 

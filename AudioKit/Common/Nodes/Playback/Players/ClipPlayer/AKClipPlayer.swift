@@ -1,10 +1,4 @@
-//
-//  AKClipPlayer.swift
-//  AudioKit
-//
-//  Created by David O'Neill, revision history on GitHub.
-//  Copyright © 2017 Audive Inc. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Schedules multiple audio files to be played in a sequence.
 open class AKClipPlayer: AKNode {
@@ -112,11 +106,15 @@ open class AKClipPlayer: AKNode {
     }
     // swiftlint:enable force_cast
 
-    public override init() {
+    public init(clips: [FileClip]? = nil) {
         AKManager.engine.attach(playerNode)
         AKManager.engine.attach(mixer)
         AKManager.engine.connect(playerNode, to: mixer)
         super.init(avAudioNode: mixer, attach: false)
+
+        if let clips = clips {
+            self.clips = clips
+        }
     }
 
     // Converts clip's parameters into sample times, and schedules the internal player to play them.

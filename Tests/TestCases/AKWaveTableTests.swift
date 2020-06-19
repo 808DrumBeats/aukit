@@ -1,10 +1,4 @@
-//
-//  AKWaveTableTests.swift
-//  AudioKitTestSuite
-//
-//  Created by Jeff Cooper and Aurelius Prochazka, revision history on Githbub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 import XCTest
@@ -22,7 +16,7 @@ class AKWaveTableTests: AKTestCase {
 
     func testReversePlayback() {
         sampler?.startPoint = sampler!.size
-        sampler?.endPoint = 0
+        sampler?.endPoint.value = 0
         afterStart = {
             self.sampler?.play()
         }
@@ -39,7 +33,7 @@ class AKWaveTableTests: AKTestCase {
     }
 
     func testStartOffsetUsingPoints() {
-        sampler?.startPoint = 2_000
+        sampler?.startPoint.value = 2_000
         afterStart = {
             self.sampler?.play()
         }
@@ -56,8 +50,8 @@ class AKWaveTableTests: AKTestCase {
     }
 
     func testEndOffsetUsingSamplePoints() {
-        sampler?.startPoint = 0
-        sampler?.endPoint = 300
+        sampler?.startPoint.value = 0
+        sampler?.endPoint.value = 300
         afterStart = {
             self.sampler?.play()
         }
@@ -74,8 +68,8 @@ class AKWaveTableTests: AKTestCase {
     }
 
     func testSampleSubsectionUsingSamplePoints() {
-        sampler?.startPoint = 300
-        sampler?.endPoint = 600
+        sampler?.startPoint.value = 300
+        sampler?.endPoint.value = 600
         afterStart = {
             self.sampler?.play()
         }
@@ -96,22 +90,22 @@ class AKWaveTableTests: AKTestCase {
 
     func testSampleSubsectionWithResetUsingSamplePoints() {
         sampler?.completionHandler = {
-            self.sampler?.startPoint = 0
+            self.sampler?.startPoint.value = 0
             self.sampler?.endPoint = self.sampler!.size
             self.sampler?.play()
         }
         afterStart = {
-            self.sampler?.startPoint = 300
-            self.sampler?.endPoint = 600
+            self.sampler?.startPoint.value = 300
+            self.sampler?.endPoint.value = 600
             self.sampler?.play()
         }
         AKTestMD5(subsectionResetMD5)
     }
 
     func testForwardLoop() {
-        sampler?.loopStartPoint = 100
-        sampler?.loopEndPoint = 300
-        sampler?.endPoint = 300
+        sampler?.loopStartPoint.value = 100
+        sampler?.loopEndPoint.value = 300
+        sampler?.endPoint.value = 300
         sampler?.loopEnabled = true
         afterStart = {
             self.sampler?.play()
@@ -120,9 +114,9 @@ class AKWaveTableTests: AKTestCase {
     }
 
     func testReverseLoop() {
-        sampler?.loopStartPoint = 300
-        sampler?.loopEndPoint = 100
-        sampler?.endPoint = 300
+        sampler?.loopStartPoint.value = 300
+        sampler?.loopEndPoint.value = 100
+        sampler?.endPoint.value = 300
         sampler?.loopEnabled = true
         afterStart = {
             self.sampler?.play()
@@ -134,7 +128,7 @@ class AKWaveTableTests: AKTestCase {
         if let path = Bundle.main.path(forResource: "sinechirp", ofType: "wav") {
             let url = URL(fileURLWithPath: path)
             let file = try! AKAudioFile(forReading: url)
-            sampler = AKWaveTable(file: file, maximumSamples: 1024)
+            sampler = AKWaveTable(file: file, maximumSamples: 1_024)
             output = sampler
         } else {
             XCTFail("Could not load sinechirp.wav")

@@ -1,14 +1,8 @@
-//
-//  AKSequencer.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper on 5/8/19.
-//  Copyright © 2019 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Open-source AudioKit Sequencer
 ///
-/// If your code used to use AKSequencer, as of AudioKit 4.8 you probably want AKAppleSequencer
+/// Up until AudioKit 4.8, this was a different class. The old class is now renamed "AKAppleSequencer"
 open class AKSequencer {
 
     /// Array of sequencer tracks
@@ -39,12 +33,13 @@ open class AKSequencer {
 
     /// Initialize with a single node or with no node at all
     /// You must provide a target node for the sequencer to drive or it will not run at all
+    /// - Parameter targetNode: Required node
     public convenience init(targetNode: AKNode) {
         self.init(targetNodes: [targetNode])
     }
 
-    /// Initialize with target nodes
-    /// This will create a track for each node
+    /// Initialize with target nodes. This will create a track for each node
+    /// - Parameter targetNodes: Array of nodes to target for each track
     public required init(targetNodes: [AKNode]? = nil) {
         if let targetNodes = targetNodes {
             tracks = targetNodes.enumerated().map({ AKSequencerTrack(targetNode: $0.element) })
@@ -53,6 +48,10 @@ open class AKSequencer {
         }
     }
 
+    /// Initialize the sequencer from a MIDI File
+    /// - Parameters:
+    ///   - fileURL: Location of the MIDI File
+    ///   - targetNodes: Nodes to place the tracks from the MIDI file into
     public convenience init(fromURL fileURL: URL, targetNodes: [AKNode]) {
         self.init(targetNodes: targetNodes)
         load(midiFileURL: fileURL)
@@ -89,10 +88,12 @@ open class AKSequencer {
     }
 
     /// Load MIDI data from a file
+    /// - Parameter midiFile: MIDI File to load data out of
     open func load(midiFile: AKMIDIFile) {
         let midiTracks = midiFile.tracks
         if midiTracks.count > tracks.count {
-            AKLog("Error: Track count and file track count do not match, dropped \(midiTracks.count - tracks.count) tracks")
+            AKLog("Error: Track count and file track count do not match ",
+                  "dropped \(midiTracks.count - tracks.count) tracks")
         }
         if tracks.count > midiTracks.count {
             AKLog("Error: Track count less than file track count, ignoring \(tracks.count - midiTracks.count) nodes")
@@ -111,6 +112,13 @@ open class AKSequencer {
     }
 
     /// Add a MIDI note to the track
+    /// - Parameters:
+    ///   - noteNumber: MIDI Note number to add
+    ///   - velocity: Velocity of the note
+    ///   - channel: Channel to place the note on
+    ///   - position: Location in beats of the new note
+    ///   - duration: Duration in beats of the new note
+    ///   - trackIndex: Which track to add the note to
     open func add(noteNumber: MIDINoteNumber,
                   velocity: MIDIVelocity = 127,
                   channel: MIDIChannel = 0,
@@ -126,6 +134,10 @@ open class AKSequencer {
     }
 
     /// Add a MIDI event to the track
+    /// - Parameters:
+    ///   - event: Event to add
+    ///   - position: Location in time in beats to add the event at
+    ///   - trackIndex: Which track to add the event
     open func add(event: AKMIDIEvent, position: Double, trackIndex: Int = 0) {
         guard tracks.count > trackIndex, trackIndex >= 0 else {
             AKLog("Track index \(trackIndex) out of range (sequencer has \(tracks.count) tracks)")
@@ -134,24 +146,34 @@ open class AKSequencer {
         tracks[trackIndex].add(event: event, position: position)
     }
 
+    /// Remove all notes
     open func clear() {
         for track in tracks {
             track.clear()
         }
     }
 
+    /// Move to a new time in the playback
+    /// - Parameter position: Time to jump to, in beats
     open func seek(to position: Double) {
         tracks.forEach({ $0.seek(to: position) })
     }
 
+    /// Equivalent to stop
     open func pause() {
         stop()
     }
 
+    /// Retrived a track for a given node
+    /// - Parameter node: Node you want to access the tack for
+    /// - Returns: Track associated with the given node
     open func getTrackFor(node: AKNode) -> AKSequencerTrack? {
         return tracks.first(where: { $0.targetNode == node })
     }
 
+    /// Add track associated with a node
+    /// - Parameter node: Node to create the track for
+    /// - Returns: Track associated with the given node
     open func addTrack(for node: AKNode) -> AKSequencerTrack {
         let track = AKSequencerTrack(targetNode: node)
         tracks.append(track)

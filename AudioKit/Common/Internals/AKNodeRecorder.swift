@@ -1,10 +1,4 @@
-//
-//  AKNodeRecorder.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Simple audio recorder class
 open class AKNodeRecorder: NSObject {
@@ -66,8 +60,8 @@ open class AKNodeRecorder: NSObject {
     ///   - bus: Integer index of the bus to use
     ///
     @objc public init(node: AKNode? = AKManager.output,
-                file: AKAudioFile? = nil,
-                bus: Int = 0) throws {
+                      file: AKAudioFile? = nil,
+                      bus: Int = 0) throws {
         guard let existingFile = file else {
             // We create a record file in temp directory
             do {

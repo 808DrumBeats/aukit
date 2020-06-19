@@ -1,33 +1,27 @@
-//
-//  AK3DPanner.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// 3-D Spatialization of the input
 open class AK3DPanner: AKNode, AKInput {
     fileprivate let environmentNode = AVAudioEnvironmentNode()
 
     /// Position of sound source along x-axis
-    @objc open dynamic var x: Double {
+    @objc open dynamic var x: AUValue {
         willSet {
-            environmentNode.listenerPosition.x = Float(-newValue)
+            environmentNode.listenerPosition.x = -newValue
         }
     }
 
     /// Position of sound source along y-axis
-    @objc open dynamic var y: Double {
+    @objc open dynamic var y: AUValue {
         willSet {
-            environmentNode.listenerPosition.y = Float(-newValue)
+            environmentNode.listenerPosition.y = -newValue
         }
     }
 
     /// Position of sound source along z-axis
-    @objc open dynamic var z: Double {
+    @objc open dynamic var z: AUValue {
         willSet {
-            environmentNode.listenerPosition.z = Float(-newValue)
+            environmentNode.listenerPosition.z = -newValue
         }
     }
 
@@ -40,7 +34,7 @@ open class AK3DPanner: AKNode, AKInput {
     ///   - y:     y-axis location in meters
     ///   - z:     z-axis location in meters
     ///
-    @objc public init(_ input: AKNode? = nil, x: Double = 0, y: Double = 0, z: Double = 0) {
+    @objc public init(_ input: AKNode? = nil, x: AUValue = 0, y: AUValue = 0, z: AUValue = 0) {
         self.x = x
         self.y = y
         self.z = z

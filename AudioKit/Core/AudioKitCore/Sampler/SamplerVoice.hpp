@@ -1,10 +1,4 @@
-//
-//  SamplerVoice.hpp
-//  AudioKit Core
-//
-//  Created by Shane Dunne, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #pragma once
 #include <math.h>
@@ -12,8 +6,13 @@
 #include "SampleBuffer.hpp"
 #include "SampleOscillator.hpp"
 #include "ADSREnvelope.hpp"
+#include "AHDSHREnvelope.hpp"
+#include "FunctionTable.hpp"
 #include "ResonantLowPassFilter.hpp"
 #include "LinearRamper.hpp"
+
+// process samples in "chunks" this size
+#define AKCORESAMPLER_CHUNKSIZE 16 // should probably be set elsewhere - currently only use this for setting up lfo
 
 namespace AudioKitCore
 {
@@ -29,7 +28,14 @@ namespace AudioKitCore
 
         /// two filters (left/right)
         ResonantLowPassFilter leftFilter, rightFilter;
-        ADSREnvelope adsrEnvelope, filterEnvelope, pitchEnvelope;
+        AHDSHREnvelope ampEnvelope;
+        ADSREnvelope filterEnvelope, pitchEnvelope;
+
+        // per-voice vibrato LFO
+        FunctionTableOscillator vibratoLFO;
+
+        // restart phase of per-voice vibrato LFO
+        bool restartVoiceLFO;
 
         /// common glide rate, seconds per octave
         float *glideSecPerOctave;
@@ -45,6 +51,9 @@ namespace AudioKitCore
 
         /// amount of semitone change via pitch envelope
         float pitchEnvelopeSemitones;
+
+        /// amount of semitone change via voice lfo
+        float voiceLFOSemitones;
 
         /// fraction 0.0 - 1.0, based on MIDI velocity
         float noteVolume;
@@ -70,7 +79,7 @@ namespace AudioKitCore
 
         void init(double sampleRate);
 
-        void updateAmpAdsrParameters() { adsrEnvelope.updateParams(); }
+        void updateAmpAdsrParameters() { ampEnvelope.updateParams(); }
         void updateFilterAdsrParameters() { filterEnvelope.updateParams(); }
         void updatePitchAdsrParameters() { pitchEnvelope.updateParams(); }
         
@@ -94,9 +103,15 @@ namespace AudioKitCore
                               float cutoffEnvelopeStrength,
                               float cutoffEnvelopeVelocityScaling,
                               float resLinear,
-                              float pitchADSRSemitones);
+                              float pitchADSRSemitones,
+                              float voiceLFOFrequencyHz,
+                              float voiceLFODepthSemitones);
 
         bool getSamples(int sampleCount, float *leftOutput, float *rightOutput);
+
+    private:
+        bool hasStartedVoiceLFO;
+        void restartVoiceLFOIfNeeded();
     };
 
 }

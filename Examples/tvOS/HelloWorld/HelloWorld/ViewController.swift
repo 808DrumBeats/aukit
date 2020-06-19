@@ -1,10 +1,4 @@
-//
-//  ViewController.swift
-//  HelloWorld
-//
-//  Created by Aurelius Prochazka, revision history on Githbub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 import AudioKitUI
@@ -32,10 +26,10 @@ class ViewController: UIViewController {
             oscillator.stop()
             sender.setTitle("Play Sine Wave", for: UIControl.State())
         } else {
-            oscillator.amplitude = random(in: 0.5 ... 1)
-            oscillator.frequency = random(in: 220 ... 880)
+            oscillator.amplitude.value = random(in: 0.5 ... 1)
+            oscillator.frequency.value = random(in: 220 ... 880)
             oscillator.start()
-            sender.setTitle("Stop Sine Wave at \(Int(oscillator.frequency))Hz", for: .normal)
+            sender.setTitle("Stop Sine Wave at \(Int(oscillator.frequency.value))Hz", for: .normal)
         }
         sender.setNeedsDisplay()
     }

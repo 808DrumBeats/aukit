@@ -1,10 +1,4 @@
-//
-//  AKPWMOscillatorBank.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Pulse-Width Modulating Oscillator Bank
 ///
@@ -15,7 +9,7 @@ open class AKPWMOscillatorBank: AKPolyphonicNode, AKComponent {
 
     // MARK: - Properties
 
-    private var internalAU: AKAudioUnitType?
+    public private(set) var internalAU: AKAudioUnitType?
 
     fileprivate var pulseWidthParameter: AUParameter?
     fileprivate var attackDurationParameter: AUParameter?
@@ -34,106 +28,101 @@ open class AKPWMOscillatorBank: AKPolyphonicNode, AKComponent {
     }
 
     /// Duty cycle width (range 0-1).
-    @objc open dynamic var pulseWidth: Double = 0.5 {
+    @objc open dynamic var pulseWidth: AUValue = 0.5 {
         willSet {
             guard pulseWidth != newValue else { return }
             if internalAU?.isSetUp == true {
-                pulseWidthParameter?.value = AUValue(newValue)
+                pulseWidthParameter?.value = newValue
             } else {
-                internalAU?.pulseWidth = AUValue(newValue)
+                internalAU?.pulseWidth = newValue
             }
         }
     }
 
     /// Attack duration in seconds
-    @objc open dynamic var attackDuration: Double = 0.1 {
+    @objc open dynamic var attackDuration: AUValue = 0.1 {
         willSet {
             guard attackDuration != newValue else { return }
             if internalAU?.isSetUp == true {
-                attackDurationParameter?.value = AUValue(newValue)
+                attackDurationParameter?.value = newValue
             } else {
-                internalAU?.attackDuration = AUValue(newValue)
+                internalAU?.attackDuration = newValue
             }
         }
     }
 
     /// Decay duration in seconds
-    @objc open dynamic var decayDuration: Double = 0.1 {
+    @objc open dynamic var decayDuration: AUValue = 0.1 {
         willSet {
             guard decayDuration != newValue else { return }
             if internalAU?.isSetUp == true {
-                decayDurationParameter?.value = AUValue(newValue)
+                decayDurationParameter?.value = newValue
             } else {
-                internalAU?.decayDuration = AUValue(newValue)
+                internalAU?.decayDuration = newValue
             }
         }
     }
     /// Sustain Level
-    @objc open dynamic var sustainLevel: Double = 1.0 {
+    @objc open dynamic var sustainLevel: AUValue = 1.0 {
         willSet {
             guard sustainLevel != newValue else { return }
             if internalAU?.isSetUp == true {
-                sustainLevelParameter?.value = AUValue(newValue)
+                sustainLevelParameter?.value = newValue
             } else {
-                internalAU?.sustainLevel = AUValue(newValue)
+                internalAU?.sustainLevel = newValue
             }
         }
     }
 
     /// Release duration in seconds
-    @objc open dynamic var releaseDuration: Double = 0.1 {
+    @objc open dynamic var releaseDuration: AUValue = 0.1 {
         willSet {
             guard releaseDuration != newValue else { return }
             if internalAU?.isSetUp == true {
-                releaseDurationParameter?.value = AUValue(newValue)
+                releaseDurationParameter?.value = newValue
             } else {
-                internalAU?.releaseDuration = AUValue(newValue)
+                internalAU?.releaseDuration = newValue
             }
         }
     }
 
     /// Pitch Bend as number of semitones
-    @objc open dynamic var pitchBend: Double = 0 {
+    @objc open dynamic var pitchBend: AUValue = 0 {
         willSet {
             guard pitchBend != newValue else { return }
             if internalAU?.isSetUp == true {
-                pitchBendParameter?.value = AUValue(newValue)
+                pitchBendParameter?.value = newValue
             } else {
-                internalAU?.pitchBend = AUValue(newValue)
+                internalAU?.pitchBend = newValue
             }
         }
     }
 
     /// Vibrato Depth in semitones
-    @objc open dynamic var vibratoDepth: Double = 0 {
+    @objc open dynamic var vibratoDepth: AUValue = 0 {
         willSet {
             guard vibratoDepth != newValue else { return }
             if internalAU?.isSetUp == true {
-                vibratoDepthParameter?.value = AUValue(newValue)
+                vibratoDepthParameter?.value = newValue
             } else {
-                internalAU?.vibratoDepth = AUValue(newValue)
+                internalAU?.vibratoDepth = newValue
             }
         }
     }
 
     /// Vibrato Rate in Hz
-    @objc open dynamic var vibratoRate: Double = 0 {
+    @objc open dynamic var vibratoRate: AUValue = 0 {
         willSet {
             guard vibratoRate != newValue else { return }
             if internalAU?.isSetUp == true {
-                vibratoRateParameter?.value = AUValue(newValue)
+                vibratoRateParameter?.value = newValue
             } else {
-                internalAU?.vibratoRate = AUValue(newValue)
+                internalAU?.vibratoRate = newValue
             }
         }
     }
 
     // MARK: - Initialization
-
-    /// Initialize the oscillator with defaults
-    public convenience override init() {
-        self.init(pulseWidth: 0.5)
-    }
 
     /// Initialize this oscillator node
     ///
@@ -148,14 +137,14 @@ open class AKPWMOscillatorBank: AKPolyphonicNode, AKComponent {
     ///   - vibratoRate: Frequency of vibrato in Hz
     ///
     @objc public init(
-        pulseWidth: Double = 0.5,
-        attackDuration: Double = 0.1,
-        decayDuration: Double = 0.1,
-        sustainLevel: Double = 1.0,
-        releaseDuration: Double = 0.1,
-        pitchBend: Double = 0,
-        vibratoDepth: Double = 0,
-        vibratoRate: Double = 0) {
+        pulseWidth: AUValue = 0.5,
+        attackDuration: AUValue = 0.1,
+        decayDuration: AUValue = 0.1,
+        sustainLevel: AUValue = 1.0,
+        releaseDuration: AUValue = 0.1,
+        pitchBend: AUValue = 0,
+        vibratoDepth: AUValue = 0,
+        vibratoRate: AUValue = 0) {
 
         self.pulseWidth = pulseWidth
         self.attackDuration = attackDuration
@@ -168,7 +157,7 @@ open class AKPWMOscillatorBank: AKPolyphonicNode, AKComponent {
 
         _Self.register()
 
-        super.init()
+        super.init(avAudioNode: AVAudioNode())
         AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
 
             self?.avAudioUnit = avAudioUnit
@@ -190,14 +179,14 @@ open class AKPWMOscillatorBank: AKPolyphonicNode, AKComponent {
         pitchBendParameter = tree["pitchBend"]
         vibratoDepthParameter = tree["vibratoDepth"]
         vibratoRateParameter = tree["vibratoRate"]
-        internalAU?.pulseWidth = Float(pulseWidth)
-        internalAU?.attackDuration = Float(attackDuration)
-        internalAU?.decayDuration = Float(decayDuration)
-        internalAU?.sustainLevel = Float(sustainLevel)
-        internalAU?.releaseDuration = Float(releaseDuration)
-        internalAU?.pitchBend = Float(pitchBend)
-        internalAU?.vibratoDepth = Float(vibratoDepth)
-        internalAU?.vibratoRate = Float(vibratoRate)
+        internalAU?.pulseWidth = pulseWidth
+        internalAU?.attackDuration = attackDuration
+        internalAU?.decayDuration = decayDuration
+        internalAU?.sustainLevel = sustainLevel
+        internalAU?.releaseDuration = releaseDuration
+        internalAU?.pitchBend = pitchBend
+        internalAU?.vibratoDepth = vibratoDepth
+        internalAU?.vibratoRate = vibratoRate
     }
 
     // MARK: - AKPolyphonic
@@ -205,9 +194,9 @@ open class AKPWMOscillatorBank: AKPolyphonicNode, AKComponent {
     // Function to start, play, or activate the node at frequency
     open override func play(noteNumber: MIDINoteNumber,
                             velocity: MIDIVelocity,
-                            frequency: Double,
+                            frequency: AUValue,
                             channel: MIDIChannel = 0) {
-        internalAU?.startNote(noteNumber, velocity: velocity, frequency: Float(frequency))
+        internalAU?.startNote(noteNumber, velocity: velocity, frequency: frequency)
     }
 
     /// Function to stop or bypass the node, both are equivalent

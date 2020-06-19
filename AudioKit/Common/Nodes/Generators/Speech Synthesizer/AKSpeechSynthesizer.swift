@@ -1,16 +1,9 @@
-//
-//  AKSpeechSynthesizer.swift
-//  AudioKit
-//
-//  Created by Wangchou Lu, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// AudioKit version of Apple's SpeechSynthesis Audio Unit
 ///
 
 open class AKSpeechSynthesizer: AKNode {
-
     public static let ComponentDescription = AudioComponentDescription(
         componentType: kAudioUnitType_Generator,
         componentSubType: kAudioUnitSubType_SpeechSynthesis,
@@ -35,13 +28,14 @@ open class AKSpeechSynthesizer: AKNode {
                 AKLog("Cannot get Speech Channel")
                 return 0
             }
-            if CopySpeechProperty(speechChannel, kSpeechRateProperty, &valueAsNSNumber) == OSErr(noErr) {
-                return Int(valueAsNSNumber!.doubleValue!.rounded())
+            if CopySpeechProperty(speechChannel, kSpeechRateProperty, &valueAsNSNumber) == OSErr(noErr),
+                let value = valueAsNSNumber?.doubleValue?.rounded() {
+                return Int(value)
             } else {
                 return 0
             }
         }
-        set (newRate) {
+        set(newRate) {
             guard let speechChannel = channel else {
                 AKLog("Cannot get Speech Channel")
                 return
@@ -57,13 +51,14 @@ open class AKSpeechSynthesizer: AKNode {
                 AKLog("Cannot get Speech Channel")
                 return 0
             }
-            if CopySpeechProperty(speechChannel, kSpeechPitchBaseProperty, &valueAsNSNumber) == OSErr(noErr) {
-                return Int(valueAsNSNumber!.doubleValue!.rounded())
+            if CopySpeechProperty(speechChannel, kSpeechPitchBaseProperty, &valueAsNSNumber) == OSErr(noErr),
+                let value = valueAsNSNumber?.doubleValue?.rounded() {
+                return Int(value)
             } else {
                 return 0
             }
         }
-        set (newFrequency) {
+        set(newFrequency) {
             guard let speechChannel = channel else {
                 AKLog("Cannot get Speech Channel")
                 return
@@ -79,13 +74,14 @@ open class AKSpeechSynthesizer: AKNode {
                 AKLog("Cannot get Speech Channel")
                 return 0
             }
-            if CopySpeechProperty(speechChannel, kSpeechPitchModProperty, &valueAsNSNumber) == OSErr(noErr) {
-                return Int(valueAsNSNumber!.doubleValue!.rounded())
+            if CopySpeechProperty(speechChannel, kSpeechPitchModProperty, &valueAsNSNumber) == OSErr(noErr),
+                let value = valueAsNSNumber?.doubleValue?.rounded() {
+                return Int(value)
             } else {
                 return 0
             }
         }
-        set (newModulation) {
+        set(newModulation) {
             guard let speechChannel = channel else {
                 AKLog("Cannot get Speech Channel")
                 return
@@ -95,7 +91,6 @@ open class AKSpeechSynthesizer: AKNode {
     }
 
     public func stop() {
-
         guard let speechChannel = channel else {
             AKLog("Cannot get Speech Channel")
             return
@@ -109,7 +104,6 @@ open class AKSpeechSynthesizer: AKNode {
                     rate: Int? = nil,
                     frequency: Int? = nil,
                     modulation: Int? = nil) {
-
         self.rate = rate ?? self.rate
         self.frequency = frequency ?? self.frequency
         self.modulation = modulation ?? self.modulation
@@ -121,7 +115,7 @@ open class AKSpeechSynthesizer: AKNode {
         SpeakCFString(speechChannel, text as CFString, nil)
     }
 
-    @objc public override init() {
+    @objc public init(rate: Int = 200, frequency: Int = 200, modulation: Int = 0) {
         super.init(avAudioNode: speechAU, attach: true)
 
         // Grab the speech channel
@@ -132,5 +126,8 @@ open class AKSpeechSynthesizer: AKNode {
                                         &channel,
                                         &propsize))
 
+        self.rate = rate
+        self.frequency = frequency
+        self.modulation = modulation
     }
 }

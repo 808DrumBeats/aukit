@@ -1,33 +1,34 @@
-//
-// ParameterRamper.hpp
-// AudioKit
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
+
 // Utility class to manage DSP parameters which can change value smoothly (be ramped) while rendering, without introducing clicks or other distortion into the signal.
 //
 // Originally based on Apple sample code, but significantly altered by Aurelius Prochazka
-//
-//  Copyright © 2020 AudioKit. All rights reserved.
-//
+
 #pragma once
 
 #ifdef __cplusplus
 
 #import <AudioToolbox/AUAudioUnit.h>
+#import <memory>
 
 class ParameterRamper {
 private:
     struct InternalData;
-    struct InternalData *data;
+    std::unique_ptr<struct InternalData> data;
 
 public:
-    ParameterRamper(float value);
+    ParameterRamper(float value = 0.f);
+    ParameterRamper(const ParameterRamper& other);
     ~ParameterRamper();
 
     void setImmediate(float value);
 
-    void init();
+    void init(float sampleRate);
 
     void reset();
+    
+    /// Ramp duration (seconds) to use for UI changes (dezipper checks)
+    void setDefaultRampDuration(float duration);
 
     void setTaper(float taper);
 
@@ -45,6 +46,9 @@ public:
 
     float getUIValue() const;
 
+    /// Dezipper using the default ramp duration
+    void dezipperCheck();
+    
     void dezipperCheck(uint32_t rampDuration);
 
     void startRamp(float newGoal, uint32_t duration);

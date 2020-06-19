@@ -1,10 +1,4 @@
-//
-//  Sampler.hpp
-//  AudioKit Core
-//
-//  Created by Shane Dunne, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #ifdef __cplusplus
 #ifdef _WIN32
@@ -65,13 +59,17 @@ public:
     void sustainPedal(bool down);
     
     void render(unsigned channelCount, unsigned sampleCount, float *outBuffers[]);
-    
+
     void  setADSRAttackDurationSeconds(float value);
     float getADSRAttackDurationSeconds(void);
+    void  setADSRHoldDurationSeconds(float value);
+    float getADSRHoldDurationSeconds(void);
     void  setADSRDecayDurationSeconds(float value);
     float getADSRDecayDurationSeconds(void);
     void  setADSRSustainFraction(float value);
     float getADSRSustainFraction(void);
+    void  setADSRReleaseHoldDurationSeconds(float value);
+    float getADSRReleaseHoldDurationSeconds(void);
     void  setADSRReleaseDurationSeconds(float value);
     float getADSRReleaseDurationSeconds(void);
 
@@ -104,10 +102,11 @@ protected:
     bool isKeyMapValid;
     
     // simple parameters
-    bool isFilterEnabled;
+    bool isFilterEnabled, restartVoiceLFO;
     
     // performance parameters
-    float masterVolume, pitchOffset, vibratoDepth, glideRate;
+    float masterVolume, pitchOffset, vibratoDepth, vibratoFrequency,
+    voiceVibratoDepth, voiceVibratoFrequency, glideRate;
     
     // parameters for mono-mode only
     

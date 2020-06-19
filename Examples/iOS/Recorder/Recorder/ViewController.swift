@@ -1,17 +1,10 @@
-//
-//  AppDelegate.swift
-//  Recorder
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 import AudioKitUI
 import UIKit
 
 class ViewController: UIViewController {
-
     var micMixer: AKMixer!
     var recorder: AKNodeRecorder!
     var player: AKPlayer!
@@ -25,20 +18,19 @@ class ViewController: UIViewController {
     var state = State.readyToRecord
 
     @IBOutlet private var plot: AKNodeOutputPlot?
-    @IBOutlet private weak var infoLabel: UILabel!
-    @IBOutlet private weak var resetButton: UIButton!
-    @IBOutlet private weak var mainButton: UIButton!
-    @IBOutlet private weak var frequencySlider: AKSlider!
-    @IBOutlet private weak var resonanceSlider: AKSlider!
-    @IBOutlet private weak var loopButton: UIButton!
-    @IBOutlet private weak var moogLadderTitle: UILabel!
+    @IBOutlet private var infoLabel: UILabel!
+    @IBOutlet private var resetButton: UIButton!
+    @IBOutlet private var mainButton: UIButton!
+    @IBOutlet private var frequencySlider: AKSlider!
+    @IBOutlet private var resonanceSlider: AKSlider!
+    @IBOutlet private var loopButton: UIButton!
+    @IBOutlet private var moogLadderTitle: UILabel!
 
     enum State {
         case readyToRecord
         case recording
         case readyToPlay
         case playing
-
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -97,13 +89,13 @@ class ViewController: UIViewController {
     // will be triggered by a background thread
     func playingEnded() {
         DispatchQueue.main.async {
-            self.setupUIForPlaying ()
+            self.setupUIForPlaying()
         }
     }
 
     @IBAction func mainButtonTouched(sender: UIButton) {
         switch state {
-        case .readyToRecord :
+        case .readyToRecord:
             infoLabel.text = "Recording"
             mainButton.setTitle("Stop", for: .normal)
             state = .recording
@@ -116,17 +108,24 @@ class ViewController: UIViewController {
                 try recorder.record()
             } catch { AKLog("Errored recording.") }
 
-        case .recording :
+        case .recording:
             // Microphone monitoring is muted
             micBooster.gain = 0
             tape = recorder.audioFile!
-            player.load(audioFile: tape)
+            try? player.load(audioFile: tape)
 
+            do {
+                try player.load(audioFile: tape)
+            } catch let err as NSError {
+                AKLog(err)
+                // Assuming formats match, this should load
+                return
+            }
             if let _ = player.audioFile?.duration {
                 recorder.stop()
                 tape.exportAsynchronously(name: "TempTestFile.m4a",
                                           baseDir: .documents,
-                                          exportFormat: .m4a) {_, exportError in
+                                          exportFormat: .m4a) { _, exportError in
                     if let error = exportError {
                         AKLog("Export Failed \(error)")
                     } else {
@@ -135,14 +134,14 @@ class ViewController: UIViewController {
                 }
                 setupUIForPlaying()
             }
-        case .readyToPlay :
+        case .readyToPlay:
             player.play()
             infoLabel.text = "Playing..."
             mainButton.setTitle("Stop", for: .normal)
             state = .playing
             plot?.node = player
 
-        case .playing :
+        case .playing:
             player.stop()
             setupUIForPlaying()
             plot?.node = mic
@@ -159,7 +158,7 @@ class ViewController: UIViewController {
         loopButton.setTitle(Constants.empty, for: UIControl.State.disabled)
     }
 
-    func setupUIForRecording () {
+    func setupUIForRecording() {
         state = .readyToRecord
         infoLabel.text = "Ready to record"
         mainButton.setTitle("Record", for: .normal)
@@ -169,17 +168,17 @@ class ViewController: UIViewController {
         setSliders(active: false)
     }
 
-    func setupUIForPlaying () {
-        let recordedDuration = player != nil ? player.audioFile?.duration  : 0
+    func setupUIForPlaying() {
+        let recordedDuration = player != nil ? player.audioFile?.duration : 0
         infoLabel.text = "Recorded: \(String(format: "%0.1f", recordedDuration!)) seconds"
         mainButton.setTitle("Play", for: .normal)
         state = .readyToPlay
         resetButton.isHidden = false
         resetButton.isEnabled = true
         setSliders(active: true)
-        moogLadder.cutoffFrequency = frequencySlider.range.upperBound
-        frequencySlider.value = moogLadder.cutoffFrequency
-        resonanceSlider.value = moogLadder.resonance
+        moogLadder.cutoffFrequency.value = frequencySlider.range.upperBound
+        frequencySlider.value = moogLadder.cutoffFrequency.value
+        resonanceSlider.value = moogLadder.resonance.value
     }
 
     func setSliders(active: Bool) {
@@ -195,17 +194,15 @@ class ViewController: UIViewController {
     }
 
     @IBAction func loopButtonTouched(sender: UIButton) {
-
         if player.isLooping {
             player.isLooping = false
             sender.setTitle("Loop is Off", for: .normal)
         } else {
             player.isLooping = true
             sender.setTitle("Loop is On", for: .normal)
-
         }
-
     }
+
     @IBAction func resetButtonTouched(sender: UIButton) {
         player.stop()
         plot?.node = mic
@@ -213,20 +210,19 @@ class ViewController: UIViewController {
             try recorder.reset()
         } catch { AKLog("Errored resetting.") }
 
-        //try? player.replaceFile((recorder.audioFile)!)
+        // try? player.replaceFile((recorder.audioFile)!)
         setupUIForRecording()
     }
 
-    func updateFrequency(value: Double) {
-        moogLadder.cutoffFrequency = value
+    func updateFrequency(value: AUValue) {
+        moogLadder.cutoffFrequency.value = value
         frequencySlider.property = "Frequency"
         frequencySlider.format = "%0.0f"
     }
 
-    func updateResonance(value: Double) {
-        moogLadder.resonance = value
+    func updateResonance(value: AUValue) {
+        moogLadder.resonance.value = value
         resonanceSlider.property = "Resonance"
         resonanceSlider.format = "%0.3f"
     }
-
 }

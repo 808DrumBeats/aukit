@@ -1,10 +1,5 @@
-//
-//  MIDIPacket+SequenceType.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
+
 import CoreMIDI
 
 /**
@@ -33,7 +28,8 @@ extension MIDIPacket: Sequence {
             func pop() -> MIDIByte {
                 assert((index < self.length) || (index <= self.length && self.data.0 != AKMIDISystemCommand.sysex.byte))
                 index += 1
-                return generator.next() as! MIDIByte
+                // Note: getting rid of the as! but saying 0 as default might not be desired.
+                return generator.next() as? MIDIByte ?? 0
             }
             let status = pop()
             if AKManager.midi.isReceivingSysex {

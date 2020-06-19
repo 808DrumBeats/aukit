@@ -1,13 +1,6 @@
-//
-//  AKAudioFile+Utilities.swift
-//  AudioKit
-//
-//  Created by Laurent Veliscek, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 extension AKAudioFile {
-
     /// Returns a silent AKAudioFile with a length set in samples.
     ///
     /// For a silent file of one second, set samples value to 44100...
@@ -19,10 +12,9 @@ extension AKAudioFile {
     ///
     /// - Returns: An AKAudioFile, or nil if init failed.
     ///
-    static public func silent(samples: Int64,
+    public static func silent(samples: Int64,
                               baseDir: BaseDirectory = .temp,
                               name: String = "") throws -> AKAudioFile {
-
         if samples < 0 {
             AKLog("ERROR AKAudioFile: cannot create silent AKAUdioFile with negative samples count")
             throw NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotCreateFile, userInfo: nil)
@@ -38,7 +30,7 @@ extension AKAudioFile {
         return try AKAudioFile(forReading: silentFile.url)
     }
 
-    static public func findPeak(pcmBuffer: AVAudioPCMBuffer) -> Double {
+    public static func findPeak(pcmBuffer: AVAudioPCMBuffer) -> Double {
         return pcmBuffer.peakTime()
     }
 }

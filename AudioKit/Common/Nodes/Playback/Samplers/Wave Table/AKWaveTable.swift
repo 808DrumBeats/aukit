@@ -1,10 +1,4 @@
-//
-//  AKWaveTable.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// An alternative to AKSampler or AKAudioPlayer, AKWaveTable is a player that
 /// doesn't rely on an as much Apple AV foundation/engine code as the others.
@@ -23,7 +17,7 @@ open class AKWaveTable: AKNode, AKComponent {
 
     // MARK: - Properties
 
-    private var internalAU: AKAudioUnitType?
+    public private(set) var internalAU: AKAudioUnitType?
 
     fileprivate var startPointParameter: AUParameter?
     fileprivate var endPointParameter: AUParameter?
@@ -52,7 +46,7 @@ open class AKWaveTable: AKNode, AKComponent {
     @objc open dynamic var endPoint: Sample = 0 {
         willSet {
             guard endPoint != newValue else { return }
-            internalAU?.endPoint = Float(safeSample(newValue))
+            internalAU?.endPoint = AUValue(safeSample(newValue))
         }
     }
 
@@ -60,7 +54,7 @@ open class AKWaveTable: AKNode, AKComponent {
     @objc open dynamic var loopStartPoint: Sample = 0 {
         willSet {
             guard loopStartPoint != newValue else { return }
-            internalAU?.loopStartPoint = Float(safeSample(newValue))
+            internalAU?.loopStartPoint = AUValue(safeSample(newValue))
         }
     }
 
@@ -68,16 +62,16 @@ open class AKWaveTable: AKNode, AKComponent {
     @objc open dynamic var loopEndPoint: Sample = 0 {
         willSet {
             guard endPoint != newValue else { return }
-            internalAU?.loopEndPoint = Float(safeSample(newValue))
+            internalAU?.loopEndPoint = AUValue(safeSample(newValue))
         }
     }
 
     /// playback rate - A value of 1 is normal, 2 is double speed, 0.5 is halfspeed, etc.
-    @objc open dynamic var rate: Double = 1 {
+    @objc open dynamic var rate: AUValue = 1 {
         willSet {
             guard rate != newValue else { return }
             if internalAU?.isSetUp == true {
-                rateParameter?.value = AUValue(newValue)
+                rateParameter?.value = newValue
             } else {
                 internalAU?.rate = newValue
             }
@@ -85,13 +79,13 @@ open class AKWaveTable: AKNode, AKComponent {
     }
 
     /// Volume - amplitude adjustment
-    @objc open dynamic var volume: Double = 1 {
+    @objc open dynamic var volume: AUValue = 1 {
         willSet {
             guard volume != newValue else { return }
             if internalAU?.isSetUp == true {
-                volumeParameter?.value = AUValue(newValue)
+                volumeParameter?.value = newValue
             } else {
-                internalAU?.volume = AUValue(newValue)
+                internalAU?.volume = newValue
             }
         }
     }
@@ -106,8 +100,8 @@ open class AKWaveTable: AKNode, AKComponent {
 
     /// Number of samples in the audio stored in memory
     open var size: Sample {
-        if avAudiofile != nil {
-            return Sample(avAudiofile!.samplesCount)
+        if let avAudiofile = avAudiofile {
+            return Sample(avAudiofile.samplesCount)
         }
         return Sample(maximumSamples)
     }
@@ -118,15 +112,15 @@ open class AKWaveTable: AKNode, AKComponent {
     }
 
     /// Position in the audio file from 0 - 1
-    open var normalizedPosition: Double {
+    open var normalizedPosition: AUValue {
         guard let internalAU = internalAU else { return 0 }
-        return Double(internalAU.position())
+        return internalAU.position()
     }
 
     /// Position in the audio in samples, but represented as a double since
     /// you could conceivably be at a non-integer sample
-    open var position: Double {
-        return normalizedPosition * Double(size)
+    open var position: AUValue {
+        return normalizedPosition * AUValue(size)
     }
 
     /// Tells whether the node is processing (ie. started, playing, or active)
@@ -169,8 +163,8 @@ open class AKWaveTable: AKNode, AKComponent {
     @objc public init(file: AKAudioFile? = nil,
                       startPoint: Sample = 0,
                       endPoint: Sample = 0,
-                      rate: Double = 1,
-                      volume: Double = 1,
+                      rate: AUValue = 1,
+                      volume: AUValue = 1,
                       maximumSamples: Sample,
                       completionHandler: @escaping AKCCallback = {},
                       loadCompletionHandler: @escaping AKCCallback = {}) {
@@ -180,8 +174,8 @@ open class AKWaveTable: AKNode, AKComponent {
         self.volume = volume
         self.endPoint = endPoint
         if let file = file {
-            self.avAudiofile = file
-            self.endPoint = Sample(avAudiofile!.samplesCount)
+            avAudiofile = file
+            self.endPoint = Sample(file.samplesCount)
         }
         self.maximumSamples = maximumSamples
         self.completionHandler = completionHandler
@@ -189,7 +183,7 @@ open class AKWaveTable: AKNode, AKComponent {
 
         _Self.register()
 
-        super.init()
+        super.init(avAudioNode: AVAudioNode())
 
         AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
             guard let strongSelf = self else {
@@ -199,8 +193,8 @@ open class AKWaveTable: AKNode, AKComponent {
             strongSelf.avAudioUnit = avAudioUnit
             strongSelf.avAudioNode = avAudioUnit
             strongSelf.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
-            strongSelf.internalAU!.completionHandler = completionHandler
-            strongSelf.internalAU!.loadCompletionHandler = loadCompletionHandler
+            strongSelf.internalAU?.completionHandler = completionHandler
+            strongSelf.internalAU?.loadCompletionHandler = loadCompletionHandler
         }
 
         guard let tree = internalAU?.parameterTree else {

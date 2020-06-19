@@ -1,14 +1,7 @@
-//
-//  AKAppleSequencer.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka and Jeff Cooper, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Sequencer based on tried-and-true CoreAudio/MIDI Sequencing
 open class AKAppleSequencer: NSObject {
-
     /// Music sequence
     open var sequence: MusicSequence?
 
@@ -30,7 +23,7 @@ open class AKAppleSequencer: NSObject {
         if let existingSequence = sequence {
             sequencePointer = UnsafeMutablePointer<MusicSequence>(existingSequence)
         }
-        //setup and attach to musicplayer
+        // setup and attach to musicplayer
         NewMusicPlayer(&musicPlayer)
         if let existingMusicPlayer = musicPlayer {
             MusicPlayerSetSequence(existingMusicPlayer, sequence)
@@ -65,12 +58,19 @@ open class AKAppleSequencer: NSObject {
     }
 
     /// Initialize the sequence with a MIDI file
-    ///
-    /// - parameter fromURL: URL of MIDI File
-    ///
+    /// - Parameter fileURL: URL of MIDI File
     public convenience init(fromURL fileURL: URL) {
         self.init()
         loadMIDIFile(fromURL: fileURL)
+    }
+
+    /// Initialize the sequence with a MIDI file data representation
+    ///
+    /// - parameter fromData: Data representation of a MIDI file
+    ///
+    public convenience init(fromData data: Data) {
+        self.init()
+        loadMIDIFile(fromData: data)
     }
 
     /// Preroll the music player. Call this function in advance of playback to reduce the sequencers
@@ -83,6 +83,7 @@ open class AKAppleSequencer: NSObject {
     }
 
     // MARK: Looping
+
     /// Set loop functionality of entire sequence
     open func toggleLoop() {
         (loopEnabled ? disableLooping() : enableLooping())
@@ -123,6 +124,7 @@ open class AKAppleSequencer: NSObject {
     }
 
     // MARK: Length
+
     /// Set length of all tracks
     ///
     /// - parameter length: Length of tracks in beats
@@ -144,7 +146,6 @@ open class AKAppleSequencer: NSObject {
 
     /// Length of longest track in the sequence
     open var length: AKDuration {
-
         var length: MusicTimeStamp = 0
         var tmpLength: MusicTimeStamp = 0
 
@@ -153,10 +154,11 @@ open class AKAppleSequencer: NSObject {
             if tmpLength >= length { length = tmpLength }
         }
 
-        return  AKDuration(beats: length, tempo: tempo)
+        return AKDuration(beats: length, tempo: tempo)
     }
 
     // MARK: Tempo and Rate
+
     /// Set the rate of the sequencer
     ///
     /// - parameter rate: Set the rate relative to the tempo of the track
@@ -179,7 +181,7 @@ open class AKAppleSequencer: NSObject {
     /// Clears all existing tempo events and adds single tempo event at start
     /// Will also adjust the tempo immediately if sequence is playing when called
     open func setTempo(_ bpm: Double) {
-        let constrainedTempo = (10...280).clamp(bpm)
+        let constrainedTempo = (10 ... 280).clamp(bpm)
 
         var tempoTrack: MusicTrack?
 
@@ -194,7 +196,6 @@ open class AKAppleSequencer: NSObject {
             currTime = fmod(currTime, length.beats)
             if let existingTempoTrack = tempoTrack {
                 MusicTrackNewExtendedTempoEvent(existingTempoTrack, currTime, constrainedTempo)
-
             }
         }
         if let existingTempoTrack = tempoTrack {
@@ -211,7 +212,7 @@ open class AKAppleSequencer: NSObject {
     ///   - position: Point in time in beats
     ///
     open func addTempoEventAt(tempo bpm: Double, position: AKDuration) {
-        let constrainedTempo = (10...280).clamp(bpm)
+        let constrainedTempo = (10 ... 280).clamp(bpm)
 
         var tempoTrack: MusicTrack?
 
@@ -271,15 +272,16 @@ open class AKAppleSequencer: NSObject {
         var tempoTrack: MusicTrack?
         guard let existingSequence = sequence else { return [] }
         MusicSequenceGetTempoTrack(existingSequence, &tempoTrack)
-        guard tempoTrack != nil else { return [] }
 
         var tempos = [(MusicTimeStamp, Double)]()
 
-        AKMusicTrack.iterateMusicTrack(tempoTrack!) { _, eventTime, eventType, eventData, _, _ in
-            if eventType == kMusicEventType_ExtendedTempo {
-                if let data = eventData?.assumingMemoryBound(to: ExtendedTempoEvent.self) {
-                    let tempoEventPointer: UnsafePointer<ExtendedTempoEvent> = UnsafePointer(data)
-                    tempos.append((eventTime, tempoEventPointer.pointee.bpm))
+        if let tempoTrack = tempoTrack {
+            AKMusicTrack.iterateMusicTrack(tempoTrack) { _, eventTime, eventType, eventData, _, _ in
+                if eventType == kMusicEventType_ExtendedTempo {
+                    if let data = eventData?.assumingMemoryBound(to: ExtendedTempoEvent.self) {
+                        let tempoEventPointer: UnsafePointer<ExtendedTempoEvent> = UnsafePointer(data)
+                        tempos.append((eventTime, tempoEventPointer.pointee.bpm))
+                    }
                 }
             }
         }
@@ -308,7 +310,7 @@ open class AKAppleSequencer: NSObject {
 
     // Remove existing tempo events
     func clearTempoEvents(_ track: MusicTrack) {
-        AKMusicTrack.iterateMusicTrack(track) {iterator, _, eventType, _, _, isReadyForNextEvent in
+        AKMusicTrack.iterateMusicTrack(track) { iterator, _, eventType, _, _, isReadyForNextEvent in
             isReadyForNextEvent = true
             if eventType == kMusicEventType_ExtendedTempo {
                 MusicEventIteratorDeleteEvent(iterator)
@@ -318,6 +320,7 @@ open class AKAppleSequencer: NSObject {
     }
 
     // MARK: Time Signature
+
     /// Return and array of (MusicTimeStamp, AKTimeSignature) tuples
     open var allTimeSignatureEvents: [(MusicTimeStamp, AKTimeSignature)] {
         struct TimeSignatureEvent {
@@ -438,12 +441,12 @@ open class AKAppleSequencer: NSObject {
         let timeSignatureMetaEventByte: UInt8 = 0x58
         let metaEventType = kMusicEventType_Meta
 
-        AKMusicTrack.iterateMusicTrack(track) {iterator, _, eventType, eventData, _, isReadyForNextEvent in
+        AKMusicTrack.iterateMusicTrack(track) { iterator, _, eventType, eventData, _, isReadyForNextEvent in
             isReadyForNextEvent = true
             guard eventType == metaEventType else { return }
 
             let data = UnsafePointer<MIDIMetaEvent>(eventData?.assumingMemoryBound(to: MIDIMetaEvent.self))
-            guard let  dataMetaEventType = data?.pointee.metaEventType else { return }
+            guard let dataMetaEventType = data?.pointee.metaEventType else { return }
 
             if dataMetaEventType == timeSignatureMetaEventByte {
                 MusicEventIteratorDeleteEvent(iterator)
@@ -451,7 +454,9 @@ open class AKAppleSequencer: NSObject {
             }
         }
     }
+
     // MARK: Duration
+
     /// Convert seconds into AKDuration
     ///
     /// - parameter seconds: time in seconds
@@ -461,7 +466,7 @@ open class AKAppleSequencer: NSObject {
         let absoluteValueSeconds = fabs(seconds)
         var outBeats = AKDuration(beats: MusicTimeStamp())
         if let existingSequence = sequence {
-            MusicSequenceGetBeatsForSeconds(existingSequence, Float64(absoluteValueSeconds), &(outBeats.beats))
+            MusicSequenceGetBeatsForSeconds(existingSequence, Float64(absoluteValueSeconds), &outBeats.beats)
         }
         outBeats.beats *= sign
         return outBeats
@@ -483,6 +488,7 @@ open class AKAppleSequencer: NSObject {
     }
 
     // MARK: Transport Control
+
     /// Play the sequence
     open func play() {
         if let existingMusicPlayer = musicPlayer {
@@ -525,10 +531,11 @@ open class AKAppleSequencer: NSObject {
 
     /// Current Time relative to sequencer length
     open var currentRelativePosition: AKDuration {
-        return currentPosition % length //can switch to modTime func when/if % is removed
+        return currentPosition % length // can switch to modTime func when/if % is removed
     }
 
     // MARK: Other Sequence Properties
+
     /// Track count
     open var trackCount: Int {
         var count: UInt32 = 0
@@ -581,9 +588,27 @@ open class AKAppleSequencer: NSObject {
     open func loadMIDIFile(fromURL fileURL: URL) {
         removeTracks()
         if let existingSequence = sequence {
-            let status: OSStatus = MusicSequenceFileLoad(existingSequence, fileURL as CFURL, .midiType, MusicSequenceLoadFlags())
+            let status: OSStatus = MusicSequenceFileLoad(existingSequence,
+                                                         fileURL as CFURL,
+                                                         .midiType,
+                                                         MusicSequenceLoadFlags())
             if status != OSStatus(noErr) {
                 AKLog("error reading midi file url: \(fileURL), read status: \(status)")
+            }
+        }
+        initTracks()
+    }
+
+    /// Load a MIDI file given its data representation (removes old tracks, if present)
+    open func loadMIDIFile(fromData data: Data) {
+        removeTracks()
+        if let existingSequence = sequence {
+            let status: OSStatus = MusicSequenceFileLoadData(existingSequence,
+                                                             data as CFData,
+                                                             .midiType,
+                                                             MusicSequenceLoadFlags())
+            if status != OSStatus(noErr) {
+                AKLog("error reading midi data, read status: \(status)")
             }
         }
         initTracks()
@@ -619,9 +644,10 @@ open class AKAppleSequencer: NSObject {
     func addMusicTrackNoteData(from tempSequencer: AKAppleSequencer, useExistingSequencerLength: Bool) {
         guard !isPlaying else {
             AKLog("Can't add tracks during playback")
-            return }
+            return
+        }
 
-        let oldLength = self.length
+        let oldLength = length
         for track in tempSequencer.tracks {
             let noteData = track.getMIDINoteData()
 
@@ -687,7 +713,6 @@ open class AKAppleSequencer: NSObject {
 
     /// Get a new track
     open func newTrack(_ name: String = "Unnamed") -> AKMusicTrack? {
-
         var newMusicTrack: MusicTrack?
         var count: UInt32 = 0
         if let existingSequence = sequence {
@@ -708,11 +733,12 @@ open class AKAppleSequencer: NSObject {
     open func deleteTrack(trackIndex: Int) {
         guard !isPlaying else {
             AKLog("Can't delete sequencer track during playback")
-            return }
+            return
+        }
         guard trackIndex < tracks.count,
             let internalTrack = tracks[trackIndex].internalMusicTrack else {
-                AKLog("Can't get track for index")
-                return
+            AKLog("Can't get track for index")
+            return
         }
 
         guard let existingSequence = sequence else {
@@ -789,8 +815,8 @@ open class AKAppleSequencer: NSObject {
         let diffToLastSpot = AKDuration(beats: noteOnTimeRel) - lastSpot
         let diffToNextSpot = nextSpot - AKDuration(beats: noteOnTimeRel)
         let optimisedQuantTime = (diffToLastSpot < diffToNextSpot ? lastSpot : nextSpot)
-        //AKLog("last \(lastSpot.beats) - curr \(currentRelativePosition.beats) - next \(nextSpot.beats)")
-        //AKLog("nearest \(optimisedQuantTime.beats)")
+        // AKLog("last \(lastSpot.beats) - curr \(currentRelativePosition.beats) - next \(nextSpot.beats)")
+        // AKLog("nearest \(optimisedQuantTime.beats)")
         return optimisedQuantTime
     }
 
@@ -808,7 +834,7 @@ open class AKAppleSequencer: NSObject {
     func getQuantizationPositions(quantizationInBeats: Double) -> [AKDuration] {
         let noteOnTimeRel = currentRelativePosition.beats
         let lastSpot = AKDuration(beats:
-            modTime(noteOnTimeRel - (noteOnTimeRel.truncatingRemainder(dividingBy: quantizationInBeats))))
+            modTime(noteOnTimeRel - noteOnTimeRel.truncatingRemainder(dividingBy: quantizationInBeats)))
         let nextSpot = AKDuration(beats: modTime(lastSpot.beats + quantizationInBeats))
         return [lastSpot, nextSpot]
     }

@@ -1,10 +1,4 @@
-//
-//  AKClipRecorder.swift
-//  AudioKit
-//
-//  Created by David O'Neill, revision history on GitHub.
-//  Copyright © 2017 Audive Inc. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// A closure that will be called when the clip is finished recording.
 /// Result will be an error or a clip. ClipRecording.url is the location
@@ -140,7 +134,8 @@ open class AKClipRecorder {
     ///   - duration: The duration in seconds of the clip to record, will be adjusted if start time
     /// was adjusted.
     ///   - tap: An optional tap to access audio as it's being recorded.
-    ///   - completion: A closure that will be called when the clip is finished recording. time and duration may be different in the result.
+    ///   - completion: A closure that will be called when the clip is finished recording.
+    ///   time and duration may be different in the result.
     ///
     public func recordClip(time: Double = 0,
                            duration: Double = Double.greatestFiniteMagnitude,
@@ -176,7 +171,9 @@ open class AKClipRecorder {
             audioFile.length > 0 {
             let duration = audioFile.duration
             clip.audioFile = nil
-            clip.completion(ClipRecordingResult.clip(ClipRecording(url: url, startTime: clip.startTime, duration: duration)))
+            clip.completion(ClipRecordingResult.clip(ClipRecording(url: url,
+                                                                   startTime: clip.startTime,
+                                                                   duration: duration)))
             completion?()
         } else {
             clip.completion(ClipRecordingResult.error(error ?? ClipRecordingError.timingError))

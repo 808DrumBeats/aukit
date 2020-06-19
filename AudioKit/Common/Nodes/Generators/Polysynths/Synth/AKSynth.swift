@@ -1,191 +1,125 @@
-//
-//  AKSynth.swift
-//  AudioKit
-//
-//  Created by Shane Dunne, revision history on Github.
-//  Copyright © 2019 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Synth
 ///
-@objc open class AKSynth: AKPolyphonicNode, AKComponent {
+open class AKSynth: AKPolyphonicNode, AKComponent {
     public typealias AKAudioUnitType = AKSynthAudioUnit
     /// Four letter unique description of the node
     public static let ComponentDescription = AudioComponentDescription(instrument: "AKsy")
 
     // MARK: - Properties
 
-    @objc public var internalAU: AKAudioUnitType?
-
-    fileprivate var masterVolumeParameter: AUParameter?
-    fileprivate var pitchBendParameter: AUParameter?
-    fileprivate var vibratoDepthParameter: AUParameter?
-    fileprivate var filterCutoffParameter: AUParameter?
-    fileprivate var filterStrengthParameter: AUParameter?
-    fileprivate var filterResonanceParameter: AUParameter?
-
-    fileprivate var attackDurationParameter: AUParameter?
-    fileprivate var decayDurationParameter: AUParameter?
-    fileprivate var sustainLevelParameter: AUParameter?
-    fileprivate var releaseDurationParameter: AUParameter?
-
-    fileprivate var filterAttackDurationParameter: AUParameter?
-    fileprivate var filterDecayDurationParameter: AUParameter?
-    fileprivate var filterSustainLevelParameter: AUParameter?
-    fileprivate var filterReleaseDurationParameter: AUParameter?
-
-    /// Ramp Duration represents the speed at which parameters are allowed to change
-    @objc open dynamic var rampDuration: Double = AKSettings.rampDuration {
-        willSet {
-            internalAU?.rampDuration = newValue
-        }
-    }
+    public private(set) var internalAU: AKAudioUnitType?
 
     /// Master volume (fraction)
-    @objc open dynamic var masterVolume: Double = 1.0 {
+    @objc open var masterVolume: AUValue = 1.0 {
         willSet {
             guard masterVolume != newValue else { return }
-
-            if internalAU?.isSetUp == true {
-                masterVolumeParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.masterVolume = newValue
+            internalAU?.masterVolume.value = newValue
         }
     }
 
     /// Pitch offset (semitones)
-    @objc open dynamic var pitchBend: Double = 0.0 {
+    @objc open var pitchBend: AUValue = 0.0 {
         willSet {
             guard pitchBend != newValue else { return }
-
-            if internalAU?.isSetUp == true {
-                pitchBendParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.pitchBend = newValue
+            internalAU?.pitchBend.value = newValue
         }
     }
 
     /// Vibrato amount (semitones)
-    @objc open dynamic var vibratoDepth: Double = 1.0 {
+    @objc open var vibratoDepth: AUValue = 1.0 {
         willSet {
             guard vibratoDepth != newValue else { return }
-
-            if internalAU?.isSetUp == true {
-                vibratoDepthParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.vibratoDepth = newValue
+            internalAU?.vibratoDepth.value = newValue
         }
     }
 
     /// Filter cutoff (harmonic ratio)
-    @objc open dynamic var filterCutoff: Double = 4.0 {
+    @objc open var filterCutoff: AUValue = 4.0 {
         willSet {
             guard filterCutoff != newValue else { return }
-
-            if internalAU?.isSetUp == true {
-                filterCutoffParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.filterCutoff = newValue
+            internalAU?.filterCutoff.value = newValue
         }
     }
 
     /// Filter EG strength (harmonic ratio)
-    @objc open dynamic var filterStrength: Double = 20.0 {
+    @objc open var filterStrength: AUValue = 20.0 {
         willSet {
             guard filterStrength != newValue else { return }
-
-            if internalAU?.isSetUp == true {
-                filterStrengthParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.filterStrength = newValue
+            internalAU?.filterStrength.value = newValue
         }
     }
 
     /// Filter resonance (dB)
-    @objc open dynamic var filterResonance: Double = 0.0 {
+    @objc open var filterResonance: AUValue = 0.0 {
         willSet {
             guard filterResonance != newValue else { return }
-
-            if internalAU?.isSetUp == true {
-                filterResonanceParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.filterResonance = newValue
+            internalAU?.filterResonance.value = newValue
         }
     }
 
     /// Amplitude attack duration (seconds)
-    @objc open dynamic var attackDuration: Double = 0.0 {
+    @objc open var attackDuration: AUValue = 0.0 {
         willSet {
             guard attackDuration != newValue else { return }
-            internalAU?.attackDuration = newValue
+            internalAU?.attackDuration.value = newValue
         }
     }
 
     /// Amplitude Decay duration (seconds)
-    @objc open dynamic var decayDuration: Double = 0.0 {
+    @objc open var decayDuration: AUValue = 0.0 {
         willSet {
             guard decayDuration != newValue else { return }
-            internalAU?.decayDuration = newValue
+            internalAU?.decayDuration.value = newValue
         }
     }
 
     /// Amplitude sustain level (fraction)
-    @objc open dynamic var sustainLevel: Double = 1.0 {
+    @objc open var sustainLevel: AUValue = 1.0 {
         willSet {
             guard sustainLevel != newValue else { return }
-            internalAU?.sustainLevel = newValue
+            internalAU?.sustainLevel.value = newValue
         }
     }
 
     /// Amplitude Release duration (seconds)
-    @objc open dynamic var releaseDuration: Double = 0.0 {
+    @objc open var releaseDuration: AUValue = 0.0 {
         willSet {
             guard releaseDuration != newValue else { return }
-            internalAU?.releaseDuration = newValue
+            internalAU?.releaseDuration.value = newValue
         }
     }
 
     /// Filter attack duration (seconds)
-    @objc open dynamic var filterAttackDuration: Double = 0.0 {
+    @objc open var filterAttackDuration: AUValue = 0.0 {
         willSet {
             guard filterAttackDuration != newValue else { return }
-            internalAU?.filterAttackDuration = newValue
+            internalAU?.filterAttackDuration.value = newValue
         }
     }
 
     /// Filter Decay duration (seconds)
-    @objc open dynamic var filterDecayDuration: Double = 0.0 {
+    @objc open var filterDecayDuration: AUValue = 0.0 {
         willSet {
             guard filterDecayDuration != newValue else { return }
-            internalAU?.filterDecayDuration = newValue
+            internalAU?.filterDecayDuration.value = newValue
         }
     }
 
     /// Filter sustain level (fraction)
-    @objc open dynamic var filterSustainLevel: Double = 1.0 {
+    @objc open var filterSustainLevel: AUValue = 1.0 {
         willSet {
             guard filterSustainLevel != newValue else { return }
-            internalAU?.filterSustainLevel = newValue
+            internalAU?.filterSustainLevel.value = newValue
         }
     }
 
     /// Filter Release duration (seconds)
-    @objc open dynamic var filterReleaseDuration: Double = 0.0 {
+    @objc open var filterReleaseDuration: AUValue = 0.0 {
         willSet {
             guard filterReleaseDuration != newValue else { return }
-            internalAU?.filterReleaseDuration = newValue
+            internalAU?.filterReleaseDuration.value = newValue
         }
     }
 
@@ -210,104 +144,64 @@
     ///   - filterSustainLevel: 0.0 - 1.0
     ///   - filterReleaseDuration: seconds, 0.0 - 10.0
     ///
-    @objc public init(
-        masterVolume: Double = 1.0,
-        pitchBend: Double = 0.0,
-        vibratoDepth: Double = 0.0,
-        filterCutoff: Double = 4.0,
-        filterStrength: Double = 20.0,
-        filterResonance: Double = 0.0,
-        attackDuration: Double = 0.0,
-        decayDuration: Double = 0.0,
-        sustainLevel: Double = 1.0,
-        releaseDuration: Double = 0.0,
+    public init(
+        masterVolume: AUValue = 1.0,
+        pitchBend: AUValue = 0.0,
+        vibratoDepth: AUValue = 0.0,
+        filterCutoff: AUValue = 4.0,
+        filterStrength: AUValue = 20.0,
+        filterResonance: AUValue = 0.0,
+        attackDuration: AUValue = 0.0,
+        decayDuration: AUValue = 0.0,
+        sustainLevel: AUValue = 1.0,
+        releaseDuration: AUValue = 0.0,
         filterEnable: Bool = false,
-        filterAttackDuration: Double = 0.0,
-        filterDecayDuration: Double = 0.0,
-        filterSustainLevel: Double = 1.0,
-        filterReleaseDuration: Double = 0.0) {
-
-        self.masterVolume = masterVolume
-        self.pitchBend = pitchBend
-        self.vibratoDepth = vibratoDepth
-        self.filterCutoff = filterCutoff
-        self.filterStrength = filterStrength
-        self.filterResonance = filterResonance
-        self.attackDuration = attackDuration
-        self.decayDuration = decayDuration
-        self.sustainLevel = sustainLevel
-        self.releaseDuration = releaseDuration
-        self.filterAttackDuration = filterAttackDuration
-        self.filterDecayDuration = filterDecayDuration
-        self.filterSustainLevel = filterSustainLevel
-        self.filterReleaseDuration = filterReleaseDuration
+        filterAttackDuration: AUValue = 0.0,
+        filterDecayDuration: AUValue = 0.0,
+        filterSustainLevel: AUValue = 1.0,
+        filterReleaseDuration: AUValue = 0.0
+    ) {
+        super.init(avAudioNode: AVAudioNode())
 
         AKSynth.register()
+        AVAudioUnit._instantiate(with: AKSynth.ComponentDescription) { avAudioUnit in
+            self.avAudioUnit = avAudioUnit
+            self.avAudioNode = avAudioUnit
+            self.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
 
-        super.init()
-
-        AVAudioUnit._instantiate(with: AKSynth.ComponentDescription) { [weak self] avAudioUnit in
-            guard let strongSelf = self else {
-                AKLog("Error: self is nil")
-                return
-            }
-            strongSelf.avAudioUnit = avAudioUnit
-            strongSelf.avAudioNode = avAudioUnit
-            strongSelf.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
+            self.masterVolume = masterVolume
+            self.pitchBend = pitchBend
+            self.vibratoDepth = vibratoDepth
+            self.filterCutoff = filterCutoff
+            self.filterStrength = filterStrength
+            self.filterResonance = filterResonance
+            self.attackDuration = attackDuration
+            self.decayDuration = decayDuration
+            self.sustainLevel = sustainLevel
+            self.releaseDuration = releaseDuration
+            self.filterAttackDuration = filterAttackDuration
+            self.filterDecayDuration = filterDecayDuration
+            self.filterSustainLevel = filterSustainLevel
+            self.filterReleaseDuration = filterReleaseDuration
         }
-
-        guard let tree = internalAU?.parameterTree else {
-            AKLog("Parameter Tree Failed")
-            return
-        }
-
-        self.masterVolumeParameter = tree["masterVolume"]
-        self.pitchBendParameter = tree["pitchBend"]
-        self.vibratoDepthParameter = tree["vibratoDepth"]
-        self.filterCutoffParameter = tree["filterCutoff"]
-        self.filterStrengthParameter = tree["filterStrength"]
-        self.filterResonanceParameter = tree["filterResonance"]
-        self.attackDurationParameter = tree["attackDuration"]
-        self.decayDurationParameter = tree["decayDuration"]
-        self.sustainLevelParameter = tree["sustainLevel"]
-        self.releaseDurationParameter = tree["releaseDuration"]
-        self.filterAttackDurationParameter = tree["filterAttackDuration"]
-        self.filterDecayDurationParameter = tree["filterDecayDuration"]
-        self.filterSustainLevelParameter = tree["filterSustainLevel"]
-        self.filterReleaseDurationParameter = tree["filterReleaseDuration"]
-
-        self.internalAU?.setParameterImmediately(.masterVolume, value: masterVolume)
-        self.internalAU?.setParameterImmediately(.pitchBend, value: pitchBend)
-        self.internalAU?.setParameterImmediately(.vibratoDepth, value: vibratoDepth)
-        self.internalAU?.setParameterImmediately(.filterCutoff, value: filterCutoff)
-        self.internalAU?.setParameterImmediately(.filterStrength, value: filterStrength)
-        self.internalAU?.setParameterImmediately(.filterResonance, value: filterResonance)
-        self.internalAU?.setParameterImmediately(.attackDuration, value: attackDuration)
-        self.internalAU?.setParameterImmediately(.decayDuration, value: decayDuration)
-        self.internalAU?.setParameterImmediately(.sustainLevel, value: sustainLevel)
-        self.internalAU?.setParameterImmediately(.releaseDuration, value: releaseDuration)
-        self.internalAU?.setParameterImmediately(.filterAttackDuration, value: filterAttackDuration)
-        self.internalAU?.setParameterImmediately(.filterDecayDuration, value: filterDecayDuration)
-        self.internalAU?.setParameterImmediately(.filterSustainLevel, value: filterSustainLevel)
-        self.internalAU?.setParameterImmediately(.filterReleaseDuration, value: filterReleaseDuration)
     }
 
-    @objc open override func play(noteNumber: MIDINoteNumber,
-                                  velocity: MIDIVelocity,
-                                  frequency: Double,
-                                  channel: MIDIChannel = 0) {
-        internalAU?.playNote(noteNumber: noteNumber, velocity: velocity, noteFrequency: Float(frequency))
+    open override func play(noteNumber: MIDINoteNumber,
+                            velocity: MIDIVelocity,
+                            frequency: AUValue,
+                            channel: MIDIChannel = 0) {
+        internalAU?.playNote(noteNumber: noteNumber, velocity: velocity, noteFrequency: frequency)
     }
 
-    @objc open override func stop(noteNumber: MIDINoteNumber) {
+    open override func stop(noteNumber: MIDINoteNumber) {
         internalAU?.stopNote(noteNumber: noteNumber, immediate: false)
     }
 
-    @objc open func silence(noteNumber: MIDINoteNumber) {
+    open func silence(noteNumber: MIDINoteNumber) {
         internalAU?.stopNote(noteNumber: noteNumber, immediate: true)
     }
 
-    @objc open func sustainPedal(pedalDown: Bool) {
+    open func sustainPedal(pedalDown: Bool) {
         internalAU?.sustainPedal(down: pedalDown)
     }
 }

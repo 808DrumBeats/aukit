@@ -1,10 +1,4 @@
-//
-//  Conductor.swift
-//  AKTest1
-//
-//  Created by Shane Dunne, revision history on Githbub.
-//  Copyright © 2018 Shane Dunne. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 
@@ -70,16 +64,16 @@ class Conductor {
         oscillator.vibratoRate = 5
 
         // Initial parameters setup: flanger
-        flanger.frequency = 2.0
-        flanger.depth = 0.4
-        flanger.dryWetMix = 0.5
-        flanger.feedback = -0.9
+        flanger.frequency.value = 2.0
+        flanger.depth.value = 0.4
+        flanger.dryWetMix.value = 0.5
+        flanger.feedback.value = -0.9
 
         // Initial parameters setup: chorus
-        chorus.frequency = 0.7
-        chorus.depth = 0.4
-        chorus.dryWetMix = 0.25
-        chorus.feedback = 0.0
+        chorus.frequency.value = 0.7
+        chorus.depth.value = 0.4
+        chorus.dryWetMix.value = 0.25
+        chorus.feedback.value = 0.0
     }
 
     func addMIDIListener(_ listener: AKMIDIListener) {
@@ -120,19 +114,19 @@ class Conductor {
     func controller(_ controller: MIDIByte, value: MIDIByte) {
         switch controller {
         case AKMIDIControl.modulationWheel.rawValue:
-            oscillator.vibratoDepth = 0.5 * Double(value) / 128.0
+            oscillator.vibratoDepth = 0.5 * AUValue(value) / 128.0
         default:
             break
         }
     }
 
     func pitchBend(_ pitchWheelValue: MIDIWord) {
-        let pwValue = Double(pitchWheelValue)
-        let scale = (pwValue - 8_192.0) / 8_192.0
+        let pwValue = AUValue(pitchWheelValue)
+        let scale: AUValue = (pwValue - 8_192.0) / 8_192.0
         if scale >= 0.0 {
-            oscillator.pitchBend = scale * self.pitchBendUpSemitones
+            oscillator.pitchBend = AUValue(scale * self.pitchBendUpSemitones)
         } else {
-            oscillator.pitchBend = scale * self.pitchBendDownSemitones
+            oscillator.pitchBend = AUValue(scale * self.pitchBendDownSemitones)
         }
     }
 

@@ -1,10 +1,4 @@
-//
-//  AKPWMOscillatorBankDSPKernel.hpp
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #ifdef __cplusplus
 #pragma once
@@ -100,7 +94,7 @@ public:
     
     void init(int channelCount, double sampleRate) override {
         AKBankDSPKernel::init(channelCount, sampleRate);
-        pulseWidthRamper.init();
+        pulseWidthRamper.init(sampleRate);
     }
     
     void reset() override {

@@ -1,113 +1,59 @@
-//
-//  AKTanhDistortion.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Distortion using a modified hyperbolic tangent function.
 ///
-open class AKTanhDistortion: AKNode, AKToggleable, AKComponent, AKInput {
-    public typealias AKAudioUnitType = AKTanhDistortionAudioUnit
+open class AKTanhDistortion: AKNode, AKToggleable, AKComponent, AKInput, AKAutomatable {
+
+    // MARK: - AKComponent
+
     /// Four letter unique description of the node
     public static let ComponentDescription = AudioComponentDescription(effect: "dist")
 
-    // MARK: - Properties
-    private var internalAU: AKAudioUnitType?
+    public typealias AKAudioUnitType = AKTanhDistortionAudioUnit
 
-    fileprivate var pregainParameter: AUParameter?
-    fileprivate var postgainParameter: AUParameter?
-    fileprivate var positiveShapeParameterParameter: AUParameter?
-    fileprivate var negativeShapeParameterParameter: AUParameter?
+    public private(set) var internalAU: AKAudioUnitType?
+
+    // MARK: - AKAutomatable
+
+    public private(set) var parameterAutomation: AKParameterAutomation?
+
+    // MARK: - Parameters
 
     /// Lower and upper bounds for Pregain
-    public static let pregainRange = 0.0 ... 10.0
+    public static let pregainRange: ClosedRange<AUValue> = 0.0 ... 10.0
 
     /// Lower and upper bounds for Postgain
-    public static let postgainRange = 0.0 ... 10.0
+    public static let postgainRange: ClosedRange<AUValue> = 0.0 ... 10.0
 
     /// Lower and upper bounds for Positive Shape Parameter
-    public static let positiveShapeParameterRange = -10.0 ... 10.0
+    public static let positiveShapeParameterRange: ClosedRange<AUValue> = -10.0 ... 10.0
 
     /// Lower and upper bounds for Negative Shape Parameter
-    public static let negativeShapeParameterRange = -10.0 ... 10.0
+    public static let negativeShapeParameterRange: ClosedRange<AUValue> = -10.0 ... 10.0
 
     /// Initial value for Pregain
-    public static let defaultPregain = 2.0
+    public static let defaultPregain: AUValue = 2.0
 
     /// Initial value for Postgain
-    public static let defaultPostgain = 0.5
+    public static let defaultPostgain: AUValue = 0.5
 
     /// Initial value for Positive Shape Parameter
-    public static let defaultPositiveShapeParameter = 0.0
+    public static let defaultPositiveShapeParameter: AUValue = 0.0
 
     /// Initial value for Negative Shape Parameter
-    public static let defaultNegativeShapeParameter = 0.0
-
-    /// Ramp Duration represents the speed at which parameters are allowed to change
-    @objc open dynamic var rampDuration: Double = AKSettings.rampDuration {
-        willSet {
-            internalAU?.rampDuration = newValue
-        }
-    }
+    public static let defaultNegativeShapeParameter: AUValue = 0.0
 
     /// Determines the amount of gain applied to the signal before waveshaping. A value of 1 gives slight distortion.
-    @objc open dynamic var pregain: Double = defaultPregain {
-        willSet {
-            guard pregain != newValue else { return }
-            if internalAU?.isSetUp == true {
-                pregainParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.setParameterImmediately(.pregain, value: newValue)
-        }
-    }
+    public let pregain = AKNodeParameter(identifier: "pregain")
 
     /// Gain applied after waveshaping
-    @objc open dynamic var postgain: Double = defaultPostgain {
-        willSet {
-            guard postgain != newValue else { return }
-            if internalAU?.isSetUp == true {
-                postgainParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.setParameterImmediately(.postgain, value: newValue)
-        }
-    }
+    public let postgain = AKNodeParameter(identifier: "postgain")
 
     /// Shape of the positive part of the signal. A value of 0 gets a flat clip.
-    @objc open dynamic var positiveShapeParameter: Double = defaultPositiveShapeParameter {
-        willSet {
-            guard positiveShapeParameter != newValue else { return }
-            if internalAU?.isSetUp == true {
-                positiveShapeParameterParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.setParameterImmediately(.positiveShapeParameter, value: newValue)
-        }
-    }
+    public let positiveShapeParameter = AKNodeParameter(identifier: "positiveShapeParameter")
 
     /// Like the positive shape parameter, only for the negative part.
-    @objc open dynamic var negativeShapeParameter: Double = defaultNegativeShapeParameter {
-        willSet {
-            guard negativeShapeParameter != newValue else { return }
-            if internalAU?.isSetUp == true {
-                negativeShapeParameterParameter?.value = AUValue(newValue)
-                return
-            }
-
-            internalAU?.setParameterImmediately(.negativeShapeParameter, value: newValue)
-        }
-    }
-
-    /// Tells whether the node is processing (ie. started, playing, or active)
-    @objc open dynamic var isStarted: Bool {
-        return internalAU?.isPlaying ?? false
-    }
+    public let negativeShapeParameter = AKNodeParameter(identifier: "negativeShapeParameter")
 
     // MARK: - Initialization
 
@@ -115,63 +61,33 @@ open class AKTanhDistortion: AKNode, AKToggleable, AKComponent, AKInput {
     ///
     /// - Parameters:
     ///   - input: Input node to process
-    ///   - pregain: Determines the amount of gain applied to the signal before waveshaping. A value of 1 gives slight distortion.
+    ///   - pregain: Gain applied to the signal before waveshaping. A value of 1 gives slight distortion.
     ///   - postgain: Gain applied after waveshaping
     ///   - positiveShapeParameter: Shape of the positive part of the signal. A value of 0 gets a flat clip.
     ///   - negativeShapeParameter: Like the positive shape parameter, only for the negative part.
     ///
-    @objc public init(
+    public init(
         _ input: AKNode? = nil,
-        pregain: Double = defaultPregain,
-        postgain: Double = defaultPostgain,
-        positiveShapeParameter: Double = defaultPositiveShapeParameter,
-        negativeShapeParameter: Double = defaultNegativeShapeParameter
+        pregain: AUValue = defaultPregain,
+        postgain: AUValue = defaultPostgain,
+        positiveShapeParameter: AUValue = defaultPositiveShapeParameter,
+        negativeShapeParameter: AUValue = defaultNegativeShapeParameter
         ) {
+        super.init(avAudioNode: AVAudioNode())
 
-        self.pregain = pregain
-        self.postgain = postgain
-        self.positiveShapeParameter = positiveShapeParameter
-        self.negativeShapeParameter = negativeShapeParameter
+        instantiateAudioUnit { avAudioUnit in
+            self.avAudioUnit = avAudioUnit
+            self.avAudioNode = avAudioUnit
 
-        _Self.register()
+            self.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
+            self.parameterAutomation = AKParameterAutomation(avAudioUnit)
 
-        super.init()
-        AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
-            guard let strongSelf = self else {
-                AKLog("Error: self is nil")
-                return
-            }
-            strongSelf.avAudioUnit = avAudioUnit
-            strongSelf.avAudioNode = avAudioUnit
-            strongSelf.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
-            input?.connect(to: strongSelf)
+            self.pregain.associate(with: self.internalAU, value: pregain)
+            self.postgain.associate(with: self.internalAU, value: postgain)
+            self.positiveShapeParameter.associate(with: self.internalAU, value: positiveShapeParameter)
+            self.negativeShapeParameter.associate(with: self.internalAU, value: negativeShapeParameter)
+
+            input?.connect(to: self)
         }
-
-        guard let tree = internalAU?.parameterTree else {
-            AKLog("Parameter Tree Failed")
-            return
-        }
-
-        pregainParameter = tree["pregain"]
-        postgainParameter = tree["postgain"]
-        positiveShapeParameterParameter = tree["positiveShapeParameter"]
-        negativeShapeParameterParameter = tree["negativeShapeParameter"]
-
-        internalAU?.setParameterImmediately(.pregain, value: pregain)
-        internalAU?.setParameterImmediately(.postgain, value: postgain)
-        internalAU?.setParameterImmediately(.positiveShapeParameter, value: positiveShapeParameter)
-        internalAU?.setParameterImmediately(.negativeShapeParameter, value: negativeShapeParameter)
-    }
-
-    // MARK: - Control
-
-    /// Function to start, play, or activate the node, all do the same thing
-    @objc open func start() {
-        internalAU?.start()
-    }
-
-    /// Function to stop or bypass the node, both are equivalent
-    @objc open func stop() {
-        internalAU?.stop()
     }
 }

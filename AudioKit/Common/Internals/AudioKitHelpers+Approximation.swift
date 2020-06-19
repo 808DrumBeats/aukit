@@ -1,14 +1,8 @@
-//
-//  AudioKitHelpers+Approximation.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper on 4/28/18.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import Foundation
 
-/// Approximation Operators - for when Swift gets double / float arithmetic wrong
+// Approximation Operators - for when Swift gets double / float arithmetic wrong
 infix operator ~== : ComparisonPrecedence
 public func ~== (left: Double, right: Double) -> Bool {
     return fabs(left.distance(to: right)) <= 1e-15

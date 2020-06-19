@@ -1,15 +1,11 @@
-//
-//  AKTuningTableBase.swift
-//  AudioKit
-//
-//  Created by Marcus W. Hobbs, revision history on Githbub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import Foundation
 
-/// AKTuningTableBase provides low-level methods for creating arbitrary mappings of midi note numbers to musical frequencies
-/// The default behavior is "12-tone equal temperament" so we can integrate in non-microtonal settings with backwards compatibility
+/// AKTuningTableBase provides low-level methods for creating
+/// arbitrary mappings of midi note numbers to musical frequencies
+/// The default behavior is "12-tone equal temperament" so
+/// we can integrate in non-microtonal settings with backwards compatibility
 open class AKTuningTableBase: NSObject {
 
     // Definitions:
@@ -20,7 +16,7 @@ open class AKTuningTableBase: NSObject {
 
     // Regarding MIDI/Pitchbend ("etNNPitchBend") scheme:
     // etnn or 12ETNN = midi note number of 12ET.  1 12ETNN = 1 semitone = 100 cents
-    // The greater your tolerance for numerical precision the less voice-stealing will happen with midi/pitchbend schemes
+    // More tolerance for numerical precision means less voice-stealing will happen with midi/pitchbend schemes
 
     /// For clarity, typealias Frequency as a Double
     public typealias Frequency = Double

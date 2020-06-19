@@ -1,15 +1,8 @@
-//
-//  AKHighShelfFilter.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// AudioKit version of Apple's HighShelfFilter Audio Unit
 ///
 open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
-
     /// Four letter unique description of the node
     public static let ComponentDescription = AudioComponentDescription(appleEffect: kAudioUnitSubType_HighShelfFilter)
 
@@ -17,7 +10,7 @@ open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
     private var mixer: AKMixer
 
     /// Cut Off Frequency (Hz) ranges from 10000 to 22050 (Default: 10000)
-    @objc open dynamic var cutoffFrequency: Double = 10_000 {
+    @objc open dynamic var cutoffFrequency: AUValue = 10_000 {
         didSet {
             cutoffFrequency = (10_000...22_050).clamp(cutoffFrequency)
             au[kHighShelfParam_CutOffFrequency] = cutoffFrequency
@@ -25,7 +18,7 @@ open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
     }
 
     /// Gain (dB) ranges from -40 to 40 (Default: 0)
-    @objc open dynamic var gain: Double = 0 {
+    @objc open dynamic var gain: AUValue = 0 {
         didSet {
             gain = (-40...40).clamp(gain)
             au[kHighShelfParam_Gain] = gain
@@ -33,7 +26,7 @@ open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
     }
 
     /// Dry/Wet Mix (Default 1)
-    @objc open dynamic var dryWetMix: Double = 1 {
+    @objc open dynamic var dryWetMix: AUValue = 1 {
         didSet {
             dryWetMix = (0...1).clamp(dryWetMix)
             inputGain?.volume = 1 - dryWetMix
@@ -41,7 +34,7 @@ open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
         }
     }
 
-    private var lastKnownMix: Double = 1
+    private var lastKnownMix: AUValue = 1
     private var inputGain: AKMixer?
     private var effectGain: AKMixer?
     private var inputMixer = AKMixer()
@@ -63,10 +56,9 @@ open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
     ///
     @objc public init(
         _ input: AKNode? = nil,
-        cutOffFrequency: Double = 10_000,
-        gain: Double = 0) {
-
-        self.cutoffFrequency = cutOffFrequency
+        cutOffFrequency: AUValue = 10_000,
+        gain: AUValue = 0) {
+        cutoffFrequency = cutOffFrequency
         self.gain = gain
 
         inputGain = AKMixer()
@@ -77,10 +69,15 @@ open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
         effectGain?.volume = 1
 
         input?.connect(to: inputMixer)
-        inputMixer.connect(to: [inputGain!, effectGain!])
+
+        // Even grosser looking than force unwrap, but...
+        if let inputGain = self.inputGain,
+            let effectGain = self.effectGain {
+            inputMixer.connect(to: [inputGain, effectGain])
+        }
 
         let effect = _Self.effect
-        self.internalEffect = effect
+        internalEffect = effect
 
         au = AUWrapper(effect)
         super.init(avAudioNode: mixer.avAudioNode)
@@ -94,9 +91,11 @@ open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
         au[kHighShelfParam_CutOffFrequency] = cutoffFrequency
         au[kHighShelfParam_Gain] = gain
     }
+
     public var inputNode: AVAudioNode {
         return inputMixer.avAudioNode
     }
+
     // MARK: - Control
 
     /// Function to start, play, or activate the node, all do the same thing
@@ -119,11 +118,12 @@ open class AKHighShelfFilter: AKNode, AKToggleable, AUEffect, AKInput {
     /// Disconnect the node
     open override func detach() {
         stop()
+        guard let inputGain = inputGain, let effectGain = effectGain else { return }
 
         AKManager.detach(nodes: [inputMixer.avAudioNode,
-                                inputGain!.avAudioNode,
-                                effectGain!.avAudioNode,
-                                mixer.avAudioNode])
-        AKManager.engine.detach(self.internalEffect)
+                                 inputGain.avAudioNode,
+                                 effectGain.avAudioNode,
+                                 mixer.avAudioNode])
+        AKManager.engine.detach(internalEffect)
     }
 }

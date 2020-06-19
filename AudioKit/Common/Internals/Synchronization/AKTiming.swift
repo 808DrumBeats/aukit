@@ -1,10 +1,4 @@
-//
-//  AKTiming.swift
-//  AudioKit
-//
-//  Created by David O'Neill, revision history on GitHub.
-//  Copyright © 2017 Audive Inc. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// A timing protocol used for syncronizing different audio sources.
 @objc public protocol AKTiming {
@@ -37,7 +31,7 @@
     func audioTime(at position: Double) -> AVAudioTime?
 
     /// Prepare for playback.  After prepare has been called, the node should be ready to begine playback immediately.
-    /// Any time consuming operations necessary for playback (eg. disk reads) should be complete once prepare has been called.
+    /// Time consuming operations necessary for playback (eg. disk reads) should be complete once prepare is called.
     ///
     @objc optional func prepare()
 

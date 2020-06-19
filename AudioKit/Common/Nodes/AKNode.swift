@@ -1,10 +1,4 @@
-//
-//  AKNode.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 extension AVAudioConnectionPoint {
     convenience init(_ node: AKNode, to bus: Int) {
@@ -13,25 +7,21 @@ extension AVAudioConnectionPoint {
 }
 
 /// Parent class for all nodes in AudioKit
-@objc open class AKNode: NSObject {
+open class AKNode: NSObject {
+
     /// The internal AVAudioEngine AVAudioNode
-    @objc open var avAudioNode: AVAudioNode
+    open var avAudioNode: AVAudioNode
 
     /// The internal AVAudioUnit, which is a subclass of AVAudioNode with more capabilities
-    @objc open var avAudioUnit: AVAudioUnit?
+    open var avAudioUnit: AVAudioUnit?
 
     /// Returns either the avAudioUnit or avAudioNode (prefers the avAudioUnit if it exists)
-    @objc open var avAudioUnitOrNode: AVAudioNode {
+    open var avAudioUnitOrNode: AVAudioNode {
         return self.avAudioUnit ?? self.avAudioNode
     }
 
-    /// Create the node
-    public override init() {
-        self.avAudioNode = AVAudioNode()
-    }
-
     /// Initialize the node from an AVAudioUnit
-    @objc public init(avAudioUnit: AVAudioUnit, attach: Bool = false) {
+    public init(avAudioUnit: AVAudioUnit, attach: Bool = false) {
         self.avAudioUnit = avAudioUnit
         self.avAudioNode = avAudioUnit
         if attach {
@@ -40,40 +30,134 @@ extension AVAudioConnectionPoint {
     }
 
     /// Initialize the node from an AVAudioNode
-    @objc public init(avAudioNode: AVAudioNode, attach: Bool = false) {
+    public init(avAudioNode: AVAudioNode, attach: Bool = false) {
         self.avAudioNode = avAudioNode
         if attach {
             AKManager.engine.attach(avAudioNode)
         }
     }
 
-    // Subclasses should override to detach all internal nodes
+    deinit {
+        detach()
+    }
+
+    /// Subclasses should override to detach all internal nodes
     open func detach() {
         AKManager.detach(nodes: [avAudioUnitOrNode])
+    }
+}
+
+/// AKNodeParameter wraps AUParameter in a user-friendly interface and adds some AudioKit-specific functionality.
+open class AKNodeParameter {
+
+    private var dsp: AKDSPRef?
+
+    private var parameter: AUParameter?
+
+    // MARK: Parameter properties
+
+    public private(set) var identifier: String
+
+    public var value: AUValue = 0 {
+        didSet {
+            guard let min = parameter?.minValue, let max = parameter?.maxValue else { return }
+            value = (min...max).clamp(value)
+            if value == oldValue { return }
+            parameter?.value = value
+        }
+    }
+
+    public var boolValue: Bool {
+        get { value > 0.5 }
+        set { value = newValue ? 1.0 : 0.0 }
+    }
+
+    public var minValue: AUValue {
+        parameter?.minValue ?? 0
+    }
+
+    public var maxValue: AUValue {
+        parameter?.maxValue ?? 1
+    }
+
+    public var range: ClosedRange<AUValue> {
+        (parameter?.minValue ?? 0) ... (parameter?.maxValue ?? 1)
+    }
+
+    public var rampDuration: Float = Float(AKSettings.rampDuration) {
+        didSet {
+            guard let dsp = dsp, let addr = parameter?.address else { return }
+            setParameterRampDurationDSP(dsp, addr, rampDuration)
+        }
+    }
+
+    public var rampTaper: Float = 1 {
+        didSet {
+            guard let dsp = dsp, let addr = parameter?.address else { return }
+            setParameterRampTaperDSP(dsp, addr, rampTaper)
+        }
+    }
+
+    public var rampSkew: Float = 0 {
+        didSet {
+            guard let dsp = dsp, let addr = parameter?.address else { return }
+            setParameterRampSkewDSP(dsp, addr, rampSkew)
+        }
+    }
+
+    // MARK: Lifecycle
+
+    public init(identifier: String, value: AUValue = 0) {
+        self.identifier = identifier
+        self.value = value
+
+        // set initial value (and ensure initial value is set)
+        self.value = value
+        guard let min = parameter?.minValue, let max = parameter?.maxValue else { return }
+        parameter?.value = (min...max).clamp(value)
+    }
+
+    /// This function should be called from AKNode subclasses as soon as a valid AU is obtained
+    public func associate(with au: AKAudioUnitBase?, value: AUValue? = nil) {
+        dsp = au?.dsp
+        parameter = au?.parameterTree?[identifier]
+
+        guard let dsp = dsp, let addr = parameter?.address else { return }
+        setParameterRampDurationDSP(dsp, addr, rampDuration)
+        setParameterRampTaperDSP(dsp, addr, rampTaper)
+        setParameterRampSkewDSP(dsp, addr, rampSkew)
+
+        let value = value ?? self.value
+        // set initial value (and ensure initial value is set)
+        self.value = value
+        guard let min = parameter?.minValue, let max = parameter?.maxValue else { return }
+        parameter?.value = (min...max).clamp(value)
+    }
+
+    /// This function should be called from AKNode subclasses as soon as a valid AU is obtained
+    public func associate(with au: AKAudioUnitBase?, value: Bool) {
+        associate(with: au, value: value ? 1.0 : 0.0)
+    }
+
+    /// Sends a .touch event to the parameter automation observer, beginning automation recording if
+    /// enabled in AKParameterAutomation.
+    /// A value may be passed as the initial automation value. The current value is used if none is passed.
+    public func beginTouch(value: AUValue? = nil) {
+        guard let value = value ?? parameter?.value else { return }
+        parameter?.setValue(value, originator: nil, atHostTime: 0, eventType: .touch)
+    }
+
+    /// Sends a .release event to the parameter observation observer, ending any automation recording.
+    /// A value may be passed as the final automation value. The current value is used if none is passed.
+    public func endTouch(value: AUValue? = nil) {
+        guard let value = value ?? parameter?.value else { return }
+        parameter?.setValue(value, originator: nil, atHostTime: 0, eventType: .release)
     }
 }
 
 extension AKNode: AKOutput {
     public var outputNode: AVAudioNode {
         return self.avAudioUnitOrNode
-    }
-
-    @available(*, deprecated, renamed: "connect(to:bus:)")
-    open func addConnectionPoint(_ node: AKNode, bus: Int = 0) {
-        connectionPoints.append(AVAudioConnectionPoint(node, to: bus))
-    }
-}
-
-// Deprecated
-extension AKNode {
-    @objc @available(*, deprecated, renamed: "detach")
-    open func disconnect() {
-        self.detach()
-    }
-
-    @available(*, deprecated, message: "Use AudioKit.detach(nodes:) instead")
-    open func disconnect(nodes: [AVAudioNode]) {
-        AKManager.detach(nodes: nodes)
     }
 }
 
@@ -85,7 +169,7 @@ public protocol AKPolyphonic {
     ///   - noteNumber: MIDI Note Number
     ///   - velocity:   MIDI Velocity
     ///   - frequency:  Play this frequency
-    func play(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, frequency: Double, channel: MIDIChannel)
+    func play(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, frequency: AUValue, channel: MIDIChannel)
 
     /// Play a sound corresponding to a MIDI note
     ///
@@ -106,7 +190,7 @@ public protocol AKPolyphonic {
 @objc open class AKPolyphonicNode: AKNode, AKPolyphonic {
     /// Global tuning table used by AKPolyphonicNode (AKNode classes adopting AKPolyphonic protocol)
     @objc public static var tuningTable = AKTuningTable()
-    open var midiInstrument: AVAudioUnitMIDIInstrument?
+    @objc open var midiInstrument: AVAudioUnitMIDIInstrument?
 
     /// Play a sound corresponding to a MIDI note with frequency
     ///
@@ -117,7 +201,7 @@ public protocol AKPolyphonic {
     ///
     @objc open func play(noteNumber: MIDINoteNumber,
                          velocity: MIDIVelocity,
-                         frequency: Double,
+                         frequency: AUValue,
                          channel: MIDIChannel = 0) {
         AKLog("Playing note: \(noteNumber), velocity: \(velocity), frequency: \(frequency), channel: \(channel), " +
             "override in subclass")
@@ -134,8 +218,7 @@ public protocol AKPolyphonic {
 
         // default implementation is 12 ET
         let frequency = AKPolyphonicNode.tuningTable.frequency(forNoteNumber: noteNumber)
-        //        AKLog("Playing note: \(noteNumber), velocity: \(velocity), using tuning table frequency: \(frequency)")
-        self.play(noteNumber: noteNumber, velocity: velocity, frequency: frequency, channel: channel)
+        self.play(noteNumber: noteNumber, velocity: velocity, frequency: AUValue(frequency), channel: channel)
     }
 
     /// Stop a sound corresponding to a MIDI note
@@ -145,14 +228,10 @@ public protocol AKPolyphonic {
     @objc open func stop(noteNumber: MIDINoteNumber) {
         AKLog("Stopping note \(noteNumber), override in subclass")
     }
-
-    deinit {
-        detach()
-    }
 }
 
 /// Protocol for dictating that a node can be in a started or stopped state
-@objc public protocol AKToggleable {
+public protocol AKToggleable {
     /// Tells whether the node is processing (ie. started, playing, or active)
     var isStarted: Bool { get }
 
@@ -188,5 +267,20 @@ public extension AKToggleable {
     /// Synonym for stop that may make more sense with effects
     func bypass() {
         stop()
+    }
+}
+
+public extension AKToggleable where Self: AKComponent {
+
+    var isStarted: Bool {
+        return (internalAU as? AKAudioUnitBase)?.isStarted ?? false
+    }
+
+    func start() {
+        (internalAU as? AKAudioUnitBase)?.start()
+    }
+
+    func stop() {
+        (internalAU as? AKAudioUnitBase)?.stop()
     }
 }

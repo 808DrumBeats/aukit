@@ -1,10 +1,5 @@
-//
-//  AKMIDI+Receiving.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
+
 // AKMIDI+Receiving Goals
 //      * Simplicty in discovery and presentation of available source inputs
 //      * Simplicty in inserting multiple midi transformations between a source and listeners
@@ -267,7 +262,7 @@ extension AKMIDI {
                                                  portID: portID,
                                                  offset: offset)
                 case .pitchWheel:
-                    listener.receivedMIDIPitchWheel(event.pitchbendAmount!,
+                    listener.receivedMIDIPitchWheel(event.pitchbendAmount ?? 0,
                                                     channel: MIDIChannel(eventChannel),
                                                     portID: portID,
                                                     offset: offset)

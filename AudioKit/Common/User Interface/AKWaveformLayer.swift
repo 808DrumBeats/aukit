@@ -1,10 +1,5 @@
-//
-//  AKWaveformLayer.swift
-//  AudioKit
-//
-//  Created by Ryan Francesconi on 11/21/18.
-//  Copyright © 2020 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
+import AudioKit
 
 /// A CAShapeLayer rendering of a mono waveform. Can be updated on any thread.
 open class AKWaveformLayer: CAShapeLayer {
@@ -42,12 +37,6 @@ open class AKWaveformLayer: CAShapeLayer {
             return false
         }
         return true
-    }
-
-    public var gain: Float = 1 {
-        didSet {
-            updateLayer()
-        }
     }
 
     private var absmax: Double = 1.0
@@ -147,7 +136,7 @@ open class AKWaveformLayer: CAShapeLayer {
         //            AKLog("table.count", table.count, "strideWidth", strideWidth)
         //        }
         // this is a sort of visual normalization - not desired in an accurate dB situation
-        let sampleDrawingScale = Double(halfHeight) / absmax * 0.75
+        let sampleDrawingScale = Double(halfHeight) / absmax * 0.85
 
         for i in stride(from: 0, to: table.count, by: strideWidth) {
             let x = Double(i) / Double(table.count) * Double(size.width)

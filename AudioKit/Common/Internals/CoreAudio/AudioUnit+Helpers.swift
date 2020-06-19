@@ -1,12 +1,4 @@
-//
-//  AudioUnit+Helpers.swift
-//  AudioKit
-//
-//  Created by Daniel Clelland, revision history on GitHub.
-//  Updated for AudioKit by Aurelius Prochazka.
-//
-//  Copyright © 2017 Daniel Clelland. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import CoreAudio
 
@@ -14,8 +6,6 @@ import CoreAudio
 
 /// Get, set, and listen to properties
 public extension AudioUnit {
-
-    //swiftlint:disable force_try
 
     /// Get value for a property
     func getValue<T>(forProperty property: AudioUnitPropertyID) throws -> T {

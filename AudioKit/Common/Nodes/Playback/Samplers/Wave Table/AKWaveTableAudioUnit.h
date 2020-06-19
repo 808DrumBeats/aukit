@@ -1,10 +1,4 @@
-//
-//  AKWaveTableAudioUnit.h
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #pragma once
 #import "AKAudioUnit.h"
@@ -16,7 +10,7 @@ typedef void (^AKCCallback)(void);
 @property (nonatomic) float endPoint;
 @property (nonatomic) float tempStartPoint;
 @property (nonatomic) float tempEndPoint;
-@property (nonatomic) double rate;
+@property (nonatomic) float rate;
 @property (nonatomic) float volume;
 @property (nonatomic) BOOL loop;
 @property (nonatomic) float loopStartPoint;
@@ -28,7 +22,7 @@ typedef void (^AKCCallback)(void);
 - (void)setupAudioFileTable:(UInt32)size;
 - (void)loadAudioData:(float *)data size:(UInt32)size sampleRate:(float)sampleRate numChannels:(UInt32)numChannels;
 - (int)size;
-- (double)position;
+- (float)position;
 - (void)destroy;
 
 @end

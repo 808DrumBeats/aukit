@@ -1,26 +1,20 @@
-//
-//  AKConvolution.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// This module will perform partitioned convolution on an input signal using an
-/// audio file as an impulse response.
+/// ftable as an impulse response.
 ///
 open class AKConvolution: AKNode, AKToggleable, AKComponent, AKInput {
-    public typealias AKAudioUnitType = AKConvolutionAudioUnit
+
+    // MARK: - AKComponent
+
     /// Four letter unique description of the node
     public static let ComponentDescription = AudioComponentDescription(effect: "conv")
 
-    // MARK: - Properties
-    private var internalAU: AKAudioUnitType?
+    public typealias AKAudioUnitType = AKConvolutionAudioUnit
 
-    /// Tells whether the node is processing (ie. started, playing, or active)
-    @objc open dynamic var isStarted: Bool {
-        return internalAU?.isPlaying ?? false
-    }
+    public private(set) var internalAU: AKAudioUnitType?
+
+    // MARK: - Parameters
 
     fileprivate var impulseResponseFileURL: CFURL
     fileprivate var partitionLength: Int = 2_048
@@ -30,47 +24,30 @@ open class AKConvolution: AKNode, AKToggleable, AKComponent, AKInput {
     /// Initialize this convolution node
     ///
     /// - Parameters:
-    ///   - input: Input node to process
-    ///   - impulseResponseFileURL: Location of the imulseResponse audio File
-    ///   - partitionLength: Partition length (in samples). Must be a power of 2. Lower values will add less latency,
-    ///                      at the cost of requiring more CPU power.
+    ///   - partitionLength: Partition length (in samples). Must be a power of 2.
+    ///     Lower values will add less latency, at the cost of requiring more CPU power.
     ///
-    @objc public init(_ input: AKNode? = nil,
-                      impulseResponseFileURL: URL,
-                      partitionLength: Int = 2_048) {
-
+    public init(_ input: AKNode? = nil,
+                impulseResponseFileURL: URL,
+                partitionLength: Int = 2_048
+    ) {
         self.impulseResponseFileURL = impulseResponseFileURL as CFURL
         self.partitionLength = partitionLength
 
-        _Self.register()
+        super.init(avAudioNode: AVAudioNode())
 
-        super.init()
-        AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
-            guard let strongSelf = self else {
-                AKLog("Error: self is nil")
-                return
-            }
-            strongSelf.avAudioUnit = avAudioUnit
-            strongSelf.avAudioNode = avAudioUnit
-            strongSelf.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
-            input?.connect(to: strongSelf)
-            strongSelf.internalAU?.setPartitionLength(Int32(partitionLength))
-            strongSelf.readAudioFile()
-            strongSelf.internalAU?.initConvolutionEngine()
-            strongSelf.internalAU?.start()
+        instantiateAudioUnit { avAudioUnit in
+            self.avAudioUnit = avAudioUnit
+            self.avAudioNode = avAudioUnit
+
+            self.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
+
+            self.internalAU?.setPartitionLength(partitionLength)
+            self.readAudioFile()
+            self.internalAU?.start()
+
+            input?.connect(to: self)
         }
-    }
-
-    // MARK: - Control
-
-    /// Function to start, play, or activate the node, all do the same thing
-    @objc open func start() {
-        internalAU?.start()
-    }
-
-    /// Function to stop or bypass the node, both are equivalent
-    @objc open func stop() {
-        internalAU?.stop()
     }
 
     private func readAudioFile() {
@@ -149,8 +126,10 @@ open class AKConvolution: AKNode, AKToggleable, AKComponent, AKInput {
                 err = ExtAudioFileRead(externalAudioFileRef, &ioNumberFrames, &bufferList)
                 if err == noErr {
                     // success
-                    let data = UnsafeMutablePointer<Float>(bufferList.mBuffers.mData?.assumingMemoryBound(to: Float.self))
-                    internalAU?.setupAudioFileTable(data!, size: ioNumberFrames)
+                    let data = UnsafeMutablePointer<Float>(
+                        bufferList.mBuffers.mData?.assumingMemoryBound(to: Float.self)
+                    )
+                    internalAU?.setWavetable(data: data, size: Int(ioNumberFrames))
                 } else {
                     // failure
                     theData?.deallocate()
@@ -160,5 +139,4 @@ open class AKConvolution: AKNode, AKToggleable, AKComponent, AKInput {
             }
         }
     }
-
 }

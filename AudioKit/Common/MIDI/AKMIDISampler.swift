@@ -1,10 +1,4 @@
-//
-//  AKMIDISampler.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AVFoundation
 import CoreAudio
@@ -26,9 +20,9 @@ open class AKMIDISampler: AKAppleSampler {
     ///
     /// - Parameter midiOutputName: Name of the instrument's MIDI output
     ///
-    public init(midiOutputName: String? = nil) {
+    public init(name midiOutputName: String) {
         super.init()
-        enableMIDI(name: midiOutputName ?? name)
+        enableMIDI(name: midiOutputName)
         hideVirtualMIDIPort()
     }
 

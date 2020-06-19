@@ -1,14 +1,7 @@
-//
-//  AKTuningTable+CombinationProductSet.swift
-//  AudioKit
-//
-//  Created by Marcus W. Hobbs, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 extension AKTuningTable {
-
-    //swiftlint:disable variable_name
+    // swiftlint:disable variable_name
 
     /// Create a hexany from 4 frequencies (4 choose 2)
     /// From Erv Wilson.  See http://anaphoria.com/dal.pdf and http://anaphoria.com/hexany.pdf
@@ -32,7 +25,10 @@ extension AKTuningTable {
     ///   - C: Third of the master set of frequencies
     ///   - D: Fourth of the master set of frequencies
     ///
-    @objc @discardableResult public func majorTetrany(_ A: Frequency, _ B: Frequency, _ C: Frequency, _ D: Frequency) -> Int {
+    @objc @discardableResult public func majorTetrany(_ A: Frequency,
+                                                      _ B: Frequency,
+                                                      _ C: Frequency,
+                                                      _ D: Frequency) -> Int {
         tuningTable(fromFrequencies: [A, B, C, D])
         return 4
     }
@@ -45,10 +41,11 @@ extension AKTuningTable {
     ///   - C: Third of the master set of frequencies
     ///   - D: Fourth of the master set of frequencies
     ///
-    @objc @discardableResult public func minorTetrany(_ A: Frequency, _ B: Frequency, _ C: Frequency, _ D: Frequency) -> Int {
+    @objc @discardableResult public func minorTetrany(_ A: Frequency,
+                                                      _ B: Frequency,
+                                                      _ C: Frequency,
+                                                      _ D: Frequency) -> Int {
         tuningTable(fromFrequencies: [A * B * C, A * B * D, A * C * D, B * C * D])
         return 4
     }
-
-    //TODO: Triadic Diamond, Triad, Reciprocal
 }

@@ -1,10 +1,4 @@
-//
-//  AKSamplerDSP.hpp
-//  AudioKit
-//
-//  Created by Shane Dunne, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #pragma once
 
@@ -16,6 +10,9 @@ typedef NS_ENUM(AUParameterAddress, AKSamplerParameter)
     AKSamplerParameterMasterVolume,
     AKSamplerParameterPitchBend,
     AKSamplerParameterVibratoDepth,
+    AKSamplerParameterVibratoFrequency,
+    AKSamplerParameterVoiceVibratoDepth,
+    AKSamplerParameterVoiceVibratoFrequency,
     AKSamplerParameterFilterCutoff,
     AKSamplerParameterFilterStrength,
     AKSamplerParameterFilterResonance,
@@ -23,14 +20,17 @@ typedef NS_ENUM(AUParameterAddress, AKSamplerParameter)
 
     // simple parameters
     AKSamplerParameterAttackDuration,
+    AKSamplerParameterHoldDuration,
     AKSamplerParameterDecayDuration,
     AKSamplerParameterSustainLevel,
+    AKSamplerParameterReleaseHoldDuration,
     AKSamplerParameterReleaseDuration,
     AKSamplerParameterFilterAttackDuration,
     AKSamplerParameterFilterDecayDuration,
     AKSamplerParameterFilterSustainLevel,
     AKSamplerParameterFilterReleaseDuration,
     AKSamplerParameterFilterEnable,
+    AKSamplerParameterRestartVoiceLFO,
     AKSamplerParameterPitchAttackDuration,
     AKSamplerParameterPitchDecayDuration,
     AKSamplerParameterPitchSustainLevel,
@@ -50,7 +50,7 @@ typedef NS_ENUM(AUParameterAddress, AKSamplerParameter)
 
 #include "AKSampler_Typedefs.h"
 
-AKDSPRef createAKSamplerDSP(int channelCount, double sampleRate);
+AKDSPRef createAKSamplerDSP(void);
 void doAKSamplerLoadData(AKDSPRef pDSP, AKSampleDataDescriptor *pSDD);
 void doAKSamplerLoadCompressedFile(AKDSPRef pDSP, AKSampleFileDescriptor *pSFD);
 void doAKSamplerUnloadAllSamples(AKDSPRef pDSP);
@@ -76,6 +76,9 @@ struct AKSamplerDSP : AKDSPBase, AKCoreSampler
     AKLinearParameterRamp masterVolumeRamp;
     AKLinearParameterRamp pitchBendRamp;
     AKLinearParameterRamp vibratoDepthRamp;
+    AKLinearParameterRamp vibratoFrequencyRamp;
+    AKLinearParameterRamp voiceVibratoDepthRamp;
+    AKLinearParameterRamp voiceVibratoFrequencyRamp;
     AKLinearParameterRamp filterCutoffRamp;
     AKLinearParameterRamp filterStrengthRamp;
     AKLinearParameterRamp filterResonanceRamp;

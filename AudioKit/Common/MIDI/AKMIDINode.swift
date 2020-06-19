@@ -1,10 +1,4 @@
-//
-//  AKMIDINode.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AVFoundation
 import CoreAudio
@@ -32,7 +26,7 @@ open class AKMIDINode: AKNode, AKMIDIListener {
     ///
     @objc public init(node: AKPolyphonicNode, midiOutputName: String? = nil) {
         internalNode = node
-        super.init()
+        super.init(avAudioNode: AVAudioNode())
         avAudioNode = internalNode.avAudioNode
         avAudioUnit = internalNode.avAudioUnit
       enableMIDI(name: midiOutputName ?? "Unnamed")

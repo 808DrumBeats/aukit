@@ -1,13 +1,6 @@
-//
-//  sawtoothTests.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
-import XCTest
 
 class SawtoothTests: AKTestCase {
 
@@ -22,6 +15,5 @@ class SawtoothTests: AKTestCase {
         output = sawtooth
         AKTestMD5("582e76f338bafc30a1a0954313891a5e")
     }
-
 
 }

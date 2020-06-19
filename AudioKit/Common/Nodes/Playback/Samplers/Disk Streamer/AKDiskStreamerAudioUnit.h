@@ -1,10 +1,4 @@
-//
-//  AKDiskStreamerAudioUnit.h
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #pragma once
 #import "AKAudioUnit.h"
@@ -26,11 +20,11 @@ typedef void (^AKCCallback)(void);
 
 - (void)loadFile:(const char*)filename;
 - (int)size;
-- (double)position;
+- (float)position;
 - (void)rewind;
-- (void)seekTo:(double)sample;
-- (void)setRate:(double)rate;
-- (double)getRate;
+- (void)seekTo:(float)sample;
+- (void)setRate:(float)rate;
+- (float)getRate;
 
 @end
 

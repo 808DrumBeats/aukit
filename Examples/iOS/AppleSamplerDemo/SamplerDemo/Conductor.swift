@@ -1,10 +1,4 @@
-//
-//  Conductor.swift
-//  SamplerDemo
-//
-//  Created by Jeff Cooper and Kanstantsin Linou, revision history on Githbub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 
@@ -23,17 +17,17 @@ enum Sound: String {
 class Conductor {
     private var sequencer: AKAppleSequencer!
     private var mixer = AKMixer()
-    private var arpeggioSynthesizer = AKMIDISampler()
-    private var padSynthesizer = AKMIDISampler()
-    private var bassSynthesizer = AKMIDISampler()
-    private var drumKit = AKMIDISampler()
+    private var arpeggioSynthesizer = AKMIDISampler(name: "Arpeggio Synth")
+    private var padSynthesizer = AKMIDISampler(name: "Pad Synth")
+    private var bassSynthesizer = AKMIDISampler(name: "Bass Synth")
+    private var drumKit = AKMIDISampler(name: "Drums")
     private var filter: AKMoogLadder?
 
     init() {
         mixer = AKMixer(arpeggioSynthesizer, padSynthesizer, bassSynthesizer, drumKit)
 
         filter = AKMoogLadder(mixer)
-        filter?.cutoffFrequency = 20_000
+        filter?.cutoffFrequency.value = 20_000
         AKManager.output = filter
 
         do {
@@ -60,7 +54,7 @@ class Conductor {
         sequencer.play()
     }
 
-    func adjustVolume(_ volume: Double, instrument: Instrument) {
+    func adjustVolume(_ volume: AUValue, instrument: Instrument) {
         let vol = volume * 2.0 // useful for gain
         switch instrument {
         case .arpeggio:
@@ -75,8 +69,7 @@ class Conductor {
     }
 
     func adjustFilterFrequency(_ frequency: Float) {
-        let value = Double(frequency)
-        filter?.cutoffFrequency = value.denormalized(to: 30 ... 20_000, taper: 3)
+        filter?.cutoffFrequency.value = frequency.denormalized(to: 30 ... 20_000, taper: 3)
     }
 
     func playSequence() {

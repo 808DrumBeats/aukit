@@ -1,10 +1,4 @@
-//
-//  AKDiskStreamer.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// An alternative to AKSampler or AKAudioPlayer, AKDiskStreamer is a player that
 /// will playback samples from disk, without incurring lots of memory usage
@@ -20,7 +14,7 @@ open class AKDiskStreamer: AKNode, AKComponent {
 
     // MARK: - Properties
 
-    private var internalAU: AKAudioUnitType?
+    public private(set) var internalAU: AKAudioUnitType?
 
     fileprivate var volumeParameter: AUParameter?
 
@@ -41,19 +35,19 @@ open class AKDiskStreamer: AKNode, AKComponent {
 
     /// playback rate - A value of 1 is normal, 2 is double speed, 0.5 is halfspeed, etc.
 
-    @objc open dynamic var rate: Double {
+    @objc open dynamic var rate: AUValue {
         set { internalAU?.setRate(newValue) }
         get { return internalAU?.getRate() ?? 0 }
     }
 
     /// Volume - amplitude adjustment
-    @objc open dynamic var volume: Double = 1 {
+    @objc open dynamic var volume: AUValue = 1 {
         willSet {
             guard volume != newValue else { return }
             if internalAU?.isSetUp == true {
-                volumeParameter?.value = AUValue(newValue)
+                volumeParameter?.value = newValue
             } else {
-                internalAU?.volume = AUValue(newValue)
+                internalAU?.volume = newValue
             }
         }
     }
@@ -68,8 +62,8 @@ open class AKDiskStreamer: AKNode, AKComponent {
 
     /// Number of samples in the audio stored in memory
     open var size: Sample {
-        if avAudiofile != nil {
-            return Sample(avAudiofile!.samplesCount)
+        if let file = avAudiofile {
+            return Sample(file.samplesCount)
         }
         return 0
     }
@@ -80,15 +74,15 @@ open class AKDiskStreamer: AKNode, AKComponent {
     }
 
     /// Position in the audio file from 0 - 1
-    open var normalizedPosition: Double {
+    open var normalizedPosition: AUValue {
         guard let internalAU = internalAU else { return 0 }
-        return Double(internalAU.position())
+        return internalAU.position()
     }
 
     /// Position in the audio in samples, but represented as a double since
     /// you could conceivably be at a non-integer sample
-    open var position: Double {
-        return normalizedPosition * Double(size)
+    open var position: AUValue {
+        return normalizedPosition * AUValue(size)
     }
 
     /// Tells whether the node is processing (ie. started, playing, or active)
@@ -109,6 +103,8 @@ open class AKDiskStreamer: AKNode, AKComponent {
         }
     }
 
+    open var loadedFile: AKAudioFile?
+
     // MARK: - Initialization
 
     /// Initialize this SamplePlayer node
@@ -118,7 +114,7 @@ open class AKDiskStreamer: AKNode, AKComponent {
     ///   - completionHandler: Callback to run when the sample playback is completed
     ///   - loadCompletionHandler: Callback to run when the sample is loaded
     ///
-    @objc public init(volume: Double = 1,
+    @objc public init(volume: AUValue = 1,
                       completionHandler: @escaping AKCCallback = {},
                       loadCompletionHandler: @escaping AKCCallback = {}) {
 
@@ -128,7 +124,7 @@ open class AKDiskStreamer: AKNode, AKComponent {
 
         _Self.register()
 
-        super.init()
+        super.init(avAudioNode: AVAudioNode())
 
         AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
             guard let strongSelf = self else {
@@ -149,11 +145,7 @@ open class AKDiskStreamer: AKNode, AKComponent {
 
         volumeParameter = tree["volume"]
 
-        internalAU?.volume = Float(volume)
-    }
-
-    @objc override convenience public init() {
-        self.init(volume: 1)
+        internalAU?.volume = volume
     }
 
     // MARK: - Control
@@ -195,13 +187,14 @@ open class AKDiskStreamer: AKNode, AKComponent {
         internalAU?.loopStartPoint = Float(safeSample(startPoint))
         internalAU?.loopEndPoint = Float(safeSample(endPoint))
         internalAU?.loadFile(file.avAsset.url.path)
+        loadedFile = file
     }
 
     open func rewind() {
         internalAU?.rewind()
     }
 
-    open func seek(to sample: Double) {
+    open func seek(to sample: AUValue) {
         internalAU?.seek(to: sample)
     }
 }

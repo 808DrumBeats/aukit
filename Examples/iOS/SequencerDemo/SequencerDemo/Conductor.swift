@@ -1,10 +1,4 @@
-//
-//  Conductor.swift
-//  SequencerDemo
-//
-//  Created by Kanstantsin Linou, revision history on Githbub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 
@@ -24,9 +18,9 @@ class Conductor {
     var mixer = AKMixer()
     var pumper: AKCompressor!
 
-    var currentTempo = 110.0 {
+    var currentTempo: AUValue = 110.0 {
         didSet {
-            sequencer.setTempo(currentTempo)
+            sequencer.setTempo(Double(currentTempo))
         }
     }
 

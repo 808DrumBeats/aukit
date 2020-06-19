@@ -1,10 +1,4 @@
-//
-//  ViewController.swift
-//  SequencerDemo
-//
-//  Created by Kanstantsin Linou, revision history on Githbub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 import AudioKitUI
@@ -102,7 +96,7 @@ class ViewController: UIViewController {
         snareButton?.isEnabled = true
     }
 
-    func updateTempo(value: Double) {
+    func updateTempo(value: AUValue) {
         conductor.currentTempo = value
     }
 }

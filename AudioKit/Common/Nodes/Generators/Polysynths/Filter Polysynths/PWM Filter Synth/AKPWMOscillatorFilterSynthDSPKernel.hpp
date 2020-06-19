@@ -1,10 +1,4 @@
-//
-//  AKPWMOscillatorFilterSynthDSPKernel.hpp
-//  AudioKit
-//
-//  Created by Colin Hallett, revision history on Github.
-//  Copyright © 2019 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #ifdef __cplusplus
 #pragma once
@@ -129,7 +123,7 @@ public:
 
     void init(int channelCount, double sampleRate) override {
         AKFilterSynthDSPKernel::init(channelCount, sampleRate);
-        pulseWidthRamper.init();
+        pulseWidthRamper.init(sampleRate);
     }
 
     void reset() override {

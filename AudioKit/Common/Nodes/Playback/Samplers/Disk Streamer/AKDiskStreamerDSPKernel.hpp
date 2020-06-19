@@ -1,10 +1,4 @@
-//
-//  AKDiskStreamerDSPKernel.hpp
-//  AudioKit
-//
-//  Created by Jeff Cooper, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 #pragma once
 #import "AKSoundpipeKernel.hpp"
@@ -28,8 +22,8 @@ public:
 
         sp_wavin_create(&wavin);
 
-        rateRamper.init();
-        volumeRamper.init();
+        rateRamper.init(sampleRate);
+        volumeRamper.init(sampleRate);
     }
 
     void start() {
@@ -45,7 +39,6 @@ public:
         started = false;
         useTempStartPoint = false;
         useTempEndPoint = false;
-        rewind();
     }
 
     void rewind() {
@@ -53,7 +46,7 @@ public:
         position = startPointViaRate();
     }
 
-    void seekTo(double sample) {
+    void seekTo(float sample) {
         sp_wavin_seek(sp, wavin, sample);
         position = sample;
     }
@@ -103,7 +96,7 @@ public:
         loop = value;
     }
 
-    void setRate(double value) {
+    void setRate(float value) {
         rate = value;
     }
 
@@ -147,11 +140,11 @@ public:
 
             int frameOffset = int(frameIndex + bufferOffset);
 
-            volume = double(volumeRamper.getAndStep());
+            volume = volumeRamper.getAndStep();
 
             float startPointToUse = startPointViaRate();
             float endPointToUse = endPointViaRate();
-            double nextPosition = position + sampleStep();
+            float nextPosition = position + sampleStep();
 
             if (started){
                 calculateMainPlayComplete(nextPosition);
@@ -216,7 +209,7 @@ public:
         if (rate == 0) {return 0;}
         return (rate > 0 ? loopEndPoint : loopStartPoint);
     }
-    double sampleStep(){
+    float sampleStep(){
         int reverseMultiplier = 1;
         if (inLoopPhase && loopReversed()){
             reverseMultiplier = -1;
@@ -226,7 +219,7 @@ public:
         }
         return sampleRateRatio() * fabs(rate) * reverseMultiplier * wavin->wav.channels;
     }
-    double sampleRateRatio(){
+    float sampleRateRatio(){
         return sourceSampleRate / AKSettings.sampleRate;
     }
     // MARK: Member Variables
@@ -250,21 +243,21 @@ public:
         return (endPointViaRate() < startPointViaRate() ? true : false);
     }
     
-    void calculateMainPlayComplete(double nextPosition){
+    void calculateMainPlayComplete(float nextPosition){
         if (nextPosition > endPointViaRate() && !startEndReversed()){
             mainPlayComplete = true;
         }else if (nextPosition < endPointViaRate() && startEndReversed()){
             mainPlayComplete = true;
         }
     }
-    bool calculateHasEnded(double nextPosition){
+    bool calculateHasEnded(float nextPosition){
         if ((nextPosition > endPointViaRate() && !startEndReversed()) ||
             (nextPosition < endPointViaRate() && startEndReversed())){
             return true;
         }
         return false;
     }
-    void calculateLoopPhase(double nextPosition){
+    void calculateLoopPhase(float nextPosition){
         if (!inLoopPhase && mainPlayComplete){
             if (nextPosition > endPointViaRate() && !startEndReversed()){
                 inLoopPhase = true;
@@ -275,7 +268,7 @@ public:
             }
         }
     }
-    void calculateShouldLoop(double nextPosition){
+    void calculateShouldLoop(float nextPosition){
         if (mainPlayComplete){
             if (nextPosition > loopEndPointViaRate() && !loopReversed()){
                 doLoopActions();
@@ -319,6 +312,6 @@ public:
     AKCCallback loopCallback = nullptr;
     UInt32 ftbl_size = 2;
     unsigned long long current_size = 2;
-    double position = 0.0;
-    double rate = 1;
+    float position = 0.0;
+    float rate = 1;
 };

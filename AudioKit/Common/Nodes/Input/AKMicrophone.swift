@@ -1,10 +1,4 @@
-//
-//  AKMicrophone.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 /// Audio from the standard input
 @objc open class AKMicrophone: AKNode, AKToggleable {
@@ -12,10 +6,10 @@
     internal let mixer = AVAudioMixerNode()
 
     /// Output Volume (Default 1)
-    @objc open dynamic var volume: Double = 1.0 {
+    @objc open dynamic var volume: AUValue = 1.0 {
         didSet {
             volume = max(volume, 0)
-            mixer.outputVolume = Float(volume)
+            mixer.outputVolume = volume
         }
     }
 
@@ -28,7 +22,7 @@
         }
     }
 
-    fileprivate var lastKnownVolume: Double = 1.0
+    fileprivate var lastKnownVolume: AUValue = 1.0
 
     /// Determine if the microphone is currently on.
     @objc open dynamic var isStarted: Bool {
@@ -37,7 +31,7 @@
 
     /// Initialize the microphone
 	@objc public init?(with format: AVAudioFormat? = nil) {
-		super.init()
+		super.init(avAudioNode: AVAudioNode())
 		guard let formatForDevice = getFormatForDevice() else {
 			AKLog("Error! Cannot unwrap format for device. Can't init the mic.")
 			return nil

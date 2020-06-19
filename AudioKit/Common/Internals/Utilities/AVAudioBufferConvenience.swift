@@ -1,10 +1,4 @@
-//
-//  AVAudioBufferConvenience.swift
-//  AudioKit
-//
-//  Created by David O'Neill, revision history on GitHub.
-//  Copyright © 2017 Audive Inc. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 extension AVAudioPCMBuffer {
 
@@ -243,8 +237,6 @@ extension AVAudioPCMBuffer {
         } else if outRampType == .exponential {
             fadeOutPower = exp(-log(25) * sampleTime / outTime)
         }
-
-        // TODO: .logarithmic
 
         // where in the buffer to end the fade in
         let fadeInSamples = Int(sampleRate * inTime)

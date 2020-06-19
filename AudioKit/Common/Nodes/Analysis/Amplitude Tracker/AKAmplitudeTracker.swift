@@ -1,10 +1,4 @@
-//
-//  AKAmplitudeTracker.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 public typealias AKThresholdCallback = @convention(block) (Bool) -> Void
 
@@ -18,12 +12,12 @@ open class AKAmplitudeTracker: AKNode, AKToggleable, AKComponent, AKInput {
 
     // MARK: - Properties
 
-    internal var internalAU: AKAudioUnitType?
+    public private(set) var internalAU: AKAudioUnitType?
 
     fileprivate var halfPowerPointParameter: AUParameter?
-    //    open var smoothness: Double = 1 { // should be 0 and above
+    //    @objc open var smoothness: AUValue = 1 { // should be 0 and above
     //        willSet {
-    //            internalAU?.smoothness = 0.05 * AUValue(newValue)
+    //            internalAU?.smoothness = 0.05 * newValue
     //        }
     //    } //in development
 
@@ -33,24 +27,24 @@ open class AKAmplitudeTracker: AKNode, AKToggleable, AKComponent, AKInput {
     }
 
     /// Detected amplitude
-    @objc open dynamic var amplitude: Double {
+    @objc open dynamic var amplitude: AUValue {
         return (leftAmplitude + rightAmplitude) / 2.0
     }
 
     /// Detected amplitude
-    @objc open dynamic var leftAmplitude: Double {
-        return Double(internalAU?.leftAmplitude ?? 0)
+    @objc open dynamic var leftAmplitude: AUValue {
+        return internalAU?.leftAmplitude ?? 0
     }
 
     /// Detected right amplitude
-    @objc open dynamic var rightAmplitude: Double {
-        return Double(internalAU?.rightAmplitude ?? 0)
+    @objc open dynamic var rightAmplitude: AUValue {
+        return internalAU?.rightAmplitude ?? 0
     }
 
     /// Threshold amplitude
-    @objc open dynamic var threshold: Double = 1 {
+    @objc open dynamic var threshold: AUValue = 1 {
         willSet {
-            internalAU?.threshold = AUValue(newValue)
+            internalAU?.threshold = newValue
         }
     }
 
@@ -76,15 +70,15 @@ open class AKAmplitudeTracker: AKNode, AKToggleable, AKComponent, AKInput {
     ///
     @objc public init(
         _ input: AKNode? = nil,
-        halfPowerPoint: Double = 10,
-        threshold: Double = 1,
+        halfPowerPoint: AUValue = 10,
+        threshold: AUValue = 1,
         thresholdCallback: @escaping AKThresholdCallback = { _ in }) {
 
         self.threshold = threshold
 
         _Self.register()
 
-        super.init()
+        super.init(avAudioNode: AVAudioNode())
         AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
             guard let strongSelf = self else {
                 AKLog("Error: self is nil")
@@ -96,7 +90,7 @@ open class AKAmplitudeTracker: AKNode, AKToggleable, AKComponent, AKInput {
             strongSelf.internalAU?.thresholdCallback = thresholdCallback
 
             if let au = strongSelf.internalAU {
-                au.setHalfPowerPoint(Float(halfPowerPoint))
+                au.setHalfPowerPoint(halfPowerPoint)
             }
             input?.connect(to: strongSelf)
         }
@@ -104,18 +98,6 @@ open class AKAmplitudeTracker: AKNode, AKToggleable, AKComponent, AKInput {
 
     deinit {
         AKLog("* AKAmplitudeTracker")
-    }
-
-    // MARK: - Control
-
-    /// Function to start, play, or activate the node, all do the same thing
-    @objc open func start() {
-        internalAU?.start()
-    }
-
-    /// Function to stop or bypass the node, both are equivalent
-    @objc open func stop() {
-        internalAU?.stop()
     }
 
 }

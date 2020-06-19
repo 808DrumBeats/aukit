@@ -1,12 +1,65 @@
-//
-//  AKPlayer+Playback.swift
-//  AudioKit
-//
-//  Created by Ryan Francesconi on 6/12/18.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import Foundation
+
+// MARK: - Loading
+
+extension AKPlayer {
+    /// Replace the contents of the player with this url. Note that if your processingFormat changes
+    /// you should dispose this AKPlayer and create a new one instead.
+    @objc public func load(url: URL) throws {
+        let file = try AVAudioFile(forReading: url)
+        try load(audioFile: file)
+    }
+
+    /// Load a new audio file into this player. Note that if your processingFormat changes
+    /// you should dispose this AKPlayer and create a new one instead.
+    @objc public func load(audioFile: AVAudioFile) throws {
+        if audioFile.processingFormat != processingFormat {
+            AKLog("⚠️ Warning: This file is a different format than the previously loaded one. " +
+                "You should make a new AKPlayer instance and reconnect. " +
+                "load() is only available for files that are the same format.")
+            throw NSError(domain: "Processing format doesn't match", code: 0, userInfo: nil)
+        }
+
+        self.audioFile = audioFile
+        initialize(restartIfPlaying: false)
+        // will reset the stored start / end times or update the buffer
+        preroll()
+    }
+
+    /// Mostly applicable to buffered players, this loads the buffer and gets it ready to play.
+    /// Otherwise it just sets the edit points and enables the fader if the region
+    /// has fade in or out applied to it.
+    @objc public func preroll(from startingTime: Double = 0, to endingTime: Double = 0) {
+        var from = startingTime
+        var to = endingTime
+
+        if to == 0 {
+            to = duration
+        }
+
+        if from > to {
+            from = 0
+        }
+        startTime = from
+        endTime = to
+
+        if isBuffered {
+            updateBuffer()
+        }
+
+        if isFaded, !isBufferFaded {
+            // make sure the fader has been enabled
+            super.startFader()
+        } else {
+            // if there are no fades, be sure to reset this
+            super.resetFader()
+        }
+    }
+}
+
+// MARK: - Main Playback Options
 
 extension AKPlayer {
     internal var useCompletionHandler: Bool {
@@ -94,12 +147,10 @@ extension AKPlayer {
 
     /// Provides a convenience method for a quick fade out for when a user presses stop.
     public func fadeOutAndStop(time: TimeInterval) {
-        guard isPlaying else {
-            return
-        }
+        guard isPlaying else { return }
 
         // creates if necessary only
-        createFader()
+        startFader()
 
         // Provides a convenience for a quick fade out when a user presses stop.
         // Only do this if it's realtime playback, as Timers aren't running
@@ -123,15 +174,15 @@ extension AKPlayer {
 
     @objc private func autoFadeOutCompletion() {
         playerNode.stop()
-        super.faderNode?.stopAutomation()
+        super.faderNode?.parameterAutomation?.stopPlayback()
         isPlaying = false
     }
 
     @objc internal func stopCompletion() {
+        guard isPlaying else { return }
         playerNode.stop()
-
         if isFaded {
-            super.faderNode?.stopAutomation()
+            super.faderNode?.parameterAutomation?.stopPlayback()
         }
         isPlaying = false
     }
@@ -145,12 +196,14 @@ extension AKPlayer {
             let refTime = hostTime ?? mach_absolute_time()
 
             if audioTime.isSampleTimeValid {
+                // offline
                 let adjustedFrames = Double(audioTime.sampleTime) * _rate
                 scheduleTime = AVAudioTime(hostTime: refTime,
                                            sampleTime: AVAudioFramePosition(adjustedFrames),
                                            atRate: sampleRate)
 
             } else if audioTime.isHostTimeValid {
+                // realtime
                 let adjustedFrames = (audioTime.toSeconds(hostTime: refTime) * _rate) * sampleRate
                 scheduleTime = AVAudioTime(hostTime: refTime,
                                            sampleTime: AVAudioFramePosition(adjustedFrames),
@@ -171,7 +224,7 @@ extension AKPlayer {
             initialize()
         }
 
-        var bufferOptions: AVAudioPlayerNodeBufferOptions = [.interrupts] // isLooping ? [.loops, .interrupts] : [.interrupts]
+        var bufferOptions: AVAudioPlayerNodeBufferOptions = [.interrupts]
 
         if isLooping, buffering == .always {
             bufferOptions = [.loops, .interrupts]
@@ -207,7 +260,7 @@ extension AKPlayer {
 
         let totalFrames = (audioFile.length - startFrame) - (audioFile.length - endFrame)
         guard totalFrames > 0 else {
-            AKLog("Unable to schedule file. totalFrames to play is \(totalFrames). audioFile.length is \(audioFile.length)")
+            AKLog("Unable to schedule file. totalFrames to play: \(totalFrames). audioFile.length: \(audioFile.length)")
             return
         }
 
@@ -236,7 +289,6 @@ extension AKPlayer {
 
     @available(iOS 11, macOS 10.13, tvOS 11, *)
     @objc internal func handleCallbackComplete(completionType: AVAudioPlayerNodeCompletionCallbackType) {
-
         // only forward the completion if is actually done playing without user intervention.
 
         // it seems to be unstable having any outbound calls from this callback not be sent to main?
@@ -257,14 +309,15 @@ extension AKPlayer {
                     }
                 }
             } catch {
-                AKLog("Failed to check currentFrame and call completion handler: \(error)... Possible Media Service Reset?")
+                AKLog("Failed to check currentFrame and call completion handler: \(error)... ",
+                      "Possible Media Service Reset?")
             }
         }
     }
 
     @objc private func handleComplete() {
         stop()
-        super.faderNode?.stopAutomation()
+        super.faderNode?.parameterAutomation?.stopPlayback()
 
         if isLooping {
             startTime = loop.start
@@ -279,5 +332,41 @@ extension AKPlayer {
         }
 
         completionHandler?()
+    }
+}
+
+@objc extension AKPlayer: AKTiming {
+    public func start(at audioTime: AVAudioTime?) {
+        play(at: audioTime)
+    }
+
+    public var isStarted: Bool {
+        return isPlaying
+    }
+
+    public func setPosition(_ position: Double) {
+        startTime = position
+        if isPlaying {
+            stop()
+            play()
+        }
+    }
+
+    public func position(at audioTime: AVAudioTime?) -> Double {
+        guard let playerTime = playerNode.playerTime(forNodeTime: audioTime ?? AVAudioTime.now()) else {
+            return startTime
+        }
+        return startTime + Double(playerTime.sampleTime) / playerTime.sampleRate
+    }
+
+    public func audioTime(at position: Double) -> AVAudioTime? {
+        let sampleRate = playerNode.outputFormat(forBus: 0).sampleRate
+        let sampleTime = (position - startTime) * sampleRate
+        let playerTime = AVAudioTime(sampleTime: AVAudioFramePosition(sampleTime), atRate: sampleRate)
+        return playerNode.nodeTime(forPlayerTime: playerTime)
+    }
+
+    open func prepare() {
+        preroll(from: startTime, to: endTime)
     }
 }

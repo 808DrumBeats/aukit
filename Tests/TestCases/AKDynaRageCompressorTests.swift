@@ -1,10 +1,4 @@
-//
-//  AKDynaRangeCompressorTests.swift
-//  AudioKitTestSuite
-//
-//  Created by Aurelius Prochazka, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
 import XCTest
@@ -16,7 +10,7 @@ class AKDynaRangeCompressorTests: AKTestCase {
         // Need to have a longer test duration to allow for envelope to progress
         duration = 1.0
         input.rampDuration = 0.0
-        input.amplitude = 0.1
+        input.amplitude.value = 0.1
     }
 
     func testAttackTime() {

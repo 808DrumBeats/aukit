@@ -1,10 +1,4 @@
-//
-//  AudioKitHelpers.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on Github.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioToolbox
 import CoreAudio
@@ -47,7 +41,7 @@ extension CGRect {
 ///
 public func fourCC(_ string: String) -> UInt32 {
     let utf8 = string.utf8
-    precondition(utf8.count == 4, "Must be a 4 char string")
+    precondition(utf8.count == 4, "Must be a 4 character string")
     var out: UInt32 = 0
     for char in utf8 {
         out <<= 8
@@ -56,72 +50,30 @@ public func fourCC(_ string: String) -> UInt32 {
     return out
 }
 
-/// Random double between bounds
-///
-/// - Parameters:
-///   - minimum: Lower bound of randomization
-///   - maximum: Upper bound of randomization
-///
-@available(*, deprecated, renamed: "random(in:)")
-public func random(_ minimum: Double, _ maximum: Double) -> Double {
-    return random(in: minimum ... maximum)
-}
-
-/// Random double in range
+/// Random AUValue(float) in range
 ///
 /// - parameter in: Range of randomization
 ///
-public func random(in range: ClosedRange<Double>) -> Double {
+public func random(in range: ClosedRange<AUValue>) -> AUValue {
     let precision = 1_000_000
     let width = range.upperBound - range.lowerBound
 
-    return Double(arc4random_uniform(UInt32(precision))) / Double(precision) * width + range.lowerBound
+    return AUValue(arc4random_uniform(UInt32(precision))) / AUValue(precision) * width + range.lowerBound
 }
 
 // MARK: - Normalization Helpers
 
 /// Extension to calculate scaling factors, useful for UI controls
-extension Double {
+extension AUValue {
     /// Return a value on [minimum, maximum] to a [0, 1] range, according to a taper
     ///
     /// - Parameters:
     ///   - to: Source range (cannot include zero if taper is not positive)
-    ///   - taper: For taper > 0, there is an algebraic curve, taper = 1 is linear, and taper < 0 is exponential
+    ///   - taper:Must be a postive number, taper = 1 is linear
     ///
-    public func normalized(from range: ClosedRange<Double>, taper: Double = 1) -> Double {
-        assert(!(range.contains(0.0) && taper < 0), "Cannot have negative taper with a range containing zero.")
-
-        if taper > 0 {
-            // algebraic taper
-            return pow(((self - range.lowerBound) / (range.upperBound - range.lowerBound)), (1.0 / taper))
-        } else {
-            // exponential taper
-            return range.lowerBound * exp(log(range.upperBound / range.lowerBound) * self)
-        }
-    }
-
-    /// Return a value on [minimum, maximum] to a [0, 1] range, according to a taper
-    ///
-    /// - Parameters:
-    ///   - minimum: Minimum of the source range (cannot be zero if taper is not positive)
-    ///   - maximum: Maximum of the source range
-    ///   - taper: For taper > 0, there is an algebraic curve, taper = 1 is linear, and taper < 0 is exponential
-    ///
-    @available(*, deprecated, renamed: "normalized(from:taper:)")
-    public func normalized(minimum: Double, maximum: Double, taper: Double = 1) -> Double {
-        return self.normalized(from: minimum ... maximum, taper: taper)
-    }
-
-    /// Convert a value on [minimum, maximum] to a [0, 1] range, according to a taper
-    ///
-    /// - Parameters:
-    ///   - minimum: Minimum of the source range (cannot be zero if taper is not positive)
-    ///   - maximum: Maximum of the source range
-    ///   - taper: For taper > 0, there is an algebraic curve, taper = 1 is linear, and taper < 0 is exponential
-    ///
-    @available(*, deprecated, renamed: "normalize(from:taper:)")
-    public mutating func normalize(minimum: Double, maximum: Double, taper: Double = 1) {
-        self = self.normalized(from: minimum ... maximum, taper: taper)
+    public func normalized(from range: ClosedRange<AUValue>, taper: AUValue = 1) -> AUValue {
+        assert(taper > 0, "Cannot have non-positive taper.")
+        return powf((self - range.lowerBound) / (range.upperBound - range.lowerBound), 1.0 / taper)
     }
 
     /// Return a value on [0, 1] to a [minimum, maximum] range, according to a taper
@@ -130,50 +82,9 @@ extension Double {
     ///   - to: Target range (cannot contain zero if taper is not positive)
     ///   - taper: For taper > 0, there is an algebraic curve, taper = 1 is linear, and taper < 0 is exponential
     ///
-    public func denormalized(to range: ClosedRange<Double>, taper: Double = 1) -> Double {
-        assert(!(range.contains(0.0) && taper < 0), "Cannot have negative taper with a range containing zero.")
-
-        // Avoiding division by zero in this trivial case
-        if range.upperBound - range.lowerBound < 0.00001 {
-            return range.lowerBound
-        }
-
-        if taper > 0 {
-            // algebraic taper
-            return range.lowerBound + (range.upperBound - range.lowerBound) * pow(self, taper)
-        } else {
-            // exponential taper
-            var adjustedMinimum: Double = 0.0
-            var adjustedMaximum: Double = 0.0
-            if range.lowerBound == 0 { adjustedMinimum = 0.00_000_000_001 }
-            if range.upperBound == 0 { adjustedMaximum = 0.00_000_000_001 }
-
-            return log(self / adjustedMinimum) / log(adjustedMaximum / adjustedMinimum)
-        }
-    }
-
-    /// Return a value on [0, 1] to a [minimum, maximum] range, according to a taper
-    ///
-    /// - Parameters:
-    ///   - minimum: Minimum of the target range (cannot be zero if taper is not positive)
-    ///   - maximum: Maximum of the target range
-    ///   - taper: For taper > 0, there is an algebraic curve, taper = 1 is linear, and taper < 0 is exponential
-    ///
-    @available(*, deprecated, renamed: "denormalized(to:taper:)")
-    public func denormalized(minimum: Double, maximum: Double, taper: Double = 1) -> Double {
-        return self.denormalized(to: minimum ... maximum, taper: taper)
-    }
-
-    /// Convert a value on [0, 1] to a [min, max] range, according to a taper
-    ///
-    /// - Parameters:
-    ///   - minimum: Minimum of the target range (cannot be zero if taper is not positive)
-    ///   - maximum: Maximum of the target range
-    ///   - taper: For taper > 0, there is an algebraic curve, taper = 1 is linear, and taper < 0 is exponential
-    ///
-    @available(*, deprecated, renamed: "denormalize(to:taper:)")
-    public mutating func denormalize(minimum: Double, maximum: Double, taper: Double = 1) {
-        self = self.denormalized(to: minimum ... maximum, taper: taper)
+    public func denormalized(to range: ClosedRange<AUValue>, taper: AUValue = 1) -> AUValue {
+        assert(taper > 0, "Cannot have non-positive taper.")
+        return range.lowerBound + (range.upperBound - range.lowerBound) * powf(self, taper)
     }
 }
 
@@ -183,8 +94,8 @@ extension Int {
     ///
     /// - parameter aRef: Reference frequency of A Note (Default: 440Hz)
     ///
-    public func midiNoteToFrequency(_ aRef: Double = 440.0) -> Double {
-        return Double(self).midiNoteToFrequency(aRef)
+    public func midiNoteToFrequency(_ aRef: AUValue = 440.0) -> AUValue {
+        return AUValue(self).midiNoteToFrequency(aRef)
     }
 }
 
@@ -194,18 +105,18 @@ extension UInt8 {
     ///
     /// - parameter aRef: Reference frequency of A Note (Default: 440Hz)
     ///
-    public func midiNoteToFrequency(_ aRef: Double = 440.0) -> Double {
-        return Double(self).midiNoteToFrequency(aRef)
+    public func midiNoteToFrequency(_ aRef: AUValue = 440.0) -> AUValue {
+        return AUValue(self).midiNoteToFrequency(aRef)
     }
 }
 
-/// Extension to Double to get the frequency from a MIDI Note Number
-extension Double {
+/// Extension to get the frequency from a MIDI Note Number
+extension AUValue {
     /// Calculate frequency from a floating point MIDI Note Number
     ///
     /// - parameter aRef: Reference frequency of A Note (Default: 440Hz)
     ///
-    public func midiNoteToFrequency(_ aRef: Double = 440.0) -> Double {
+    public func midiNoteToFrequency(_ aRef: AUValue = 440.0) -> AUValue {
         return pow(2.0, (self - 69.0) / 12.0) * aRef
     }
 }
@@ -215,18 +126,18 @@ extension Int {
     ///
     /// - parameter aRef: Reference frequency of A Note (Default: 440Hz)
     ///
-    public func frequencyToMIDINote(_ aRef: Double = 440.0) -> Double {
-        return Double(self).frequencyToMIDINote(aRef)
+    public func frequencyToMIDINote(_ aRef: AUValue = 440.0) -> AUValue {
+        return AUValue(self).frequencyToMIDINote(aRef)
     }
 }
 
-/// Extension to Double to get the frequency from a MIDI Note Number
-extension Double {
+/// Extension to get the frequency from a MIDI Note Number
+extension AUValue {
     /// Calculate MIDI Note Number from a frequency in Hz
     ///
     /// - parameter aRef: Reference frequency of A Note (Default: 440Hz)
     ///
-    public func frequencyToMIDINote(_ aRef: Double = 440.0) -> Double {
+    public func frequencyToMIDINote(_ aRef: AUValue = 440.0) -> AUValue {
         return 69 + 12 * log2(self / aRef)
     }
 }
@@ -262,20 +173,20 @@ extension Sequence where Iterator.Element: Hashable {
 }
 
 @inline(__always)
-internal func AudioUnitGetParameter(_ unit: AudioUnit, param: AudioUnitParameterID) -> Double {
+internal func AudioUnitGetParameter(_ unit: AudioUnit, param: AudioUnitParameterID) -> AUValue {
     var val: AudioUnitParameterValue = 0
     AudioUnitGetParameter(unit, param, kAudioUnitScope_Global, 0, &val)
-    return Double(val)
+    return val
 }
 
 @inline(__always)
-internal func AudioUnitSetParameter(_ unit: AudioUnit, param: AudioUnitParameterID, to value: Double) {
+internal func AudioUnitSetParameter(_ unit: AudioUnit, param: AudioUnitParameterID, to value: AUValue) {
     AudioUnitSetParameter(unit, param, kAudioUnitScope_Global, 0, AudioUnitParameterValue(value), 0)
 }
 
 /// Adding subscript
 extension AVAudioUnit {
-    subscript(param: AudioUnitParameterID) -> Double {
+    subscript(param: AudioUnitParameterID) -> AUValue {
         get {
             return AudioUnitGetParameter(audioUnit, param: param)
         }
@@ -292,7 +203,7 @@ internal struct AUWrapper {
         self.avAudioUnit = avAudioUnit
     }
 
-    subscript(param: AudioUnitParameterID) -> Double {
+    subscript(param: AudioUnitParameterID) -> AUValue {
         get {
             return self.avAudioUnit[param]
         }
@@ -325,14 +236,14 @@ public extension AUParameter {
     convenience init(identifier: String,
                      name: String,
                      address: AUParameterAddress,
-                     range: ClosedRange<Double>,
+                     range: ClosedRange<AUValue>,
                      unit: AudioUnitParameterUnit,
                      flags: AudioUnitParameterOptions) {
         self.init(identifier: identifier,
                   name: name,
                   address: address,
-                  min: AUValue(range.lowerBound),
-                  max: AUValue(range.upperBound),
+                  min: range.lowerBound,
+                  max: range.upperBound,
                   unit: unit,
                   flags: flags)
     }

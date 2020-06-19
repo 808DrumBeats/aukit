@@ -1,10 +1,4 @@
-//
-//  ContentView.swift
-//  Drums
-//
-//  Created by Matthias Frick on 11/09/2019.
-//  Copyright © 2019 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import SwiftUI
 
@@ -23,8 +17,8 @@ struct PadsView: View {
             }) {
               ZStack {
                 Rectangle()
-                  .fill(Color(self.conductor.drumSamples.map({$0.color})[getPadId(row: row, column: column)]))
-                Text(self.conductor.drumSamples.map({$0.name})[getPadId(row: row, column: column)])
+                  .fill(Color(self.conductor.drumSamples.map({ $0.color })[getPadId(row: row, column: column)]))
+                Text(self.conductor.drumSamples.map({ $0.name })[getPadId(row: row, column: column)])
                   .foregroundColor(Color("FontColor")).fontWeight(.bold)
 
               }

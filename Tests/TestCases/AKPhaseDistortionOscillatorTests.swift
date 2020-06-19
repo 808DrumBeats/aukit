@@ -1,13 +1,6 @@
-//
-//  AKPhaseDistortionOscillatorTests.swift
-//  AudioKit for iOS
-//
-//  Created by Aurelius Prochazka, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
-import XCTest
 
 class AKPhaseDistortionOscillatorTests: AKTestCase {
 
@@ -29,9 +22,9 @@ class AKPhaseDistortionOscillatorTests: AKTestCase {
                                                  amplitude: 0.5,
                                                  phaseDistortion: 1.234,
                                                  detuningOffset: 1.234,
-                                                 detuningMultiplier: 1.234)
+                                                 detuningMultiplier: 1.1)
         output = oscillator
-        AKTestMD5("664e9b50ff633d1bb6bd8e173bec09e3")
+        AKTestMD5("2e01df8582f3357dd0886066b09eaba9")
     }
 
     func testFrequency() {
@@ -59,20 +52,20 @@ class AKPhaseDistortionOscillatorTests: AKTestCase {
     }
 
     func testDetuningMultiplier() {
-        oscillator = AKPhaseDistortionOscillator(waveform: AKTable(.square), detuningMultiplier: 1.234)
+        oscillator = AKPhaseDistortionOscillator(waveform: AKTable(.square), detuningMultiplier: 1.1)
         output = oscillator
-        AKTestMD5("41332aab84da42575572efa17fc040c2")
+        AKTestMD5("78244cdf0afa2e3030205cebf175e024")
     }
 
     func testParametersSetAfterInit() {
         oscillator = AKPhaseDistortionOscillator(waveform: AKTable(.square))
         oscillator.rampDuration = 0.0
-        oscillator.frequency = 1_234
-        oscillator.amplitude = 0.5
-        oscillator.phaseDistortion = 1.234
-        oscillator.detuningOffset = 1.234
-        oscillator.detuningMultiplier = 1.234
+        oscillator.frequency.value = 1_234
+        oscillator.amplitude.value = 0.5
+        oscillator.phaseDistortion.value = 1.234
+        oscillator.detuningOffset.value = 1.234
+        oscillator.detuningMultiplier.value = 1.1
         output = oscillator
-        AKTestMD5("664e9b50ff633d1bb6bd8e173bec09e3")
+        AKTestMD5("2e01df8582f3357dd0886066b09eaba9")
     }
 }

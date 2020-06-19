@@ -1,13 +1,6 @@
-//
-//  phasorTests.swift
-//  AudioKit
-//
-//  Created by Aurelius Prochazka, revision history on GitHub.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
-import XCTest
 
 class PhasorTests: AKTestCase {
 
@@ -15,7 +8,7 @@ class PhasorTests: AKTestCase {
 
     override func setUp() {
         super.setUp()
-        afterStart =  { self.phasor.start() }
+        afterStart = { self.phasor.start() }
         duration = 1.0
     }
 
@@ -25,4 +18,3 @@ class PhasorTests: AKTestCase {
     }
 
 }
-

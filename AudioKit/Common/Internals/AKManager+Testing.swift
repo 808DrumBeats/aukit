@@ -1,15 +1,8 @@
-//
-//  AudioKit+Testing.swift
-//  AudioKit
-//
-//  Created by Jeff Cooper on 4/20/18.
-//  Copyright © 2018 AudioKit. All rights reserved.
-//
+// Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import Foundation
 
 extension AKManager {
-
     // MARK: - Testing
 
     /// Testing AKNode
@@ -34,15 +27,17 @@ extension AKManager {
             let maximumFrameCount: AVAudioFrameCount = 4_096
             try AKTry {
                 engine.reset()
-                try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: maximumFrameCount)
+                try engine.enableManualRenderingMode(.offline,
+                                                     format: AKSettings.audioFormat,
+                                                     maximumFrameCount: maximumFrameCount)
                 try engine.start()
             }
 
             afterStart()
             tester?.play()
 
-            let buffer: AVAudioPCMBuffer = AVAudioPCMBuffer(pcmFormat: engine.manualRenderingFormat,
-                                                            frameCapacity: engine.manualRenderingMaximumFrameCount)!
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: engine.manualRenderingFormat,
+                                                frameCapacity: engine.manualRenderingMaximumFrameCount) else { return }
 
             while engine.manualRenderingSampleTime < samples {
                 let framesToRender = buffer.frameCapacity
