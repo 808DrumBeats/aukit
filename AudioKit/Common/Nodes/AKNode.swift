@@ -13,7 +13,23 @@ open class AKNode: NSObject {
     open var avAudioNode: AVAudioNode
 
     /// The internal AVAudioUnit, which is a subclass of AVAudioNode with more capabilities
-    open var avAudioUnit: AVAudioUnit?
+    open var avAudioUnit: AVAudioUnit? {
+        didSet {
+            if let akAudioUnit = avAudioUnit?.auAudioUnit as? AKAudioUnitBase {
+                let mirror = Mirror(reflecting: self)
+
+                for child in mirror.children {
+                    if let param = child.value as? Parameter, let label = child.label {
+                        // Property wrappers create a variable with an underscore
+                        // prepended. Drop the underscore to look up the parameter.
+                        let name = String(label.dropFirst())
+                        param.projectedValue.associate(with: akAudioUnit,
+                                                       identifier: name)
+                    }
+                }
+            }
+        }
+    }
 
     /// Returns either the avAudioUnit or avAudioNode (prefers the avAudioUnit if it exists)
     open var avAudioUnitOrNode: AVAudioNode {
@@ -48,7 +64,7 @@ open class AKNode: NSObject {
 }
 
 /// AKNodeParameter wraps AUParameter in a user-friendly interface and adds some AudioKit-specific functionality.
-open class AKNodeParameter {
+public class AKNodeParameter {
 
     private var dsp: AKDSPRef?
 
@@ -110,11 +126,6 @@ open class AKNodeParameter {
     public init(identifier: String, value: AUValue = 0) {
         self.identifier = identifier
         self.value = value
-
-        // set initial value (and ensure initial value is set)
-        self.value = value
-        guard let min = parameter?.minValue, let max = parameter?.maxValue else { return }
-        parameter?.value = (min...max).clamp(value)
     }
 
     /// This function should be called from AKNode subclasses as soon as a valid AU is obtained
@@ -155,6 +166,126 @@ open class AKNodeParameter {
     }
 }
 
+/// AKNodeParameter wraps AUParameter in a user-friendly interface and adds some AudioKit-specific functionality.
+/// New version for use with Parameter property wrapper.
+public class AKNodeParameter2 {
+
+    private var dsp: AKDSPRef?
+
+    private var parameter: AUParameter?
+
+    // MARK: Parameter properties
+
+    public var value: AUValue = 0 {
+        didSet {
+            guard let min = parameter?.minValue, let max = parameter?.maxValue else { return }
+            value = (min...max).clamp(value)
+            if value == oldValue { return }
+            parameter?.value = value
+        }
+    }
+
+    public var boolValue: Bool {
+        get { value > 0.5 }
+        set { value = newValue ? 1.0 : 0.0 }
+    }
+
+    public var minValue: AUValue {
+        parameter?.minValue ?? 0
+    }
+
+    public var maxValue: AUValue {
+        parameter?.maxValue ?? 1
+    }
+
+    public var range: ClosedRange<AUValue> {
+        (parameter?.minValue ?? 0) ... (parameter?.maxValue ?? 1)
+    }
+
+    public var rampDuration: Float = Float(AKSettings.rampDuration) {
+        didSet {
+            guard let dsp = dsp, let addr = parameter?.address else { return }
+            setParameterRampDurationDSP(dsp, addr, rampDuration)
+        }
+    }
+
+    public var rampTaper: Float = 1 {
+        didSet {
+            guard let dsp = dsp, let addr = parameter?.address else { return }
+            setParameterRampTaperDSP(dsp, addr, rampTaper)
+        }
+    }
+
+    public var rampSkew: Float = 0 {
+        didSet {
+            guard let dsp = dsp, let addr = parameter?.address else { return }
+            setParameterRampSkewDSP(dsp, addr, rampSkew)
+        }
+    }
+
+    // MARK: Lifecycle
+
+    /// This function should be called from AKNode subclasses as soon as a valid AU is obtained
+    public func associate(with au: AKAudioUnitBase, identifier: String) {
+        dsp = au.dsp
+        parameter = au.parameterTree?[identifier]
+        assert(parameter != nil)
+
+        guard let dsp = dsp, let addr = parameter?.address else { return }
+        setParameterRampDurationDSP(dsp, addr, rampDuration)
+        setParameterRampTaperDSP(dsp, addr, rampTaper)
+        setParameterRampSkewDSP(dsp, addr, rampSkew)
+
+        guard let min = parameter?.minValue, let max = parameter?.maxValue else { return }
+        parameter?.value = (min...max).clamp(value)
+    }
+
+    /// Sends a .touch event to the parameter automation observer, beginning automation recording if
+    /// enabled in AKParameterAutomation.
+    /// A value may be passed as the initial automation value. The current value is used if none is passed.
+    public func beginTouch(value: AUValue? = nil) {
+        guard let value = value ?? parameter?.value else { return }
+        parameter?.setValue(value, originator: nil, atHostTime: 0, eventType: .touch)
+    }
+
+    /// Sends a .release event to the parameter observation observer, ending any automation recording.
+    /// A value may be passed as the final automation value. The current value is used if none is passed.
+    public func endTouch(value: AUValue? = nil) {
+        guard let value = value ?? parameter?.value else { return }
+        parameter?.setValue(value, originator: nil, atHostTime: 0, eventType: .release)
+    }
+}
+
+/// Wraps AKNodeParameter so we can easily assign values to it.
+///
+/// Instead of`osc.frequency.value = 440`, we have `osc.frequency = 440`
+///
+/// Use the $ operator to access the underlying AKNodeParameter. For example:
+/// `osc.$frequency.maxValue`
+///
+/// When writing an AKNode, use:
+/// ```
+/// @Parameter("myParameterName") var myParameterName: AUValue
+/// ```
+/// This syntax gives us additional flexibility for how parameters are implemented internally.
+@propertyWrapper
+public struct Parameter {
+
+    var param = AKNodeParameter2()
+
+    public init() { }
+
+    public var wrappedValue: AUValue {
+        get { param.value }
+        set { param.value = newValue }
+    }
+
+    public var projectedValue: AKNodeParameter2 {
+        get { param }
+        set { param = newValue }
+    }
+}
+
 extension AKNode: AKOutput {
     public var outputNode: AVAudioNode {
         return self.avAudioUnitOrNode
@@ -190,7 +321,7 @@ public protocol AKPolyphonic {
 @objc open class AKPolyphonicNode: AKNode, AKPolyphonic {
     /// Global tuning table used by AKPolyphonicNode (AKNode classes adopting AKPolyphonic protocol)
     @objc public static var tuningTable = AKTuningTable()
-    @objc open var midiInstrument: AVAudioUnitMIDIInstrument?
+    open var midiInstrument: AVAudioUnitMIDIInstrument?
 
     /// Play a sound corresponding to a MIDI note with frequency
     ///
@@ -199,10 +330,10 @@ public protocol AKPolyphonic {
     ///   - velocity:   MIDI Velocity
     ///   - frequency:  Play this frequency
     ///
-    @objc open func play(noteNumber: MIDINoteNumber,
-                         velocity: MIDIVelocity,
-                         frequency: AUValue,
-                         channel: MIDIChannel = 0) {
+    open func play(noteNumber: MIDINoteNumber,
+                   velocity: MIDIVelocity,
+                   frequency: AUValue,
+                   channel: MIDIChannel = 0) {
         AKLog("Playing note: \(noteNumber), velocity: \(velocity), frequency: \(frequency), channel: \(channel), " +
             "override in subclass")
     }
@@ -213,7 +344,7 @@ public protocol AKPolyphonic {
     ///   - noteNumber: MIDI Note Number
     ///   - velocity:   MIDI Velocity
     ///
-    @objc open func play(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel = 0) {
+    open func play(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel = 0) {
         // MARK: Microtonal pitch lookup
 
         // default implementation is 12 ET
@@ -225,7 +356,7 @@ public protocol AKPolyphonic {
     ///
     /// - parameter noteNumber: MIDI Note Number
     ///
-    @objc open func stop(noteNumber: MIDINoteNumber) {
+    open func stop(noteNumber: MIDINoteNumber) {
         AKLog("Stopping note \(noteNumber), override in subclass")
     }
 }

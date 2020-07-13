@@ -6,34 +6,22 @@
 /// for a signal to decay to 1/1000, or 60dB down from its original amplitude).
 /// Output from a comb filter will appear only after loopDuration seconds.
 ///
+/// TODO: Known bug: Loop duration is ignored
+///
 open class AKCombFilterReverb: AKNode, AKToggleable, AKComponent, AKInput, AKAutomatable {
 
-    // MARK: - AKComponent
-
-    /// Four letter unique description of the node
     public static let ComponentDescription = AudioComponentDescription(effect: "comb")
 
     public typealias AKAudioUnitType = AKCombFilterReverbAudioUnit
 
     public private(set) var internalAU: AKAudioUnitType?
 
-    // MARK: - AKAutomatable
-
     public private(set) var parameterAutomation: AKParameterAutomation?
 
     // MARK: - Parameters
 
-    /// Lower and upper bounds for Reverb Duration
-    public static let reverbDurationRange: ClosedRange<AUValue> = 0.0 ... 10.0
-
-    /// Initial value for Reverb Duration
-    public static let defaultReverbDuration: AUValue = 1.0
-
-    /// Initial value for Loop Duration
-    public static let defaultLoopDuration: AUValue = 0.1
-
     /// The time in seconds for a signal to decay to 1/1000, or 60dB from its original amplitude. (aka RT-60).
-    public let reverbDuration = AKNodeParameter(identifier: "reverbDuration")
+    @Parameter public var reverbDuration: AUValue
 
     // MARK: - Initialization
 
@@ -49,19 +37,18 @@ open class AKCombFilterReverb: AKNode, AKToggleable, AKComponent, AKInput, AKAut
     ///
     public init(
         _ input: AKNode? = nil,
-        reverbDuration: AUValue = defaultReverbDuration,
-        loopDuration: AUValue = defaultLoopDuration
+        reverbDuration: AUValue = 1.0,
+        loopDuration: AUValue = 0.1
         ) {
         super.init(avAudioNode: AVAudioNode())
-
+        self.reverbDuration = reverbDuration
         instantiateAudioUnit { avAudioUnit in
             self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             self.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
-            self.parameterAutomation = AKParameterAutomation(avAudioUnit)
 
-            self.reverbDuration.associate(with: self.internalAU, value: reverbDuration)
+            self.parameterAutomation = AKParameterAutomation(avAudioUnit)
 
             input?.connect(to: self)
         }

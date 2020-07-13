@@ -20,7 +20,6 @@ import AVFoundation
  videoPlayer.setRate(1, time: kCMTimeInvalid, atHostTime: futureTime)
  }
  ```
-
  Basic usage looks like:
  ```
  guard let player = AKPlayer(url: url) else { return }
@@ -34,7 +33,6 @@ import AVFoundation
 
  player.play()
  ```
-
  Please note that pre macOS 10.13 / iOS 11 you will need to provide your own completionHandler if needed.
  */
 public class AKPlayer: AKAbstractPlayer {
@@ -50,10 +48,10 @@ public class AKPlayer: AKAbstractPlayer {
     // MARK: - Nodes
 
     /// The underlying player node
-    @objc public var playerNode = AVAudioPlayerNode()
+    public var playerNode = AVAudioPlayerNode()
 
     /// If sample rate conversion is needed
-    @objc public var mixerNode: AVAudioMixerNode?
+    public var mixerNode: AVAudioMixerNode?
 
     // MARK: - Private Parts
 
@@ -72,7 +70,7 @@ public class AKPlayer: AKAbstractPlayer {
 
     /// Completion handler to be called when Audio is done playing. The handler won't be called if
     /// stop() is called while playing or when looping from a buffer. Requires iOS 11, macOS 10.13.
-    @objc public var completionHandler: AKCallback? {
+    public var completionHandler: AKCallback? {
         didSet {
             if #available(iOS 11, macOS 10.13, tvOS 11, *) {
             } else {
@@ -85,10 +83,10 @@ public class AKPlayer: AKAbstractPlayer {
 
     /// Completion handler to be called when Audio has looped. The handler won't be called if
     /// stop() is called while playing.
-    @objc public var loopCompletionHandler: AKCallback?
+    public var loopCompletionHandler: AKCallback?
 
     /// Used with buffering players
-    @objc public var buffer: AVAudioPCMBuffer?
+    public var buffer: AVAudioPCMBuffer?
 
     /// Sets if the player should buffer dynamically (as needed) or always.
     /// Not buffering means streaming from disk (best for long files),
@@ -131,7 +129,7 @@ public class AKPlayer: AKAbstractPlayer {
 
     /// Volume 0.0 -> 1.0, default 1.0
     /// This is different than gain
-    @objc public var volume: AUValue {
+    public var volume: AUValue {
         get {
             return playerNode.volume
         }
@@ -142,7 +140,7 @@ public class AKPlayer: AKAbstractPlayer {
     }
 
     /// Left/Right balance -1.0 -> 1.0, default 0.0
-    @objc public var pan: AUValue {
+    public var pan: AUValue {
         get {
             return playerNode.pan
         }
@@ -157,7 +155,7 @@ public class AKPlayer: AKAbstractPlayer {
     @objc public internal(set) var frameCount: AVAudioFrameCount = 0
 
     /// - Returns: The current frame while playing
-    @objc public var currentFrame: AVAudioFramePosition {
+    public var currentFrame: AVAudioFramePosition {
         if let nodeTime = playerNode.lastRenderTime,
             let playerTime = playerNode.playerTime(forNodeTime: nodeTime) {
             return playerTime.sampleTime
@@ -166,7 +164,7 @@ public class AKPlayer: AKAbstractPlayer {
     }
 
     /// - Returns: Current time of the player in seconds while playing.
-    @objc public var currentTime: Double {
+    public var currentTime: Double {
         let currentDuration = (endTime - startTime == 0) ? duration : (endTime - startTime)
         var normalizedPauseTime = 0.0
         if let pauseTime = pauseTime, pauseTime > startTime {
@@ -184,19 +182,19 @@ public class AKPlayer: AKAbstractPlayer {
     }
 
     /// Returns the audioFile's internal processingFormat
-    @objc public var processingFormat: AVAudioFormat? {
+    public var processingFormat: AVAudioFormat? {
         return audioFile?.processingFormat
     }
 
     // MARK: - Public Options
 
     /// true if the player is buffering audio rather than playing from disk
-    @objc public var isBuffered: Bool {
+    public var isBuffered: Bool {
         return isNormalized || isReversed || buffering == .always
     }
 
     /// Will automatically normalize on buffer updates if enabled
-    @objc public var isNormalized: Bool = false {
+    public var isNormalized: Bool = false {
         didSet {
             updateBuffer(force: true)
         }
@@ -206,14 +204,10 @@ public class AKPlayer: AKAbstractPlayer {
     @objc public internal(set) var isPaused: Bool = false
 
     /// Reversing the audio will set the player to buffering
-    @objc public var isReversed: Bool = false {
+    public var isReversed: Bool = false {
         didSet {
-            if isPlaying {
-                stop()
-            }
-            if isFaded {
-                fade.needsUpdate = true
-            }
+            if isPlaying { stop() }
+            if isFaded { fade.needsUpdate = true }
             updateBuffer(force: true)
         }
     }
@@ -221,7 +215,7 @@ public class AKPlayer: AKAbstractPlayer {
     // When buffered this will indicate if the buffer will be faded.
     // Fading the actual buffer data is necessary as loops when buffered don't fire
     // a callback on loop restart
-    @objc public var isBufferFaded: Bool {
+    public var isBufferFaded: Bool {
         return buffering == .always && isLooping
     }
 
@@ -233,9 +227,7 @@ public class AKPlayer: AKAbstractPlayer {
         faderNode = output
 
         // start this bypassed
-        faderNode?.bypass()
-
-        // AKLog("Fader input format:", faderNode?.avAudioUnitOrNode.inputFormat(forBus: 0))
+        bypassFader()
     }
 
     /// Create a player from a URL
@@ -248,7 +240,7 @@ public class AKPlayer: AKAbstractPlayer {
             self.init(audioFile: avfile, reopenFile: false)
             return
         } catch {
-            AKLog("ERROR loading \(url.path) \(error)")
+            AKLog("ERROR loading \(url.path) \(error)", log: .fileHandling, type: .error)
         }
         return nil
     }
@@ -259,15 +251,22 @@ public class AKPlayer: AKAbstractPlayer {
     @objc public convenience init(audioFile: AVAudioFile, reopenFile: Bool = true) {
         self.init()
 
+        // sets processingFormat
         self.audioFile = audioFile
 
         if reopenFile, let readFile = try? AVAudioFile(forReading: audioFile.url) {
             self.audioFile = readFile
         }
 
-        if mixerNode == nil, processingFormat != AKSettings.audioFormat {
-            AKLog("⚠️ Warning: This file is a different format than AKSettings. A mixer is being placed in line.")
-            AKLog("processingFormat:", processingFormat, "AKSettings.audioFormat:", AKSettings.audioFormat)
+        if mixerNode == nil,
+            let processingFormat = processingFormat,
+            processingFormat.sampleRate != AKSettings.audioFormat.sampleRate {
+            let error = "⚠️ Warning: This file is a different sample rate than AKSettings. " +
+                "A mixer is being placed in line. " +
+                "File.processingFormat: \(processingFormat) AKSettings.audioFormat: \(AKSettings.audioFormat)"
+
+            AKLog(error, log: .fileHandling, type: .error)
+
             let strongMixer = AVAudioMixerNode()
             mixerNode = strongMixer
         }
@@ -317,11 +316,10 @@ public class AKPlayer: AKAbstractPlayer {
     // see AKDynamicPlayer
     internal func connectNodes() {
         guard let processingFormat = processingFormat else {
-            AKLog("Error: the audioFile processingFormat is nil, so nothing can be connected.")
+            AKLog("Error: the audioFile processingFormat is nil, so nothing can be connected.", log: .fileHandling, type: .error)
             return
         }
 
-        var connectionFormat = processingFormat
         var playerOutput: AVAudioNode = playerNode
 
         // if there is a mixer that was creating, insert it in line
@@ -329,15 +327,16 @@ public class AKPlayer: AKAbstractPlayer {
         // AKSettings.audioFormat if needed
         if let mixerNode = mixerNode {
             AKManager.connect(playerNode, to: mixerNode, format: processingFormat)
-            connectionFormat = AKSettings.audioFormat
             playerOutput = mixerNode
         }
+
+        // now set the ongoing format to AKSettings
+        let connectionFormat = AKSettings.audioFormat
 
         if let faderNode = faderNode {
             AKManager.connect(playerOutput, to: faderNode.avAudioUnitOrNode, format: connectionFormat)
         }
-
-        faderNode?.bypass()
+        bypassFader()
     }
 
     // MARK: - Play
@@ -351,8 +350,7 @@ public class AKPlayer: AKAbstractPlayer {
     // Placed in main class to be overriden in subclasses if needed.
     public func play(from startingTime: Double, to endingTime: Double, at audioTime: AVAudioTime?, hostTime: UInt64?) {
         let refTime = hostTime ?? mach_absolute_time()
-        let audioTime = audioTime ?? AVAudioTime.now()
-
+        var audioTime = audioTime ?? AVAudioTime.now()
         isPlaying = true
 
         preroll(from: startingTime, to: endingTime)
@@ -361,6 +359,19 @@ public class AKPlayer: AKAbstractPlayer {
         // prepare the fader
         if isFaded, !isBufferFaded {
             scheduleFader()
+
+            // Offline: if sample rate is mismatched from AKSettings.sampleRate,
+            // then adjust the scheduling to compensate. See also AKAbstractPlayer.scheduleFader
+            if renderingMode == .offline, sampleRate != AKSettings.sampleRate {
+                let sampleRateRatio = sampleRate / AKSettings.sampleRate
+
+                let sampleTime = AVAudioFramePosition(Double(audioTime.sampleTime) / sampleRateRatio)
+                audioTime = AVAudioTime(hostTime: audioTime.hostTime, sampleTime: sampleTime, atRate: sampleRate)
+
+                // AKLog("AKSettings sample rate (\(AKSettings.sampleRate) is mismatched from the player ", sampleRate)
+                // AKLog("Adjusted fade out values by the ratio:", sampleRateRatio)
+            }
+
             faderNode?.parameterAutomation?.startPlayback(at: audioTime, offset: offsetTime)
         }
 
