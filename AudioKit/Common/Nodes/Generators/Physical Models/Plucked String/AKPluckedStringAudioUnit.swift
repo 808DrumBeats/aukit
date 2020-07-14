@@ -1,14 +1,12 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
-import AVFoundation
-
 public class AKPluckedStringAudioUnit: AKAudioUnitBase {
 
     let frequency = AUParameter(
         identifier: "frequency",
-        name: "Frequency",
+        name: "Variable frequency. Values less than the initial frequency will be doubled until greater than that.",
         address: AKPluckedStringParameter.frequency.rawValue,
-        range: AKPluckedString.frequencyRange,
+        range: 0 ... 22_000,
         unit: .hertz,
         flags: .default)
 
@@ -16,7 +14,7 @@ public class AKPluckedStringAudioUnit: AKAudioUnitBase {
         identifier: "amplitude",
         name: "Amplitude",
         address: AKPluckedStringParameter.amplitude.rawValue,
-        range: AKPluckedString.amplitudeRange,
+        range: 0 ... 1,
         unit: .generic,
         flags: .default)
 

@@ -1,14 +1,12 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
-import AVFoundation
-
 public class AKTremoloAudioUnit: AKAudioUnitBase {
 
     let frequency = AUParameter(
         identifier: "frequency",
         name: "Frequency (Hz)",
         address: AKTremoloParameter.frequency.rawValue,
-        range: AKTremolo.frequencyRange,
+        range: 0.0 ... 100.0,
         unit: .hertz,
         flags: .default)
 
@@ -16,7 +14,7 @@ public class AKTremoloAudioUnit: AKAudioUnitBase {
         identifier: "depth",
         name: "Depth",
         address: AKTremoloParameter.depth.rawValue,
-        range: AKTremolo.depthRange,
+        range: 0.0 ... 1.0,
         unit: .generic,
         flags: .default)
 

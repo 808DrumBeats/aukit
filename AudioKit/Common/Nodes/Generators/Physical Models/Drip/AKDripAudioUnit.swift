@@ -1,14 +1,12 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
-import AVFoundation
-
 public class AKDripAudioUnit: AKAudioUnitBase {
 
     let intensity = AUParameter(
         identifier: "intensity",
         name: "The intensity of the dripping sounds.",
         address: AKDripParameter.intensity.rawValue,
-        range: AKDrip.intensityRange,
+        range: 0 ... 100,
         unit: .generic,
         flags: .default)
 
@@ -16,7 +14,7 @@ public class AKDripAudioUnit: AKAudioUnitBase {
         identifier: "dampingFactor",
         name: "The damping factor. Maximum value is 2.0.",
         address: AKDripParameter.dampingFactor.rawValue,
-        range: AKDrip.dampingFactorRange,
+        range: 0.0 ... 2.0,
         unit: .generic,
         flags: .default)
 
@@ -24,7 +22,7 @@ public class AKDripAudioUnit: AKAudioUnitBase {
         identifier: "energyReturn",
         name: "The amount of energy to add back into the system.",
         address: AKDripParameter.energyReturn.rawValue,
-        range: AKDrip.energyReturnRange,
+        range: 0 ... 100,
         unit: .generic,
         flags: .default)
 
@@ -32,7 +30,7 @@ public class AKDripAudioUnit: AKAudioUnitBase {
         identifier: "mainResonantFrequency",
         name: "Main resonant frequency.",
         address: AKDripParameter.mainResonantFrequency.rawValue,
-        range: AKDrip.mainResonantFrequencyRange,
+        range: 0 ... 22_000,
         unit: .hertz,
         flags: .default)
 
@@ -40,7 +38,7 @@ public class AKDripAudioUnit: AKAudioUnitBase {
         identifier: "firstResonantFrequency",
         name: "The first resonant frequency.",
         address: AKDripParameter.firstResonantFrequency.rawValue,
-        range: AKDrip.firstResonantFrequencyRange,
+        range: 0 ... 22_000,
         unit: .hertz,
         flags: .default)
 
@@ -48,7 +46,7 @@ public class AKDripAudioUnit: AKAudioUnitBase {
         identifier: "secondResonantFrequency",
         name: "The second resonant frequency.",
         address: AKDripParameter.secondResonantFrequency.rawValue,
-        range: AKDrip.secondResonantFrequencyRange,
+        range: 0 ... 22_000,
         unit: .hertz,
         flags: .default)
 
@@ -56,7 +54,7 @@ public class AKDripAudioUnit: AKAudioUnitBase {
         identifier: "amplitude",
         name: "Amplitude.",
         address: AKDripParameter.amplitude.rawValue,
-        range: AKDrip.amplitudeRange,
+        range: 0 ... 1,
         unit: .generic,
         flags: .default)
 

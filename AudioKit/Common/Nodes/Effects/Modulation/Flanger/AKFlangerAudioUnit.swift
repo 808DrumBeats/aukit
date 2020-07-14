@@ -1,14 +1,12 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
-import AVFoundation
-
 public class AKFlangerAudioUnit: AKAudioUnitBase {
 
     var frequency = AUParameter(
         identifier: "frequency",
         name: "Frequency (Hz)",
         address: AKModulatedDelayParameter.frequency.rawValue,
-        range: AKFlanger.frequencyRange,
+        range: kAKFlanger_MinFrequency ... kAKFlanger_MaxFrequency,
         unit: .hertz,
         flags: .default)
 
@@ -16,7 +14,7 @@ public class AKFlangerAudioUnit: AKAudioUnitBase {
        identifier: "depth",
        name: "Depth 0-1",
        address: AKModulatedDelayParameter.depth.rawValue,
-       range: AKFlanger.depthRange,
+       range: kAKFlanger_MinDepth ... kAKFlanger_MaxDepth,
        unit: .generic,
        flags: .default)
 
@@ -24,7 +22,7 @@ public class AKFlangerAudioUnit: AKAudioUnitBase {
        identifier: "feedback",
        name: "Feedback 0-1",
        address: AKModulatedDelayParameter.feedback.rawValue,
-       range: AKFlanger.feedbackRange,
+       range: kAKFlanger_MinFeedback ... kAKFlanger_MaxFeedback,
        unit: .generic,
        flags: .default)
 
@@ -32,7 +30,7 @@ public class AKFlangerAudioUnit: AKAudioUnitBase {
        identifier: "dryWetMix",
        name: "Dry Wet Mix 0-1",
        address: AKModulatedDelayParameter.dryWetMix.rawValue,
-       range: AKFlanger.dryWetMixRange,
+       range: kAKFlanger_MinDryWetMix ... kAKFlanger_MaxDryWetMix,
        unit: .generic,
        flags: .default)
 

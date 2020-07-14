@@ -31,12 +31,12 @@ class AKBoosterTests: AKTestCase {
         let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
         let url = desktop.appendingPathComponent("TestOutput.aif")
         let settings: [String: Any] = [AVSampleRateKey: 44_100.0, AVNumberOfChannelsKey: 2]
-        let audioFile = try! AKAudioFile(forWriting: url, settings: settings)
+        let audioFile = try! AVAudioFile(forWriting: url, settings: settings)
         let osc = AKOscillator()
         let booster = AKBooster(osc, gain: 1.0)
         booster.rampDuration = 1
-        booster.leftGain.value = 0.0
-        booster.rightGain.value = 0.0
+        booster.leftGain = 0.0
+        booster.rightGain = 0.0
         osc.connect(to: booster)
         AKManager.output = booster
         try! AKManager.renderToFile(audioFile, duration: 4, prerender: {
