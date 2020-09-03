@@ -1,12 +1,12 @@
 //: ## Tracking Amplitude
 //: Determing the amplitude of an audio signal by
-//: outputting the value of a generator node into the AKAmplitudeTracker.
+//: outputting the value of a generator node into the AKAmplitudeTap.
 //: This node is great if you want to build an app that does audio monitoring and analysis.
 import AudioKitPlaygrounds
 import AudioKit
 
 //: First lets set up sound source to track
-let oscillatorNode = AKOperationGenerator { _ in
+let oscillatorNode = AKOperationGenerator {
     // Let's set up the volume to be changing in the shape of a sine wave
     let volume = AKOperation.sineWave(frequency: 0.2).scale(minimum: 0, maximum: 0.5)
 
@@ -17,10 +17,11 @@ let oscillatorNode = AKOperationGenerator { _ in
     return AKOperation.sineWave(frequency: frequency, amplitude: volume)
 }
 
-let trackedAmplitude = AKAmplitudeTracker(oscillatorNode)
-AKManager.output = trackedAmplitude
-try AKManager.start()
+let trackedAmplitude = AKAmplitudeTap(oscillatorNode)
+engine.output = trackedAmplitude
+try engine.start()
 oscillatorNode.start()
+trackedAmplitude.start()
 
 //: User Interface
 import AudioKitUI

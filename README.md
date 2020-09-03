@@ -29,18 +29,16 @@ If you, your team or your company is using AudioKit, please consider [sponsoring
 
 ## Installation
 
-Installation details are found in the [Frameworks README file](https://github.com/audiokit/AudioKit/blob/master/Frameworks/README.md).
+### Swift Package Manager
+
+**AudioKit is available as a Swift Package! (requires Xcode 11.x)**. To add AudioKit to your Xcode project, select File -> Swift Packages -> Add Package Depedancy. Enter `https://github.com/AudioKit/AudioKit` for the URL.
+
+### CocoaPods
 
 AudioKit is also available via [CocoaPods](https://cocoapods.org/pods/AudioKit). Place the following in your `Podfile`:
 
 ```
     pod 'AudioKit', '~> 5.0'
-```
-
-If you do not need the UI components, you can select just the Core pod, like so:
-
-```
-   pod 'AudioKit/Core'
 ```
 
 You can also use [Carthage](https://github.com/Carthage/Carthage) (v0.30 or higher) to install our precompiled static frameworks in your project.
@@ -53,8 +51,8 @@ For Hello World, you only need to understand a few lines of code:
 | Code                                           | Description                  |
 |------------------------------------------------|------------------------------|
 | `var oscillator = AKOscillator()`              | Create the sound generator   |
-| `AKManager.output = oscillator`                | Tell AudioKit what to output |
-| `AKManager.start()`                            | Start up AudioKit            |
+| `engine.output = oscillator`                | Tell AudioKit what to output |
+| `engine.start()`                            | Start up AudioKit            |
 | `oscillator.start()`                           | Start the oscillator         |
 | `oscillator.frequency = random(in: 220...880)` | Set oscillator parameters    |
 | `oscillator.stop()`                            | Stop the oscillator          |

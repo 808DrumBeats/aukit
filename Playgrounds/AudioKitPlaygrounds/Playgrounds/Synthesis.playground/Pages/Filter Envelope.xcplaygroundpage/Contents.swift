@@ -35,7 +35,7 @@ extension AKOperationGenerator {
     }
 }
 
-let synth = AKOperationGenerator { _ in
+let synth = AKOperationGenerator {
 
     let oscillator = AKOperation.fmOscillator(baseFrequency: Synth.frequency,
                                               carrierMultiplier: 3,
@@ -53,8 +53,8 @@ let synth = AKOperationGenerator { _ in
         resonance: 0.9)
 }
 
-AKManager.output = synth
-try AKManager.start()
+engine.output = synth
+try engine.start()
 synth.parameters = [0, 1_000, 0] // Initialize the array
 synth.start()
 

@@ -5,10 +5,9 @@
 //: ## Low-Frequency Oscillation of Parameters
 //: ### Oftentimes we want rhythmic changing of parameters that varying in a standard way.
 //: ### This is traditionally done with Low-Frequency Oscillators, LFOs.
-import AudioKitPlaygrounds
 import AudioKit
 
-let generator = AKOperationGenerator { _ in
+let generator = AKOperationGenerator {
     let frequencyLFO = AKOperation.square(frequency: 1)
         .scale(minimum: 440, maximum: 880)
     let carrierLFO = AKOperation.triangle(frequency: 1)
@@ -26,8 +25,8 @@ let generator = AKOperationGenerator { _ in
         amplitude: 0.2)
 }
 
-AKManager.output = generator
-try AKManager.start()
+engine.output = generator
+try engine.start()
 
 generator.start()
 

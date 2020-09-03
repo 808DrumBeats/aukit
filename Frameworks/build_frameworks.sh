@@ -32,24 +32,37 @@ if [ ! -f build_frameworks.sh ]; then
     exit 0
 fi
 
+(cd ..; swift package generate-xcodeproj --xcconfig-overrides AudioKit.xcconfig)
+
 VERSION=$(cat ../VERSION)
 FRAMEWORKS=$(cat Frameworks.list)
 PLATFORMS=${PLATFORMS:-"iOS macOS tvOS"}
 
-if test "$TRAVIS" = true;
+if [[ "$TRAVIS" = true ]];
 then
 	echo "Travis detected, build #$TRAVIS_BUILD_NUMBER"
-	if test "$TRAVIS_BRANCH" = "$STAGING_BRANCH"; then # Staging build
+	if [[ "$TRAVIS_BRANCH" = "$STAGING_BRANCH" ]]; then # Staging build
 		ACTIVE_ARCH=NO
 		XCSUFFIX=""
 		VERSION="${VERSION}.b1"
-	elif test "$TRAVIS_TAG" != ""; then  # Release build
+	elif [[ "$TRAVIS_TAG" != "" ]]; then  # Release build
 		ACTIVE_ARCH=NO
 		XCSUFFIX=""
 	else # Test build
 		ACTIVE_ARCH=YES
 		XCSUFFIX="-travis"
+		SIMULATOR_ONLY=true
 		PLATFORMS="iOS macOS" # Skipping tvOS?
+	fi
+elif [[ "$GITHUB_ACTION" != "" ]]; then
+	echo "GitHub Actions Workflow detected, run #$GITHUB_RUN_ID"
+	if [[ "$GITHUB_REF" != "refs/heads/staging" ]] && [[ "$GITHUB_REF" != refs/tag/* ]]; then
+		ACTIVE_ARCH=YES
+		XCSUFFIX="-travis"
+		SIMULATOR_ONLY=true
+	else
+		ACTIVE_ARCH=NO
+		XCSUFFIX=""
 	fi
 else # Regular command-line assumed
 	ACTIVE_ARCH=NO
@@ -66,12 +79,12 @@ fi
 # Provide 3 arguments: platform (iOS or tvOS), simulator os, native os
 create_universal_frameworks()
 {
-	PROJECT="../AudioKit/AudioKit.xcodeproj"
+	PROJECT="../AudioKit.xcodeproj"
 	DIR="AudioKit-$1"
 	rm -rf $DIR/*.framework
 	mkdir -p "$DIR"
-	xcodebuild -project "$PROJECT" -target "All-$1" -xcconfig simulator${XCSUFFIX}.xcconfig -configuration ${CONFIGURATION} -sdk $2 \
-		BUILD_DIR="${BUILD_DIR}" AUDIOKIT_VERSION="$VERSION" clean build | tee -a build.log | $XCPRETTY || exit 2
+	xcodebuild -project "$PROJECT" -target "AudioKit" -xcconfig simulator${XCSUFFIX}.xcconfig -configuration ${CONFIGURATION} -sdk $2 \
+		BUILD_DIR="${BUILD_DIR}" CURRENT_PROJECT_VERSION="$VERSION" clean build | tee -a build.log | $XCPRETTY || exit 2
 	for f in ${PROJECT_NAME} $FRAMEWORKS; do
 		cp -av "${BUILD_DIR}/${CONFIGURATION}-$2/${f}.framework" "$DIR/"
 		if test -d  "${BUILD_DIR}/${CONFIGURATION}-$2/${f}.framework.dSYM"; then
@@ -84,18 +97,22 @@ create_universal_frameworks()
 		fi
 	done
 	
-	if test "$TRAVIS" = true && test "$TRAVIS_TAG" = "" && test "$TRAVIS_BRANCH" != "$STAGING_BRANCH";
+	if test "$SIMULATOR_ONLY" = true;
 	then # Only build for simulator on Travis CI, unless we're building a release
 		for f in ${PROJECT_NAME} $FRAMEWORKS; do
 			cp -v "${BUILD_DIR}/${CONFIGURATION}-$2/${f}.framework/${f}" "${DIR}/${f}.framework/"
-			cp -av "${BUILD_DIR}/${CONFIGURATION}-$2/${f}.framework/Modules/${f}.swiftmodule/"* "${DIR}/${f}.framework/Modules/${f}.swiftmodule/"
+			if test -d "${BUILD_DIR}/${CONFIGURATION}-$2/${f}.framework/Modules/${f}.swiftmodule/"; then
+				cp -av "${BUILD_DIR}/${CONFIGURATION}-$2/${f}.framework/Modules/${f}.swiftmodule/"* "${DIR}/${f}.framework/Modules/${f}.swiftmodule/"
+			fi
 		done
 	else # Build device slices
-		xcodebuild -project "$PROJECT" -target "All-$1" -xcconfig device.xcconfig -configuration ${CONFIGURATION} -sdk $3 \
-			BUILD_DIR="${BUILD_DIR}" AUDIOKIT_VERSION="$VERSION" clean build | tee -a build.log | $XCPRETTY || exit 3
+		xcodebuild -project "$PROJECT" -target "AudioKit" -xcconfig device.xcconfig -configuration ${CONFIGURATION} -sdk $3 \
+			BUILD_DIR="${BUILD_DIR}" CURRENT_PROJECT_VERSION="$VERSION" clean build | tee -a build.log | $XCPRETTY || exit 3
 		for f in ${PROJECT_NAME} $FRAMEWORKS; do
-			cp -av "${BUILD_DIR}/${CONFIGURATION}-$3/${f}.framework/Modules/${f}.swiftmodule/"* \
-				"${DIR}/${f}.framework/Modules/${f}.swiftmodule/"
+			if test -d "${BUILD_DIR}/${CONFIGURATION}-$3/${f}.framework/Modules/${f}.swiftmodule/"; then
+				cp -av "${BUILD_DIR}/${CONFIGURATION}-$3/${f}.framework/Modules/${f}.swiftmodule/"* \
+					"${DIR}/${f}.framework/Modules/${f}.swiftmodule/"
+			fi
 			cp -v "${BUILD_DIR}/${CONFIGURATION}-$3/${f}.framework/Info.plist" "${DIR}/${f}.framework/"
 			# Merge the frameworks proper - apparently it's important that device OS is first starting in Xcode 10.2
 			lipo -create -output "${DIR}/${f}.framework/${f}" \
@@ -134,12 +151,14 @@ create_universal_frameworks()
 		# Swift 5 / Xcode 10.2 bug (!?) - must combine the generated AudioKit-Swift.h headers
 		for fw in ${PROJECT_NAME} ${FRAMEWORKS};
 		do
-			echo '#include <TargetConditionals.h>' > "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
-			echo '#if TARGET_OS_SIMULATOR' >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
-			cat "${BUILD_DIR}/${CONFIGURATION}-$2/${fw}.framework/Headers/${fw}-Swift.h" >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
-			echo '#else' >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
-			cat "${BUILD_DIR}/${CONFIGURATION}-$3/${fw}.framework/Headers/${fw}-Swift.h" >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
-			echo '#endif' >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
+			if test -f "${BUILD_DIR}/${CONFIGURATION}-$2/${fw}.framework/Headers/${fw}-Swift.h"; then
+				echo '#include <TargetConditionals.h>' > "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
+				echo '#if TARGET_OS_SIMULATOR' >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
+				cat "${BUILD_DIR}/${CONFIGURATION}-$2/${fw}.framework/Headers/${fw}-Swift.h" >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
+				echo '#else' >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
+				cat "${BUILD_DIR}/${CONFIGURATION}-$3/${fw}.framework/Headers/${fw}-Swift.h" >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
+				echo '#endif' >> "${DIR}/${fw}.framework/Headers/${fw}-Swift.h"
+			fi
 		done
 	fi
 }
@@ -148,7 +167,7 @@ create_universal_frameworks()
 # 2 arguments: platform (iOS or tvOS), platform (iphoneos, iphonesimulator, appletvos, appletvsimulator)
 create_framework()
 {
-	PROJECT="../AudioKit/AudioKit.xcodeproj"
+	PROJECT="../AudioKit.xcodeproj"
 	DIR="AudioKit-$1/$2"
 	rm -rf "$DIR/$PROJECT_NAME.framework" "$DIR/$PROJECT_UI_NAME.framework"
 	mkdir -p "$DIR"
@@ -158,8 +177,8 @@ create_framework()
 		XCCONFIG=device.xcconfig
 	fi
 	echo "Building static frameworks for $1 / $2"
-	xcodebuild -project "$PROJECT" -target "All-$1" -xcconfig ${XCCONFIG} -configuration ${CONFIGURATION} -sdk $2 \
-		BUILD_DIR="${BUILD_DIR}" AUDIOKIT_VERSION="$VERSION" clean build | tee -a build.log | $XCPRETTY || exit 2
+	xcodebuild -project "$PROJECT" -target "AudioKit" -xcconfig ${XCCONFIG} -configuration ${CONFIGURATION} -sdk $2 \
+		BUILD_DIR="${BUILD_DIR}" CURRENT_PROJECT_VERSION="$VERSION" clean build | tee -a build.log | $XCPRETTY || exit 2
 	for f in ${PROJECT_NAME} $FRAMEWORKS; do
 		cp -av "${BUILD_DIR}/${CONFIGURATION}-$2/${f}.framework" "$DIR/"
 		strip -S "${DIR}/${f}.framework/${f}"
@@ -170,12 +189,12 @@ create_framework()
 # Provide 2 arguments: platform (macOS), native os (macosx)
 create_macos_frameworks()
 {
-	PROJECT="../AudioKit/AudioKit.xcodeproj"
+	PROJECT="../AudioKit.xcodeproj"
 	DIR="AudioKit-$1"
 	rm -rf ${DIR}/*.framework
 	mkdir -p "$DIR"
-	xcodebuild -project "$PROJECT" -target "All-macOS" ONLY_ACTIVE_ARCH=$ACTIVE_ARCH CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-		-configuration ${CONFIGURATION} -sdk $2 BUILD_DIR="${BUILD_DIR}" AUDIOKIT_VERSION="$VERSION" clean build | tee -a build.log | $XCPRETTY || exit 2
+	xcodebuild -project "$PROJECT" -target "AudioKit" ONLY_ACTIVE_ARCH=$ACTIVE_ARCH CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+		-configuration ${CONFIGURATION} -sdk $2 BUILD_DIR="${BUILD_DIR}" CURRENT_PROJECT_VERSION="$VERSION" clean build | tee -a build.log | $XCPRETTY || exit 2
 	for f in ${PROJECT_NAME} $FRAMEWORKS; do
 		cp -av "${BUILD_DIR}/${CONFIGURATION}/${f}.framework" "$DIR/"
 		if test -d  "${BUILD_DIR}/${CONFIGURATION}/${f}.framework.dSYM";
@@ -196,13 +215,13 @@ create_catalyst_frameworks()
 		echo "Skipping Catalyst build, macOS Catalina is required"
 		return
 	fi
-	PROJECT="../AudioKit/AudioKit.xcodeproj"
+	PROJECT="../AudioKit.xcodeproj"
 	DIR="AudioKit-macOS/Catalyst"
 	rm -rf ${DIR}/*.framework
 	mkdir -p "$DIR"
-	xcodebuild archive -project "$PROJECT" -scheme All-iOS ONLY_ACTIVE_ARCH=$ACTIVE_ARCH CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" SKIP_INSTALL=NO \
-			-configuration ${CONFIGURATION} -destination 'platform=macOS,arch=x86_64,variant=Mac Catalyst' -archivePath "${BUILD_DIR}/Catalyst.xcarchive" \
-			BUILD_DIR="${BUILD_DIR}" AUDIOKIT_VERSION="$VERSION" | tee -a build.log | $XCPRETTY || exit 2
+	xcodebuild archive -project "$PROJECT" -scheme AudioKit-Package ONLY_ACTIVE_ARCH=$ACTIVE_ARCH SDKROOT=iphoneos CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" SKIP_INSTALL=NO \
+			-configuration ${CONFIGURATION} -destination 'platform=macOS,variant=Mac Catalyst' -archivePath "${BUILD_DIR}/Catalyst.xcarchive" \
+			BUILD_DIR="${BUILD_DIR}" CURRENT_PROJECT_VERSION="$VERSION" | tee -a build.log | $XCPRETTY || exit 2
 	for f in ${PROJECT_NAME} $FRAMEWORKS; do
 		cp -av "${BUILD_DIR}/Catalyst.xcarchive/Products/Library/Frameworks/${f}.framework" "$DIR/"
 		if test -d  "${BUILD_DIR}/${CONFIGURATION}/${f}.framework.dSYM";
@@ -229,13 +248,13 @@ rm -f build.log
 
 for os in $PLATFORMS; do
 	if test $os = 'iOS'; then
-		create_universal_frameworks iOS iphonesimulator iphoneos
-		#create_framework iOS iphoneos
-		#create_framework iOS iphonesimulator
+		#create_universal_frameworks iOS iphonesimulator iphoneos
+		create_framework iOS iphoneos
+		create_framework iOS iphonesimulator
 	elif test $os = 'tvOS'; then
-		create_universal_frameworks tvOS appletvsimulator appletvos
-		#create_framework tvOS appletvos
-		#create_framework tvOS appletvsimulator
+		#create_universal_frameworks tvOS appletvsimulator appletvos
+		create_framework tvOS appletvos
+		create_framework tvOS appletvsimulator
 	elif test $os = 'macOS'; then
 		create_macos_frameworks macOS macosx
 		create_catalyst_frameworks

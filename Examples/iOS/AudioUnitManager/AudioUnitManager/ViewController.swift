@@ -66,9 +66,9 @@ class ViewController: UIViewController {
         self.player = player
 
         // assign AudioKit's output to the mixer so it's easy to switch sources
-        AKManager.output = mixer
+        engine.output = mixer
         do {
-            try AKManager.start()
+            try engine.start()
         } catch {
             AKLog("AudioKit did not start!")
         }
@@ -150,7 +150,7 @@ class ViewController: UIViewController {
         guard let player = player else { return }
 
         // check to make sure the input is the player
-        if auManager?.input != player {
+        if auManager?.input !== player {
             auManager?.connectEffects(firstNode: player, lastNode: mixer)
         }
 
@@ -284,7 +284,7 @@ extension ViewController: AKKeyboardDelegate {
         guard let auInstrument = auInstrument else { return }
 
         // check to make sure the input is the auInstrument
-        if auManager?.input != auInstrument {
+        if auManager?.input !== auInstrument {
             auManager?.connectEffects(firstNode: auInstrument, lastNode: mixer)
         }
         auInstrument.play(noteNumber: note, channel: 0)

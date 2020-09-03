@@ -5,9 +5,7 @@ import Foundation
 
 class SequencerManager {
     var seq: AKAppleSequencer?
-    let oscBank = AKFMOscillatorBank(waveform: AKTable(.triangle),
-                                     attackDuration: 0.01,
-                                     decayDuration: 0.03)
+    let oscBank = AKSynth(attackDuration: 0.01, decayDuration: 0.03)
     let mixer = AKMixer()
     var node: AKMIDINode!
 
@@ -25,12 +23,12 @@ class SequencerManager {
         node = AKMIDINode(node: oscBank)
         seq?.setGlobalMIDIOutput(node.midiIn)
         oscBank >>> mixer
-        AKManager.output = mixer
+        engine.output = mixer
     }
 
     fileprivate func startAudioKit() {
         do {
-            try AKManager.start()
+            try engine.start()
         } catch {
             AKLog("Couldn't start AudioKit")
         }

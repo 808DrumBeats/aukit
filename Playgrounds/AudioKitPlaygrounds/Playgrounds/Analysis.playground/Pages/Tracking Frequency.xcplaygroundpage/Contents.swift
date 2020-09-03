@@ -6,7 +6,7 @@ import AudioKitPlaygrounds
 import AudioKit
 
 //: First lets set up sound source to track
-let oscillatorNode = AKOperationGenerator { _ in
+let oscillatorNode = AKOperationGenerator {
     // Let's set up the volume to be changing in the shape of a sine wave
     let volume = AKOperation.sineWave(frequency: 0.2).scale(minimum: 0, maximum: 0.5)
 
@@ -16,14 +16,14 @@ let oscillatorNode = AKOperationGenerator { _ in
     return AKOperation.sineWave(frequency: frequency, amplitude: volume)
 }
 
-let tracker = AKFrequencyTracker(oscillatorNode)
+let tracker = AKPitchTap(oscillatorNode)
 let booster = AKBooster(tracker, gain: 0.5)
 let secondaryOscillator = AKOscillator()
 
 //: The frequency tracker passes its input to the output,
 //: so we can insert into the signal chain at the bottom
-AKManager.output = AKMixer(booster, secondaryOscillator)
-try AKManager.start()
+engine.output = AKMixer(booster, secondaryOscillator)
+try engine.start()
 
 oscillatorNode.start()
 secondaryOscillator.start()

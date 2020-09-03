@@ -3,7 +3,7 @@
 import AudioKitPlaygrounds
 import AudioKit
 
-let generator = AKOperationGenerator { _ in
+let generator = AKOperationGenerator {
     let white = AKOperation.whiteNoise()
     let pink = AKOperation.pinkNoise()
 
@@ -13,8 +13,8 @@ let generator = AKOperationGenerator { _ in
     return noise.pan(lfo)
 }
 
-AKManager.output = generator
-try AKManager.start()
+engine.output = generator
+try engine.start()
 
 generator.start()
 

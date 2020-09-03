@@ -4,7 +4,7 @@
 import AudioKitPlaygrounds
 import AudioKit
 
-let generator = AKOperationGenerator { _ in
+let generator = AKOperationGenerator {
 
     // Generate a sine wave at the right frequency
     let crossingSignalTone = AKOperation.sineWave(frequency: 2_500)
@@ -21,8 +21,8 @@ let generator = AKOperationGenerator { _ in
     return crossingSignal * 0.2
 }
 
-AKManager.output = generator
-try AKManager.start()
+engine.output = generator
+try engine.start()
 //: Activate the signal
 generator.start()
 

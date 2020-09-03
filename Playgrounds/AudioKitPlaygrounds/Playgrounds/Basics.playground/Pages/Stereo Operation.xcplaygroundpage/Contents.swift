@@ -4,7 +4,6 @@
 //:
 //: ## Stereo Operation
 //: This is an example of building a stereo sound generator.
-import AudioKitPlaygrounds
 import AudioKit
 
 let generator = AKOperationGenerator(channelCount: 2) { _ in
@@ -21,8 +20,8 @@ let generator = AKOperationGenerator(channelCount: 2) { _ in
     return [leftOutput, rightOutput]
 }
 
-AKManager.output = generator
-try AKManager.start()
+engine.output = generator
+try engine.start()
 generator.start()
 
 import PlaygroundSupport

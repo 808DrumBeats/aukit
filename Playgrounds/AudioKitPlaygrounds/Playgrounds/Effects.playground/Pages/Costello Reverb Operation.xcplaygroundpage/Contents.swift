@@ -8,14 +8,14 @@ let file = try AKAudioFile(readFileName: playgroundAudioFiles[0])
 let player = try AKAudioPlayer(file: file)
 player.looping = true
 
-let effect = AKOperationEffect(player) { player, _ in
+let effect = AKOperationEffect(player) { player in
     return player.reverberateWithCostello(
         feedback: AKOperation.sineWave(frequency: 0.1).scale(minimum: 0.5, maximum: 0.97),
         cutoffFrequency: 10_000)
 }
 
-AKManager.output = effect
-try AKManager.start()
+engine.output = effect
+try engine.start()
 player.play()
 
 //: User Interface

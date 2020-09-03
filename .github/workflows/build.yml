@@ -2,180 +2,77 @@
 name: CI
 
 on: [push, pull_request]
+env:
+  XCODE_VER: 12_beta
 
 jobs:
-  # Run the build for each platform in parallel
-  build:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        env:
-          [PLATFORMS: iOS, PLATFORMS: macOS, PLATFORMS: tvOS]
-      fail-fast: true
-
-    steps:
-    - name: Install additional packages
-      run: brew install swiftlint
-
-    - name: Check out AudioKit
-      uses: actions/checkout@v2
-
-    - name: Build Frameworks
-      run: |
-        cd Frameworks
-        sudo xcode-select -s /Applications/Xcode_11.5.app
-        ./build_frameworks.sh
-      env:
-        PLATFORMS: ${{ matrix.env.PLATFORMS }}
-
-    - name: Upload built frameworks
-      uses: actions/upload-artifact@v1
-      with:
-        name: ${{ matrix.env.PLATFORMS }}
-        path: Frameworks/AudioKit-${{ matrix.env.PLATFORMS }}
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: build-${{ matrix.env.PLATFORMS }}
-        path: Frameworks/build
-
-  # Reassemble the builds, put together the XCFramework
-  xcframework:
-    needs: build
-    runs-on: macos-latest
-
-    steps:
-    - name: Check out AudioKit
-      uses: actions/checkout@v2
-
-    - name: Download iOS build artifacts
-      uses: actions/download-artifact@v1
-      with:
-        name: build-iOS
-        path: Frameworks/build
-    - name: Download macOS build artifacts
-      uses: actions/download-artifact@v1
-      with:
-        name: build-macOS
-        path: Frameworks/build
-    - name: Download tvOS build artifacts
-      uses: actions/download-artifact@v1
-      with:
-        name: build-tvOS
-        path: Frameworks/build
-
-    - name: Build XCFramework
-      run: |
-        cd Frameworks
-        sudo xcode-select -s /Applications/Xcode_11.5.app
-        mkdir release
-        ./build_xcframework.sh release
-
-    - name: Upload XCFramework artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: XCFrameworks
-        path: Frameworks/release
-
-  # Perform unit tests in parallel
   test:
-    needs: xcframework
-    runs-on: macos-latest
     strategy:
       matrix:
-        env:
-          [PLATFORMS: iOS, PLATFORMS: macOS, PLATFORMS: tvOS]
-      fail-fast: false
-
+        xcode_version: ['11.6', '12_beta']
+    runs-on: macos-latest
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode_version }}.app
     steps:
-    - name: Check out AudioKit
-      uses: actions/checkout@v2
-    
-    - name: Download XCFramework
-      uses: actions/download-artifact@v1
-      with:
-        name: XCFrameworks
-        path: Frameworks
+      - name: Check out AudioKit
+        uses: actions/checkout@v2
+      - name: Build AudioKit
+        run: |
+          set -euo pipefail
+          swift package clean
+          swift build --sanitize="address"
+      - name: Run Tests
+        run: |
+          set -euo pipefail
+          swift test --sanitize="address"
 
-    - name: Run unit tests
-      run: |
-        sudo xcode-select -s /Applications/Xcode_11.5.app
-        ./Tests/test-${{ matrix.env.PLATFORMS }}.sh
-
-  # Upload staging builds to S3
   staging:
-    needs: xcframework
+    needs: test
     if: github.ref == 'refs/heads/staging'
-    runs-on: ubuntu-latest
-
+    runs-on: macos-latest
     steps:
-    - name: Check out AudioKit
-      uses: actions/checkout@v2
-    - name: Download XCFramework
-      uses: actions/download-artifact@v1
-      with:
-        name: XCFrameworks
-        path: Frameworks
-    - name: Upload to S3
-      run: |
-        cd Frameworks
-        mkdir zips
-        zip -9r zips/AudioKit.xcframeworks.zip *.xcframework
-        for f in *.xcframework; do
-          zip -9r zips/${f}.zip ${f}
-        done
-        for zip in zips/*.zip; do
-          aws s3 cp ${zip} s3://files.audiokit.io/staging/v$(cat ../VERSION).b1/
-        done
-        aws cloudfront create-invalidation --distribution-id ${CF_DISTRIBUTION} --paths '/staging/*'
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        CF_DISTRIBUTION: ${{ secrets.CF_DISTRIBUTION }}
+      - name: Check out AudioKit
+        uses: actions/checkout@v2
+      - name: Build and Upload XCFrameworks
+        run: |
+          set -euo pipefail
+          sudo xcode-select -s /Applications/Xcode_${XCODE_VER}.app
+          cd Frameworks
+          ./build_frameworks.sh
+          ./build_xcframework.sh
+          zip -9r AudioKit.xcframeworks.zip *.xcframework
+          aws s3 cp AudioKit.xcframeworks.zip s3://files.audiokit.io/staging/v$(<../VERSION).b$(<BETA)/
+          aws cloudfront create-invalidation --distribution-id ${CF_DISTRIBUTION} --paths '/staging/*'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CF_DISTRIBUTION: ${{ secrets.CF_DISTRIBUTION }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: XCFrameworks
+          path: Frameworks/AudioKit.xcframeworks.zip
 
   # Upload release assets for tags
   release:
     needs: test
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-
+    runs-on: macos-latest
     steps:
-    - name: Check out AudioKit
-      uses: actions/checkout@v2
-
-    - name: Download XCFramework
-      uses: actions/download-artifact@v1
-      with:
-        name: XCFrameworks
-        path: Frameworks
-
-    - name: Download built iOS frameworks
-      uses: actions/download-artifact@v1
-      with:
-        name: iOS
-        path: Frameworks/AudioKit-iOS
-    - name: Download built macOS frameworks
-      uses: actions/download-artifact@v1
-      with:
-        name: macOS
-        path: Frameworks/AudioKit-macOS
-    - name: Download built tvOS frameworks
-      uses: actions/download-artifact@v1
-      with:
-        name: tvOS
-        path: Frameworks/AudioKit-tvOS
-    
-    - name: Build packages
-      run: |
-        cd Frameworks
-        ./build_packages.sh
-
-    - name: Upload files to release draft
-      uses: marvinpinto/action-automatic-releases@latest
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        prerelease: false
-        draft: true
-        files: Frameworks/packages/*
-
+      - name: Check out AudioKit
+        uses: actions/checkout@v2
+      - name: Build XCFrameworks
+        run: |
+          set -euo pipefail
+          sudo xcode-select -s /Applications/Xcode_${XCODE_VER}.app
+          cd Frameworks
+          ./build_frameworks.sh
+          ./build_xcframework.sh
+          zip -9r AudioKit.xcframeworks.zip *.xcframework
+      - name: Upload files to release draft
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          draft: true
+          files: Frameworks/AudioKit.xcframeworks.zip

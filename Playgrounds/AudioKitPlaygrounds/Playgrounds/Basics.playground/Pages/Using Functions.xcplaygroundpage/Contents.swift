@@ -4,7 +4,6 @@
 //:
 //: ## Using Functions
 //: Encapsualating functionality of operations into functions
-import AudioKitPlaygrounds
 import AudioKit
 
 func drone(frequency: Double, rate: Double) -> AKOperation {
@@ -13,7 +12,7 @@ func drone(frequency: Double, rate: Double) -> AKOperation {
     return tone.triggeredWithEnvelope(trigger: metro, attack: 0.01, hold: 0.1, release: 0.1)
 }
 
-let generator = AKOperationGenerator { _ in
+let generator = AKOperationGenerator {
 
     let drone1 = drone(frequency: 440, rate: 3)
     let drone2 = drone(frequency: 330, rate: 5)
@@ -22,8 +21,8 @@ let generator = AKOperationGenerator { _ in
     return (drone1 + drone2 + drone3) / 3
 }
 
-AKManager.output = generator
-try AKManager.start()
+engine.output = generator
+try engine.start()
 
 generator.start()
 

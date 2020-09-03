@@ -1,7 +1,7 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AudioKit
-import AudioKitUI
+import AVFoundation
 import UIKit
 
 class ViewController: UIViewController {
@@ -13,7 +13,9 @@ class ViewController: UIViewController {
     var moogLadder: AKMoogLadder!
     var mainMixer: AKMixer!
 
-    lazy var mic = AKMicrophone()
+    let engine = AKEngine()
+    // this is lazy here so that the sample rate can be set before it's created by reference
+    lazy var mic = AKMicrophone(engine: engine.avEngine)
 
     var state = State.readyToRecord
 
@@ -45,7 +47,9 @@ class ViewController: UIViewController {
             AKLog("Could not set session category.")
         }
 
-        AKSettings.sampleRate = 48000
+        // Kludge to align sample rates of the graph with the current input sample rate
+        AKSettings.sampleRate = engine.avEngine.inputNode.inputFormat(forBus: 0).sampleRate
+
         AKSettings.defaultToSpeaker = true
 
         // Patching
@@ -66,9 +70,9 @@ class ViewController: UIViewController {
 
         mainMixer = AKMixer(moogLadder, micBooster)
 
-        AKManager.output = mainMixer
+        engine.output = mainMixer
         do {
-            try AKManager.start()
+            try engine.start()
         } catch {
             AKLog("AudioKit did not start!")
         }
@@ -77,7 +81,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        plot?.node = mic
+//        plot?.node = mic
         setupButtonNames()
         setupUIForRecording()
     }
@@ -122,9 +126,8 @@ class ViewController: UIViewController {
                 return
             }
 
-
-            // NOTE: there could be another export function in here that creates an AKConverter to export
-            // to the destination of choice if desired. See the macOS Recorder example if interested
+        // NOTE: there could be another export function in here that creates an AKConverter to export
+        // to the destination of choice if desired. See the macOS Recorder example if interested
         case .readyToPlay:
             player.play()
             infoLabel.text = "Playing..."

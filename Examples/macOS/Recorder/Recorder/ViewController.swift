@@ -26,8 +26,8 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else { return }
-        AKSettings.audioFormat = audioFormat
+        // Kludge to align sample rates of the graph with the current input sample rate
+        AKSettings.sampleRate = engine.inputNode.inputFormat(forBus: 0).sampleRate
 
         view.wantsLayer = true
         view.layer?.backgroundColor = CGColor.black
@@ -49,7 +49,7 @@ class ViewController: NSViewController {
             self.record()
         }
 
-        AKLog(AKSettings.audioFormat, "inputNode:", AKManager.engine.inputNode.outputFormat(forBus: 0).sampleRate)
+        AKLog(AKSettings.audioFormat, "inputNode:", engine.inputNode.outputFormat(forBus: 0).sampleRate)
 
         // Patching
         inputPlot.node = mic
@@ -65,15 +65,15 @@ class ViewController: NSViewController {
         recorder = try? AKNodeRecorder(node: micMixer)
 
         player = AKPlayer()
-        player.isLooping = true
+        player.isLooping = false
         player.completionHandler = playingEnded
 
         moogLadder = AKMoogLadder(player)
         mainMixer = AKMixer(moogLadder, micBooster)
-        AKManager.output = mainMixer
+        engine.output = mainMixer
 
         do {
-            try AKManager.start()
+            try engine.start()
         } catch {
             AKLog("AudioKit did not start!")
         }

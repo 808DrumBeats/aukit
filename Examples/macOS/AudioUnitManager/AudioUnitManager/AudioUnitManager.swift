@@ -46,7 +46,7 @@ class AudioUnitManager: NSViewController {
     internal var windowControllers = [AudioUnitGenericWindow?](repeating: nil, count: 6)
     internal var midiManager: AKMIDI?
     internal var player: AKPlayer?
-    internal var waveform: AKWaveform?
+    internal var waveform: WaveformView?
     internal var fmOscillator = AKFMOscillator()
     internal var mixer = AKMixer()
     internal var testPlayer: InstrumentPlayer?
@@ -99,7 +99,7 @@ class AudioUnitManager: NSViewController {
                                                object: nil)
         let mainOutput = AKMixer()
         mixer.connect(to: mainOutput)
-        AKManager.output = mainOutput
+        engine.output = mainOutput
 
         initManager()
         initMIDI()
@@ -107,11 +107,11 @@ class AudioUnitManager: NSViewController {
     }
 
     internal func startEngine(completionHandler: AKCallback? = nil) {
-        AKLog("* engine.isRunning: \(AKManager.engine.isRunning)")
+        AKLog("* engine.isRunning: \(engine.isRunning)")
 
-        if !AKManager.engine.isRunning {
+        if !engine.isRunning {
             do {
-                try AKManager.start()
+                try engine.start()
             } catch {
                 AKLog("AudioKit did not start!")
             }
@@ -304,7 +304,7 @@ extension AudioUnitManager: NSWindowDelegate {
             if w == view.window {
                 internalManager.reset()
                 do {
-                    try AKManager.stop()
+                    try engine.stop()
                 } catch {
                     AKLog("AudioKit did not stop!")
                 }

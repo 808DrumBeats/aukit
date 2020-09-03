@@ -7,7 +7,7 @@ let interval: Double = 2
 let noteCount: Double = 24
 let startingNote: Double = 48 // C
 
-let generator = AKOperationGenerator { _ in
+let generator = AKOperationGenerator {
 
     let frequency = (floor(AKOperation.phasor(frequency: 0.5) * noteCount) * interval + startingNote)
         .midiNoteToFrequency()
@@ -19,8 +19,8 @@ let generator = AKOperationGenerator { _ in
     return mixer(oscillator, reverb, balance: 0.6)
 }
 
-AKManager.output = generator
-try AKManager.start()
+engine.output = generator
+try engine.start()
 generator.start()
 
 import PlaygroundSupport
