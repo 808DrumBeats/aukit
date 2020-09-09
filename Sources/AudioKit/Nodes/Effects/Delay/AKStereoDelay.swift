@@ -5,15 +5,13 @@ import CAudioKit
 
 /// Stereo delay-line with stereo (linked dual mono) and ping-pong modes
 ///
-public class AKStereoDelay: AKNode, AKToggleable, AKComponent, AKAutomatable {
+public class AKStereoDelay: AKNode, AKToggleable, AKComponent {
 
     public static let ComponentDescription = AudioComponentDescription(effect: "sdly")
 
     public typealias AKAudioUnitType = InternalAU
 
     public private(set) var internalAU: AKAudioUnitType?
-
-    public private(set) var parameterAutomation: AKParameterAutomation?
 
     // MARK: - Parameters
 
@@ -90,7 +88,7 @@ public class AKStereoDelay: AKNode, AKToggleable, AKComponent, AKAutomatable {
     ///   - pingPong: true for ping-pong mode, false for stereo mode.
     ///
     public init(
-        _ input: AKNode? = nil,
+        _ input: AKNode,
         maximumDelayTime: AUValue = 2.0,
         time: AUValue = 0,
         feedback: AUValue = 0,
@@ -99,21 +97,18 @@ public class AKStereoDelay: AKNode, AKToggleable, AKComponent, AKAutomatable {
     ) {
         super.init(avAudioNode: AVAudioNode())
 
-        self.time = time
-        self.feedback = feedback
-        self.dryWetMix = dryWetMix
-        self.pingPong = pingPong ? 1.0 : 0.0
-
         instantiateAudioUnit { avAudioUnit in
             self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             self.internalAU = avAudioUnit.auAudioUnit as? AKAudioUnitType
-            self.parameterAutomation = AKParameterAutomation(avAudioUnit)
+
+            self.time = time
+            self.feedback = feedback
+            self.dryWetMix = dryWetMix
+            self.pingPong = pingPong ? 1.0 : 0.0
         }
 
-        if let input = input {
-            connections.append(input)
-        }
+        connections.append(input)
     }
 }

@@ -19,24 +19,16 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
     ],
     targets: [
+        .target(name: "TPCircularBuffer"),
+        .target(name: "STK"),
+        .target(name: "soundpipe", cSettings: [.define("NO_LIBSNDFILE")]),
         .target(
-            name: "TPCircularBuffer",
-            dependencies: []),
-        .target(
-            name: "STK",
-            dependencies: []),
+            name: "sporth",
+            dependencies: ["soundpipe"],
+            cSettings: [.define("NO_LIBSNDFILE")]),
         .target(
             name: "CAudioKit",
-            dependencies: ["TPCircularBuffer", "STK"],
-            cSettings: [
-                .headerSearchPath("soundpipe/lib/dr_wav"),
-                .headerSearchPath("soundpipe/lib/faust"),
-                .headerSearchPath("soundpipe/lib/inih"),
-                .headerSearchPath("soundpipe/lib/kissfft"),
-                .headerSearchPath("soundpipe/include"),
-                .headerSearchPath("sporth/include"),
-                .headerSearchPath("soundpipeextension/include"),
-                .define("NO_LIBSNDFILE")],
+            dependencies: ["TPCircularBuffer", "STK", "soundpipe", "sporth"],
             cxxSettings: [
                 .headerSearchPath("CoreAudio"),
                 .headerSearchPath("Sporth Custom Ugens"),

@@ -17,6 +17,16 @@ extension AVAudioNode {
         }
     }
 
+    /// Make a connection without breaking other connections.
+    public func connect(input: AVAudioNode, bus: Int) {
+        if let engine = engine {
+            var points = engine.outputConnectionPoints(for: input, outputBus: 0)
+            if points.contains(where: { $0.node === self}) { return }
+            points.append(AVAudioConnectionPoint(node: self, bus: bus))
+            engine.connect(input, to: points, fromBus: 0, format: nil)
+        }
+    }
+
 }
 
 public class AKEngine {
@@ -24,22 +34,53 @@ public class AKEngine {
     // TODO make this internal
     public let avEngine = AVAudioEngine()
 
-    public init() { }
+    // maximum number of frames the engine will be asked to render in any single render call
+    let maximumFrameCount: AVAudioFrameCount = 1024
+
+    public class InputNode: AKMixer {
+        var isNotConnected = true
+
+        func connect(to engine: AKEngine) {
+            engine.avEngine.attach(avAudioNode)
+            engine.avEngine.connect(engine.avEngine.inputNode, to: avAudioNode, format: nil)
+
+        }
+    }
+
+    let _input = InputNode()
+    public var input: InputNode {
+        guard let _ = Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription") as? String else {
+            fatalError("To use the microphone, you must include the NSMicrophoneUsageDescription in your Info.plist")
+        }
+        if _input.isNotConnected {
+            _input.connect(to: self)
+            _input.isNotConnected = false
+        }
+        return _input
+    }
+
+
+    public init() {}
 
     public var output: AKNode? {
         didSet {
             if let node = oldValue {
                 avEngine.mainMixerNode.disconnect(input: node.avAudioNode)
+                node.detach()
             }
             if let node = output {
                 avEngine.attach(node.avAudioNode)
                 node.makeAVConnections()
-                avEngine.connect(node.avAudioNode, to: avEngine.mainMixerNode)
+                avEngine.connect(node.avAudioNode, to: avEngine.mainMixerNode, format: nil)
             }
         }
     }
 
     public func start() throws {
+        if output == nil {
+            AKLog("🛑 Error: Attempt to start engine with no output.")
+            return
+        }
         try avEngine.start()
     }
 
@@ -47,114 +88,47 @@ public class AKEngine {
         avEngine.stop()
     }
 
-    /// Test the output of a given node
-    ///
-    /// - Parameters:
-    ///   - duration: Number of seconds to test (accurate to the sample)
-    ///   - afterStart: Closure to execute at the beginning of the test
-    ///
-    /// - Returns: MD5 hash of audio output for comparison with test baseline.
-    public func test(duration: Double, afterStart: () -> Void = {}) throws -> String {
+    public func startTest(totalDuration duration: Double) -> AVAudioPCMBuffer {
+        let samples = Int(duration * AKSettings.sampleRate)
 
-        var digestHex = ""
-
-        #if swift(>=3.2)
-        if #available(iOS 11, macOS 10.13, tvOS 11, *) {
-            let samples = Int(duration * AKSettings.sampleRate)
-
-            // maximum number of frames the engine will be asked to render in any single render call
-            let maximumFrameCount: AVAudioFrameCount = 4_096
-            try AKTry {
-                self.avEngine.reset()
-                try self.avEngine.enableManualRenderingMode(.offline,
-                                                            format: AKSettings.audioFormat,
-                                                            maximumFrameCount: maximumFrameCount)
-                try self.avEngine.start()
-            }
-
-            afterStart()
-
-            let md5state = UnsafeMutablePointer<md5_state_s>.allocate(capacity: 1)
-            md5_init(md5state)
-            var samplesHashed = 0
-
-            guard let buffer = AVAudioPCMBuffer(
-                pcmFormat: avEngine.manualRenderingFormat,
-                frameCapacity: avEngine.manualRenderingMaximumFrameCount) else { return "" }
-
-            while avEngine.manualRenderingSampleTime < samples {
-                let framesToRender = buffer.frameCapacity
-                let status = try avEngine.renderOffline(framesToRender, to: buffer)
-                switch status {
-                case .success:
-                    // data rendered successfully
-                    if let floatChannelData = buffer.floatChannelData {
-
-                        for frame in 0 ..< framesToRender {
-                            for channel in 0 ..< buffer.format.channelCount where samplesHashed < samples {
-                                let sample = floatChannelData[Int(channel)][Int(frame)]
-                                withUnsafeBytes(of: sample) { samplePtr in
-                                    if let baseAddress = samplePtr.bindMemory(to: md5_byte_t.self).baseAddress {
-                                        md5_append(md5state, baseAddress, 4)
-                                    }
-                                }
-                                samplesHashed += 1
-                            }
-                        }
-
-                    }
-
-                case .insufficientDataFromInputNode:
-                    // applicable only if using the input node as one of the sources
-                    break
-
-                case .cannotDoInCurrentContext:
-                    // engine could not render in the current render call, retry in next iteration
-                    break
-
-                case .error:
-                    // error occurred while rendering
-                    fatalError("render failed")
-                @unknown default:
-                    fatalError("Unknown render result")
-                }
-            }
-
-            var digest = [md5_byte_t](repeating: 0, count: 16)
-
-            digest.withUnsafeMutableBufferPointer { digestPtr in
-                md5_finish(md5state, digestPtr.baseAddress)
-            }
-
-            for index in 0..<16 {
-                digestHex += String(format: "%02x", digest[index])
-            }
-
-            md5state.deallocate()
-
+        do {
+            self.avEngine.reset()
+            try self.avEngine.enableManualRenderingMode(.offline,
+                                                        format: AKSettings.audioFormat,
+                                                        maximumFrameCount: maximumFrameCount)
+            try start()
+        } catch let err {
+            AKLog("🛑 Start Test Error: \(err)")
         }
-        #endif
 
-        return digestHex
+        return AVAudioPCMBuffer(
+            pcmFormat: avEngine.manualRenderingFormat,
+            frameCapacity: AVAudioFrameCount(samples))!
     }
 
-    /// Audition the test to hear what it sounds like
-    ///
-    /// - Parameters:
-    ///   - duration: Number of seconds to test (accurate to the sample)
-    ///   - afterStart: Block of code to run before audition
-    ///
-    public func auditionTest(duration: Double, afterStart: () -> Void = {}) throws {
-        try avEngine.start()
+    public func render(duration: Double) -> AVAudioPCMBuffer {
+        let sampleCount = Int(duration * AKSettings.sampleRate)
+        let startSampleCount = Int(avEngine.manualRenderingSampleTime)
 
-        // if the engine isn't running you need to give it time to get its act together before
-        // playing, otherwise the start of the audio is cut off
-        if !avEngine.isRunning {
-            usleep(UInt32(1_000_000))
+        let buffer = AVAudioPCMBuffer(
+            pcmFormat: avEngine.manualRenderingFormat,
+            frameCapacity: AVAudioFrameCount(sampleCount))!
+
+        let tempBuffer = AVAudioPCMBuffer(
+            pcmFormat: avEngine.manualRenderingFormat,
+            frameCapacity: AVAudioFrameCount(maximumFrameCount))!
+
+        do {
+            while avEngine.manualRenderingSampleTime < sampleCount + startSampleCount {
+                let currentSampleCount = Int(avEngine.manualRenderingSampleTime)
+                let framesToRender = min(UInt32(sampleCount + startSampleCount - currentSampleCount), maximumFrameCount)
+                try avEngine.renderOffline(AVAudioFrameCount(framesToRender), to: tempBuffer)
+                buffer.append(tempBuffer)
+            }
+        } catch let err {
+            AKLog("🛑 Could not render offline \(err)")
         }
-
-        afterStart()
-        usleep(UInt32(duration * 1_000_000))
+        return buffer
     }
 
     /// Enumerate the list of available input devices.
@@ -288,8 +262,6 @@ public class AKEngine {
         avEngine.setDevice(id: output.deviceID)
         #endif
     }
-
-    // TODO write a test for render to file
 
     /// Render output to an AVAudioFile for a duration.
     ///

@@ -12,18 +12,9 @@ public protocol AUComponent: AnyObject, Aliased {
     static var ComponentDescription: AudioComponentDescription { get }
 }
 
-protocol AUEffect: AUComponent { }
-
-extension AUEffect {
-    static var effect: AVAudioUnitEffect {
-        return AVAudioUnitEffect(audioComponentDescription: ComponentDescription)
-    }
-}
-
 public protocol AKComponent: AUComponent {
     associatedtype AKAudioUnitType: AUAudioUnit // eventually AKAudioUnitBase
     var internalAU: AKAudioUnitType? { get }
-    var rampDuration: AUValue { get set }
 }
 
 extension AKComponent {
@@ -42,10 +33,6 @@ extension AKComponent {
         }
     }
 
-    public var rampDuration: AUValue {
-        get { return (internalAU as? AKAudioUnitBase)?.rampDuration ?? 0.0 }
-        set { (internalAU as? AKAudioUnitBase)?.rampDuration = newValue }
-    }
 }
 
 extension AUParameterTree {

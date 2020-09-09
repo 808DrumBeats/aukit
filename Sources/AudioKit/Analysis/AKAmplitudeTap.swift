@@ -60,7 +60,7 @@ public class AKAmplitudeTap: AKToggleable {
     private var handler: (Float) -> Void = { _ in }
 
     /// - parameter input: Node to analyze
-    public init(_ input: AKNode?, bufferSize: UInt32 = 1_024, handler: @escaping (Float) -> Void = { _ in }) {
+    public init(_ input: AKNode, bufferSize: UInt32 = 1_024, handler: @escaping (Float) -> Void = { _ in }) {
         self.bufferSize = bufferSize
         self.input = input
         self.handler = handler
@@ -85,7 +85,7 @@ public class AKAmplitudeTap: AKToggleable {
 
         input.avAudioUnitOrNode.installTap(onBus: bus,
                                            bufferSize: bufferSize,
-                                           format: AKSettings.audioFormat,
+                                           format: nil,
                                            block: handleTapBlock(buffer:at:))
     }
 

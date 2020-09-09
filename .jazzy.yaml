@@ -16,12 +16,8 @@ custom_categories:
     - AKComponent
     - AKCustomUgen
     - AKDevice
-    - AKInput
     - AKLog(fullname:file:line:_:)
-    - AKMicrophoneTracker
     - AKNodeRecorder
-    - AKOutput
-    - AKPeriodicFunction
     - AKSettings
     - AKTable
     - AKTableType
@@ -30,7 +26,6 @@ custom_categories:
     - AKTry(_:)
     - CheckError(_:)
     - fourCC(_:)
-    - ">>>(_:_:)"
 
   - name: MIDI
     children:
@@ -203,7 +198,6 @@ custom_categories:
 
   - name: Input Node
     children:
-    - AKMicrophone
     - AKStereoInput
 
   - name: Mixing Nodes

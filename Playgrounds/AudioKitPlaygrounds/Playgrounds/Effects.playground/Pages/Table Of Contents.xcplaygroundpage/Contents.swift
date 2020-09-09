@@ -17,9 +17,7 @@
 //: Delay is a lot more powerful than simply repeating an earlier sound.
 //: By varying parameters, you can get startlingly beautiful effects.
 //:
-//: * [Delay](Delay)
 //: * [Smooth Delay](Smooth%20Delay)
-//: * [Variable Delay](Variable%20Delay)
 //:
 //: ### Distortion
 //:
@@ -27,37 +25,28 @@
 //: and basically change something essential to the sound, usually making for a
 //: harsher sound, but that's a matter of taste.
 //:
-//: * [Bit Crush Effect](Bit%20Crush%20Effect)
 //: * [Decimator](Decimator)
 //: * [Distortion](Distortion)
 //: * [Ring Modulator](Ring%20Modulator)
-//: * [Tanh Distortion](Tanh%20Distortion)
 //:
 //: ### Dynamics Processing
 //:
 //: Dynamics processing is usually done at the mixing stage and involves
 //: changing the signal's output levels.
 //:
-//: * [Clipper](Clipper)
 //: * [Compressor](Compressor)
 //: * [Dynamics Processor](Dynamics%20Processor)
 //: * [Expander](Expander)
 //: * [Peak Limiter](Peak%20Limiter)
 //:
-//: ### Filters
-//:
-//: * Filter playground pages were moved to a dedicated playground
-//:
 //: ### Pitch Shifting
 //:
-//: * [Pitch Shifter](Pitch%20Shifter)
 //: * [Pitch Shifter Operation](Pitch%20Shifter%20Operation)
 //:
 //: ### Reverb
 //:
 //: These are the more traditional reverb efffects.
 //:
-//: * [Costello Reverb](Costello%20Reverb)
 //: * [Simple Reverb](Reverb)
 //: * iOS-only Reverb - appears in the iOS Development Playground
 //:
@@ -65,17 +54,9 @@
 //:
 //: * [Convolution](Convolution)
 //:
-//: Then there are "reverbs" that are more commonly used as components, not as a stand-alone effect.
-//:
-//: * [Comb Filter Reverb](Comb%20Filter%20Reverb)
-//: * [Flat Frequency Response Reverb](Flat%20Frequency%20Response%20Reverb)
-//:
 //: ### Other
 //:
-//: * [Auto Wah Wah](Auto%20Wah%20Wah)
 //: * [Graphic Equalizer](Graphic%20Equalizer)
-//: * [String Resonator](String%20Resonator)
-//: * [Tremolo](Tremolo)
 //: * [3D Panner](3D%20Panner)
 
 //: ## Operations
