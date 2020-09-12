@@ -31,10 +31,8 @@ let package = Package(
             dependencies: ["TPCircularBuffer", "STK", "soundpipe", "sporth"],
             cxxSettings: [
                 .headerSearchPath("CoreAudio"),
-                .headerSearchPath("Sporth Custom Ugens"),
                 .headerSearchPath("AudioKitCore/Common"),
                 .headerSearchPath("Devoloop/include"),
-                .headerSearchPath("EZAudio/include"),
                 .headerSearchPath(".")
             ]
         ),
