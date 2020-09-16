@@ -17,7 +17,6 @@ FOUNDATION_EXPORT const unsigned char AudioKitVersionString[];
 #import "AKDSPBase.h"
 #import "AKSoundpipeDSPBase.h"
 
-#import "DSPKernel.h"
 #import "ExceptionCatcher.h"
 #import "AKGlobals.h"
 #import "AUParameterTreeExt.h"
@@ -74,5 +73,7 @@ AK_API void akCallbackInstrumentSetCallback(AKDSPRef dsp, AKCMIDICallback callba
 #define AKPhaseDistortionOscillatorDebugPhase 0
 #define AKOscillatorDebugPhase 0
 
+// EZAudio
+#import "EZAudio.h"
 #import "EZAudioPlot.h"
 #import "EZAudioFFT.h"

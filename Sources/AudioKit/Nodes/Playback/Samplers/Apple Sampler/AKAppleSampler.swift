@@ -305,8 +305,16 @@ open class AKAppleSampler: AKNode {
         try loadSoundFont(file, preset: preset, type: kAUSampler_DefaultPercussionBankMSB)
     }
 
+    /// Set the pitch bend amount
+    /// - Parameters:
+    ///   - amount: Value of the pitch bend
+    ///   - channel: MIDI Channel ot apply the bend to
     public func setPitchbend(amount: MIDIWord, channel: MIDIChannel) {
         samplerUnit.sendPitchBend(amount, onChannel: channel)
     }
 
+    /// Reset the internal sampler
+    public func resetSampler() {
+        samplerUnit.reset()
+    }
 }
