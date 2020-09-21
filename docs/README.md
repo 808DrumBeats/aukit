@@ -13,7 +13,7 @@ Inline comments are also parsed by the "jazzy" documentation generator which pro
 
 We try to include a README folder in every directory of AudioKit to describe folders' contents and to provide some basic quickstart information.
 
-README files often contain *TODO* sections which contain things that could or should improve the material in that folder.
+README files can contain *TO DO* sections which contain things that could or should improve the material in that folder.
 
 ## Playgrounds
 
@@ -30,6 +30,6 @@ There are many sample projects included in AudioKit's `Examples` folder. The exa
 
 ## Sampler Overviews
 
-* [Survey of AudioKit's Sampler Options](Samplers.md)
-* [AKSampler in-depth](AKSampler.md)
-* [Preparing Sample Sets](PreparingSampleSets.md)
+* [Survey of AudioKit's Sampler Options](../Sources/AudioKit/Nodes/Playback/Samplers/Samplers.md)
+* [Sampler in-depth](../Sources/AudioKit/Nodes/Playback/Samplers/Sampler/Sampler.md)
+* [Preparing Sample Sets](../Sources/AudioKit/Nodes/Playback/Samplers/PreparingSampleSets.md)

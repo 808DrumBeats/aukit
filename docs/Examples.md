@@ -1,9 +1,5 @@
 # AudioKit Examples
 
-## Examples for iOS that build on macOS Catalina through Catalyst
-
-* HelloWorld - two simple frequency oscillators
-
 ## Examples for iOS and macOS
 
 * Audio Unit Manager - host audio units inside your application
@@ -15,7 +11,6 @@
 
 ## Examples for iOS only
 
-* Apple Sampler Demo - example of AudioKit's AKAppleSampler
 * MIDI File Edit and Sync - demonstrates how to manipulate midifiles on the fly
 
 ### Audiobus Examples for iOS
@@ -24,11 +19,17 @@
 * Filter Effects - Audiobus enabled effects processor
 * Sender Synth - Audiobus enabled synthesizer
 
-## Examples for macOS only
+## Examples for macOS
 
+* Audio Unit Manager - host audio units inside your application
 * Flanger and Chorus - Effect processor examples
 * Hello OSC - Starter project for OSC communication
+* Hello World - Starter application that just plays an oscillator and displays a waveform
+* Microphone Analysis - frequency and amplitude information from the incoming audio stream
+* MIDI Utility - Basic MIDI implementation including MIDI monitoring
 * Output Splitter - crude example of how to split Audio and pipe it to two different output devices
+* Random Clips - Demonstration of some of the new sample accurate functionality in AudioKit 4
+* Recorder - Simple audio recorder
 * Speech Synthesizeer - simple speech synthesizer
 
 ## Example for tvOS
@@ -44,5 +45,5 @@ When projects get big or complicated enough, we move them to their own repositor
 * [Analog Synth X](https://github.com/AudioKit/AnalogSynthX) - polyphonic synthesizer with a very nice user interface
 * [ROM Player](https://github.com/AudioKit/ROMPlayer) - EXS24, Sound Font, Wave Player
 * [Particles](http://github.com/AudioKit/Particles/) - Metal based audio visualizer (works on devices only, not the simulator)
-* [SamplerDemo](http://github.com/AudioKit/SamplerDemo/) - Demo of the AKSampler for both iOS and macOS
+* [SamplerDemo](http://github.com/AudioKit/SamplerDemo/) - Demo of the Sampler for both iOS and macOS
 * [Song Processor](http://github.com/AudioKit/SongProcessor) - adding effects to songs from the device's iTunes Library

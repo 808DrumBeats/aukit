@@ -28,7 +28,7 @@ extension AVAudioEngine {
                           userInfo: [NSLocalizedDescriptionKey: "Seconds needs to be a positive value"])
         }
 
-        try AKTry {
+        try ExceptionCatcher {
             // Engine can't be running when switching to offline render mode.
             if self.isRunning { self.stop() }
             try self.enableManualRenderingMode(.offline,
@@ -73,13 +73,13 @@ extension AVAudioEngine {
                 progressValue = min(Double(audioFile.framePosition) / Double(targetSamples), 1.0)
                 progressHandler?(progressValue)
             case .cannotDoInCurrentContext:
-                AKLog("renderToFile cannotDoInCurrentContext", type: .error)
+                Log("renderToFile cannotDoInCurrentContext", type: .error)
                 continue
             case .error, .insufficientDataFromInputNode:
                 throw NSError(domain: "AVAudioEngine ext", code: 1,
                               userInfo: [NSLocalizedDescriptionKey: "render error"])
             @unknown default:
-                AKLog("Unknown render result:", status, type: .error)
+                Log("Unknown render result:", status, type: .error)
                 isRendering = false
             }
 
@@ -105,7 +105,7 @@ extension AVAudioEngine {
             }
         }
 
-        try AKTry {
+        try ExceptionCatcher {
             self.stop()
             self.disableManualRenderingMode()
         }
