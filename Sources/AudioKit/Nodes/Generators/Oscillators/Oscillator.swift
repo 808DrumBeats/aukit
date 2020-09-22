@@ -107,6 +107,7 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
                 fatalError("Couldn't create audio unit")
             }
             self.internalAU = audioUnit
+            self.stop()
 
             audioUnit.setWavetable(waveform.content)
 
@@ -116,6 +117,5 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
             self.detuningOffset = detuningOffset
             self.detuningMultiplier = detuningMultiplier
         }
-
     }
 }

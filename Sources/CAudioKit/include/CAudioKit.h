@@ -43,13 +43,11 @@ FOUNDATION_EXPORT const unsigned char AudioKitVersionString[];
 #import "CoreSynth.h"
 #import "SamplerDSP.h"
 
-// Utilities
-#import "ParameterRamper.h"
-
 // Sequencing / MIDI
 #import "SequencerEngine.h"
 
 // Automation
+#import "ParameterRamper.h"
 #import "ParameterAutomation.h"
 #import "LinearParameterRamp.h"
 
@@ -76,6 +74,10 @@ AK_API void akCallbackInstrumentSetCallback(DSPRef dsp, CMIDICallback callback);
 #import "EZAudio.h"
 #import "EZAudioPlot.h"
 #import "EZAudioFFT.h"
+
+// TPCircularBuffer
+#import "TPCircularBuffer+Unit.h"
+#import "TPCircularBuffer+AudioBufferList.h"
 
 // Misc
 #import "BufferedAudioBus.h"
