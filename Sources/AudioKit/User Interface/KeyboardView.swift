@@ -1,9 +1,5 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
-#if targetEnvironment(macCatalyst) || os(iOS)
-import UIKit
-import CoreMIDI
-
 /// Delegate for keyboard events
 public protocol KeyboardDelegate: AnyObject {
     /// Note on events
@@ -12,8 +8,13 @@ public protocol KeyboardDelegate: AnyObject {
     func noteOff(note: MIDINoteNumber)
 }
 
+
+#if targetEnvironment(macCatalyst) || os(iOS)
+import UIKit
+import CoreMIDI
+
 /// Clickable keyboard mainly used for AudioKit playgrounds
-@IBDesignable public class KeyboardView: UIView, MIDIListener {
+@IBDesignable public class KeyboardView: UIView {
     //swiftlint:disable
     /// Number of octaves displayed at once
     @IBInspectable open var octaveCount: Int = 2
@@ -23,9 +24,6 @@ public protocol KeyboardDelegate: AnyObject {
 
     /// Relative measure of the height of the black keys
     @IBInspectable open var topKeyHeightRatio: CGFloat = 0.55
-
-    /// Color of the polyphonic toggle button
-    @IBInspectable open var polyphonicButton: UIColor = #colorLiteral(red: 1.000, green: 1.000, blue: 1.000, alpha: 1.000)
 
     /// White key color
     @IBInspectable open var  whiteKeyOff: UIColor = #colorLiteral(red: 1.000, green: 1.000, blue: 1.000, alpha: 1.000)
@@ -374,65 +372,6 @@ public protocol KeyboardDelegate: AnyObject {
         return #colorLiteral(red: 1.000, green: 1.000, blue: 1.000, alpha: 0.000)
 
     }
-
-    // MARK: - MIDI
-
-    public func receivedMIDINoteOn(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        DispatchQueue.main.async(execute: {
-            self.onKeys.insert(noteNumber)
-            self.delegate?.noteOn(note: noteNumber)
-            self.setNeedsDisplay()
-        })
-    }
-
-    public func receivedMIDINoteOff(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        DispatchQueue.main.async(execute: {
-            self.onKeys.remove(noteNumber)
-            self.delegate?.noteOff(note: noteNumber)
-            self.setNeedsDisplay()
-        })
-    }
-
-    public func receivedMIDIController(_ controller: MIDIByte, value: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        if controller == MIDIByte(MIDIControl.damperOnOff.rawValue) && value == 0 {
-            for note in onKeys {
-                delegate?.noteOff(note: note)
-            }
-        }
-    }
-
-    public func receivedMIDIAftertouch(noteNumber: MIDINoteNumber, pressure: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDIAftertouch(_ pressure: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDIPitchWheel(_ pitchWheelValue: MIDIWord, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDIProgramChange(_ program: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDISystemCommand(_ data: [MIDIByte], portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDISetupChange() {
-        // Do nothing
-    }
-
-    public func receivedMIDIPropertyChange(propertyChangeInfo: MIDIObjectPropertyChangeNotification) {
-        // Do nothing
-    }
-
-    public func receivedMIDINotification(notification: MIDINotification) {
-        // Do nothing
-    }
-
 }
 
 #elseif os(macOS)
@@ -440,36 +379,36 @@ public protocol KeyboardDelegate: AnyObject {
 import Cocoa
 import CoreMIDI
 
-public protocol KeyboardDelegate: class {
-    func noteOn(note: MIDINoteNumber)
-    func noteOff(note: MIDINoteNumber)
-}
-
-public class KeyboardView: NSView, MIDIListener {
-
-    override public var isFlipped: Bool {
-        return true
-    }
+/// View that displays a piano keyboard
+public class KeyboardView: NSView {
 
     var size = CGSize.zero
 
+    /// Number of octaves on the keyboard
     @IBInspectable open var octaveCount: Int = 2
+    /// Octave number for left-most keys
     @IBInspectable open var firstOctave: Int = 4
 
+    /// How large should the black keys be
     @IBInspectable open var topKeyHeightRatio: CGFloat = 0.55
-    @IBInspectable open var polyphonicButton: NSColor = #colorLiteral(red: 1.000, green: 1.000, blue: 1.000, alpha: 1.000)
 
+    /// Color of unpressed natural key (in C)
     @IBInspectable open var  whiteKeyOff: NSColor = #colorLiteral(red: 1.000, green: 1.000, blue: 1.000, alpha: 1.000)
+    /// Color of unpressed accidental key (in C)
     @IBInspectable open var  blackKeyOff: NSColor = #colorLiteral(red: 0.000, green: 0.000, blue: 0.000, alpha: 1.000)
+    /// Color of activated key
     @IBInspectable open var  keyOnColor: NSColor = #colorLiteral(red: 1.000, green: 0.000, blue: 0.000, alpha: 1.000)
+    /// Color
     @IBInspectable open var  topWhiteKeyOff: NSColor = #colorLiteral(red: 1.000, green: 1.000, blue: 1.000, alpha: 0.000)
 
+    /// Optional Keyboard delegate
     open weak var delegate: KeyboardDelegate?
 
     var oneOctaveSize = CGSize.zero
     var xOffset: CGFloat = 1
     var onKeys = Set<MIDINoteNumber>()
 
+    /// Polyphonic mode
     public var polyphonicMode = false {
         didSet {
             for note in onKeys {
@@ -487,6 +426,8 @@ public class KeyboardView: NSView, MIDIListener {
     let topKeyNotes = [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 11]
     let whiteKeyNotes = [0, 2, 4, 5, 7, 9, 11]
 
+    /// Draw keyboard
+    /// - Parameter dirtyRect: Rectangle to draw into
     override public func draw(_ dirtyRect: NSRect) {
         for i in 0 ..< octaveCount {
             drawOctaveCanvas(octaveNumber: i)
@@ -575,6 +516,13 @@ public class KeyboardView: NSView, MIDIListener {
         }
     }
 
+    /// Initialize with all parameters
+    /// - Parameters:
+    ///   - width: Horizontal size
+    ///   - height: Vertical size
+    ///   - firstOctave: Octave of left-most keys
+    ///   - octaveCount: Number of octaves to display
+    ///   - polyphonic: Should more than one key light up at a time?
     public init(width: Int,
                 height: Int,
                 firstOctave: Int = 4,
@@ -588,12 +536,15 @@ public class KeyboardView: NSView, MIDIListener {
         needsDisplay = true
     }
 
+    /// Initialize from Storyboard
+    /// - Parameter aDecoder: Decoder
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
 
     // MARK: - Storyboard Rendering
 
+    /// Story board rendering
     override public func prepareForInterfaceBuilder() {
         super.prepareForInterfaceBuilder()
 
@@ -603,10 +554,14 @@ public class KeyboardView: NSView, MIDIListener {
                                height: Double(height))
     }
 
+    /// Intrinsic content size
     override open var intrinsicContentSize: CGSize {
         return CGSize(width: 1_024, height: 84)
     }
 
+    /// Get note name or spelling
+    /// - Parameter note: MIDI Note Number as an Integer
+    /// - Returns: Spelling
     public func getNoteName(note: Int) -> String {
         let keyInOctave = note % 12
         return notesWithSharps[keyInOctave]
@@ -631,6 +586,8 @@ public class KeyboardView: NSView, MIDIListener {
         return MIDINoteNumber(note)
     }
 
+    /// React to mouse down
+    /// - Parameter event: Click event
     override public func mouseDown(with event: NSEvent) {
         let note = noteFromEvent(event: event)
         if polyphonicMode && onKeys.contains(note) {
@@ -643,6 +600,8 @@ public class KeyboardView: NSView, MIDIListener {
         needsDisplay = true
     }
 
+    /// React to mouse up
+    /// - Parameter event: Click event
     override public func mouseUp(with event: NSEvent) {
         if !polyphonicMode {
             let note = noteFromEvent(event: event)
@@ -652,6 +611,8 @@ public class KeyboardView: NSView, MIDIListener {
         needsDisplay = true
     }
 
+    /// React to mouse dragging
+    /// - Parameter event: Drage event
     override public func mouseDragged(with event: NSEvent) {
 
         if polyphonicMode {
@@ -670,26 +631,67 @@ public class KeyboardView: NSView, MIDIListener {
             needsDisplay = true
         }
     }
+}
 
+#endif
+
+extension KeyboardView: MIDIListener {
     // MARK: - MIDI
 
-    public func receivedMIDINoteOn(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
+    /// Receive the MIDI note on event
+    ///
+    /// - Parameters:
+    ///   - noteNumber: MIDI Note number of activated note
+    ///   - velocity:   MIDI Velocity (0-127)
+    ///   - channel:    MIDI Channel (1-16)
+    ///   - portID:     MIDI Unique Port ID
+    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDINoteOn(noteNumber: MIDINoteNumber,
+                                   velocity: MIDIVelocity,
+                                   channel: MIDIChannel,
+                                   portID: MIDIUniqueID?,
+                                   offset: MIDITimeStamp) {
         DispatchQueue.main.async(execute: {
             self.onKeys.insert(noteNumber)
             self.delegate?.noteOn(note: noteNumber)
-            self.needsDisplay = true
         })
     }
 
-    public func receivedMIDINoteOff(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
+    /// Receive the MIDI note off event
+    ///
+    /// - Parameters:
+    ///   - noteNumber: MIDI Note number of released note
+    ///   - velocity:   MIDI Velocity (0-127) usually speed of release, often 0.
+    ///   - channel:    MIDI Channel (1-16)
+    ///   - portID:     MIDI Unique Port ID
+    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDINoteOff(noteNumber: MIDINoteNumber,
+                                    velocity: MIDIVelocity,
+                                    channel: MIDIChannel,
+                                    portID: MIDIUniqueID?,
+                                    offset: MIDITimeStamp) {
         DispatchQueue.main.async(execute: {
             self.onKeys.remove(noteNumber)
             self.delegate?.noteOff(note: noteNumber)
-            self.needsDisplay = true
         })
     }
 
-    public func receivedMIDIController(_ controller: MIDIByte, value: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
+    /// Receive a generic controller value
+    ///
+    /// - Parameters:
+    ///   - controller: MIDI Controller Number
+    ///   - value:      Value of this controller
+    ///   - channel:    MIDI Channel (1-16)
+    ///   - portID:     MIDI Unique Port ID
+    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIController(_ controller: MIDIByte,
+                                       value: MIDIByte,
+                                       channel: MIDIChannel,
+                                       portID: MIDIUniqueID?,
+                                       offset: MIDITimeStamp) {
         if controller == MIDIByte(MIDIControl.damperOnOff.rawValue) && value == 0 {
             for note in onKeys {
                 delegate?.noteOff(note: note)
@@ -697,38 +699,92 @@ public class KeyboardView: NSView, MIDIListener {
         }
     }
 
-    public func receivedMIDIAftertouch(noteNumber: MIDINoteNumber, pressure: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
+    /// Receive single note based aftertouch event
+    ///
+    /// - Parameters:
+    ///   - noteNumber: Note number of touched note
+    ///   - pressure:   Pressure applied to the note (0-127)
+    ///   - channel:    MIDI Channel (1-16)
+    ///   - portID:     MIDI Unique Port ID
+    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIAftertouch(noteNumber: MIDINoteNumber,
+                                       pressure: MIDIByte,
+                                       channel: MIDIChannel,
+                                       portID: MIDIUniqueID?,
+                                       offset: MIDITimeStamp) {
         // Do nothing
     }
 
-    public func receivedMIDIAftertouch(_ pressure: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
+    /// Receive global aftertouch
+    ///
+    /// - Parameters:
+    ///   - pressure: Pressure applied (0-127)
+    ///   - channel:  MIDI Channel (1-16)
+    ///   - portID:   MIDI Unique Port ID
+    ///   - offset:   the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIAftertouch(_ pressure: MIDIByte,
+                                       channel: MIDIChannel,
+                                       portID: MIDIUniqueID?,
+                                       offset: MIDITimeStamp) {
         // Do nothing
     }
 
-    public func receivedMIDIPitchWheel(_ pitchWheelValue: MIDIWord, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
+    /// Receive pitch wheel value
+    ///
+    /// - Parameters:
+    ///   - pitchWheelValue: MIDI Pitch Wheel Value (0-16383)
+    ///   - channel:         MIDI Channel (1-16)
+    ///   - portID:          MIDI Unique Port ID
+    ///   - offset:          the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIPitchWheel(_ pitchWheelValue: MIDIWord,
+                                       channel: MIDIChannel,
+                                       portID: MIDIUniqueID?,
+                                       offset: MIDITimeStamp) {
         // Do nothing
     }
 
-    public func receivedMIDIProgramChange(_ program: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
+    /// Receive program change
+    ///
+    /// - Parameters:
+    ///   - program:  MIDI Program Value (0-127)
+    ///   - channel:  MIDI Channel (1-16)
+    ///   - portID:   MIDI Unique Port ID
+    ///   - offset:   the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIProgramChange(_ program: MIDIByte,
+                                          channel: MIDIChannel,
+                                          portID: MIDIUniqueID?,
+                                          offset: MIDITimeStamp) {
         // Do nothing
     }
 
-    public func receivedMIDISystemCommand(_ data: [MIDIByte], portID: MIDIUniqueID?, offset: MIDITimeStamp) {
+    /// Receive a MIDI system command (such as clock, SysEx, etc)
+    ///
+    /// - data:       Array of integers
+    /// - portID:     MIDI Unique Port ID
+    /// - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDISystemCommand(_ data: [MIDIByte],
+                                          portID: MIDIUniqueID?,
+                                          offset: MIDITimeStamp) {
         // Do nothing
     }
 
+    /// MIDI Setup has changed
     public func receivedMIDISetupChange() {
         // Do nothing
     }
 
+    /// MIDI Object Property has changed
     public func receivedMIDIPropertyChange(propertyChangeInfo: MIDIObjectPropertyChangeNotification) {
         // Do nothing
     }
 
+    /// Generic MIDI Notification
     public func receivedMIDINotification(notification: MIDINotification) {
         // Do nothing
     }
-
 }
-
-#endif

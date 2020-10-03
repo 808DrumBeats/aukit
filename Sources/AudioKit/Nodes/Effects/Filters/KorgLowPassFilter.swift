@@ -5,16 +5,20 @@ import AVFoundation
 import CAudioKit
 
 /// Analogue model of the Korg 35 Lowpass Filter
-public class KorgLowPassFilter: Node, AudioUnitContainer, Toggleable {
+public class KorgLowPassFilter: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "klpf"
     public static let ComponentDescription = AudioComponentDescription(effect: "klpf")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for cutoffFrequency
     public static let cutoffFrequencyDef = NodeParameterDef(
         identifier: "cutoffFrequency",
         name: "Filter cutoff",
@@ -26,6 +30,7 @@ public class KorgLowPassFilter: Node, AudioUnitContainer, Toggleable {
     /// Filter cutoff
     @Parameter public var cutoffFrequency: AUValue
 
+    /// Specification details for resonance
     public static let resonanceDef = NodeParameterDef(
         identifier: "resonance",
         name: "Filter resonance (should be between 0-2)",
@@ -37,6 +42,7 @@ public class KorgLowPassFilter: Node, AudioUnitContainer, Toggleable {
     /// Filter resonance (should be between 0-2)
     @Parameter public var resonance: AUValue
 
+    /// Specification details for saturation
     public static let saturationDef = NodeParameterDef(
         identifier: "saturation",
         name: "Filter saturation.",
@@ -50,14 +56,18 @@ public class KorgLowPassFilter: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for KorgLowPassFilter
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [KorgLowPassFilter.cutoffFrequencyDef,
              KorgLowPassFilter.resonanceDef,
              KorgLowPassFilter.saturationDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("KorgLowPassFilterDSP")
         }

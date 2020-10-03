@@ -7,16 +7,20 @@ import CAudioKit
 /// These filters are Butterworth second-order IIR filters. 
 /// They offer an almost flat passband and very good precision and stopband attenuation.
 /// 
-public class BandRejectButterworthFilter: Node, AudioUnitContainer, Toggleable {
+public class BandRejectButterworthFilter: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "btbr"
     public static let ComponentDescription = AudioComponentDescription(effect: "btbr")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for centerFrequency
     public static let centerFrequencyDef = NodeParameterDef(
         identifier: "centerFrequency",
         name: "Center Frequency (Hz)",
@@ -28,6 +32,7 @@ public class BandRejectButterworthFilter: Node, AudioUnitContainer, Toggleable {
     /// Center frequency. (in Hertz)
     @Parameter public var centerFrequency: AUValue
 
+    /// Specification details for bandwidth
     public static let bandwidthDef = NodeParameterDef(
         identifier: "bandwidth",
         name: "Bandwidth (Hz)",
@@ -41,13 +46,17 @@ public class BandRejectButterworthFilter: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for BandRejectButterworthFilter
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [BandRejectButterworthFilter.centerFrequencyDef,
              BandRejectButterworthFilter.bandwidthDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("BandRejectButterworthFilterDSP")
         }

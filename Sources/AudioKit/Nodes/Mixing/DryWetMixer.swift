@@ -5,16 +5,20 @@ import CAudioKit
 
 /// Balanceable Mix between two signals, usually used for a dry signal and wet signal
 ///
-public class DryWetMixer: Node, AudioUnitContainer, Toggleable {
+public class DryWetMixer: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "dwmx"
    public static let ComponentDescription = AudioComponentDescription(effect: "dwmx")
 
-   public typealias AudioUnitType = InternalAU
+    /// Internal type of audio unit for this node
+    public typealias AudioUnitType = InternalAU
 
-   public private(set) var internalAU: AudioUnitType?
+    /// Internal audio unit
+    public private(set) var internalAU: AudioUnitType?
 
-   // MARK: - Parameters
+    // MARK: - Parameters
 
+    /// Specification details for balance
     public static let balanceDef = NodeParameterDef(
         identifier: "balance",
         name: "Balance",
@@ -28,12 +32,16 @@ public class DryWetMixer: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal audio unit for dry wet mixer
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [DryWetMixer.balanceDef]
         }
 
+        /// Create dry wet mixer DSP
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("DryWetMixerDSP")
         }
@@ -62,6 +70,11 @@ public class DryWetMixer: Node, AudioUnitContainer, Toggleable {
         connections.append(input2)
     }
 
+    /// Initializer with dry wet labels
+    /// - Parameters:
+    ///   - dry: Input 1
+    ///   - wet: Input 2
+    ///   - balance: Balance between inputs
     public convenience init(dry: Node, wet: Node, balance: AUValue = 0.5) {
         self.init(dry, wet, balance: balance)
     }

@@ -18,10 +18,12 @@ extension MIDIByte {
         return self & 0xF
     }
 
+    /// High Bit
     public var highBit: MIDIByte {
         return self >> 4
     }
 
+    /// Value as traditional hex string
     public var hex: String {
         let st = String(format: "%02X", self)
         return "0x\(st)"
@@ -69,7 +71,7 @@ extension MIDIWord {
     /// byte in the MIDIWord
     ///
     /// - Parameter ioBitmap: Full 8bits of ioMapping for one output
-    init(ioBitmap: UInt8) {
+    init(ioBitmap: MIDIByte) {
         let high = (ioBitmap & 0xF0) >> 4
         let low = ioBitmap & 0x0F
         self = UInt16(high << 8) | UInt16(low)
@@ -86,8 +88,11 @@ extension MIDIWord {
     }
 }
 
+/// MIDI Time Format
 public enum MIDITimeFormat: Int {
+    /// Ticks Per Beat
     case ticksPerBeat = 0
+    /// Frames per second
     case framesPerSecond = 1
 
     var description: String {

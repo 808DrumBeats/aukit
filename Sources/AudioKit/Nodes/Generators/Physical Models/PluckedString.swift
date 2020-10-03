@@ -5,17 +5,22 @@ import AVFoundation
 import CAudioKit
 
 /// Karplus-Strong plucked string instrument.
+/// TODO This node needs tests
 /// 
-public class PluckedString: Node, AudioUnitContainer, Toggleable {
+public class PluckedString: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "pluk"
     public static let ComponentDescription = AudioComponentDescription(generator: "pluk")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
         name: "Variable frequency. Values less than the initial frequency are doubled until greater than that.",
@@ -27,6 +32,7 @@ public class PluckedString: Node, AudioUnitContainer, Toggleable {
     /// Variable frequency. Values less than the initial frequency are doubled until greater than that.
     @Parameter public var frequency: AUValue
 
+    /// Specification details for amplitude
     public static let amplitudeDef = NodeParameterDef(
         identifier: "amplitude",
         name: "Amplitude",
@@ -40,13 +46,17 @@ public class PluckedString: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for PluckedString
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [PluckedString.frequencyDef,
              PluckedString.amplitudeDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("PluckedStringDSP")
         }
@@ -80,7 +90,6 @@ public class PluckedString: Node, AudioUnitContainer, Toggleable {
             self.frequency = frequency
             self.amplitude = amplitude
         }
-
     }
 
     // MARK: - Control

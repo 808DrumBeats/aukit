@@ -10,16 +10,20 @@ import CAudioKit
 /// of the “string” is controlled by the fundamentalFrequency.  
 /// This operation can be used to simulate sympathetic resonances to an input signal.
 /// 
-public class StringResonator: Node, AudioUnitContainer, Toggleable {
+public class StringResonator: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "stre"
     public static let ComponentDescription = AudioComponentDescription(effect: "stre")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for fundamentalFrequency
     public static let fundamentalFrequencyDef = NodeParameterDef(
         identifier: "fundamentalFrequency",
         name: "Fundamental Frequency (Hz)",
@@ -31,12 +35,13 @@ public class StringResonator: Node, AudioUnitContainer, Toggleable {
     /// Fundamental frequency of string.
     @Parameter public var fundamentalFrequency: AUValue
 
+    /// Specification details for feedback
     public static let feedbackDef = NodeParameterDef(
         identifier: "feedback",
         name: "Feedback (%)",
         address: akGetParameterAddress("StringResonatorParameterFeedback"),
         range: 0.0 ... 1.0,
-        unit: .generic,
+        unit: .percent,
         flags: .default)
 
     /// Feedback amount (value between 0-1). A value close to 1 creates a slower decay and a more pronounced resonance. Small values may leave the input signal unaffected. Depending on the filter frequency, typical values are > .9.
@@ -44,13 +49,17 @@ public class StringResonator: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for StringResonator
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [StringResonator.fundamentalFrequencyDef,
              StringResonator.feedbackDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("StringResonatorDSP")
         }

@@ -5,16 +5,20 @@ import CAudioKit
 
 /// Stereo StereoFieldLimiter
 ///
-public class StereoFieldLimiter: Node, AudioUnitContainer, Toggleable {
+public class StereoFieldLimiter: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "sflm"
     public static let ComponentDescription = AudioComponentDescription(effect: "sflm")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Properties
 
+    /// Specification details for amount
     public static let amountDef = NodeParameterDef(
         identifier: "amount",
         name: "Limiting amount",
@@ -28,12 +32,16 @@ public class StereoFieldLimiter: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal audio unit for stereo field limiter
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [StereoFieldLimiter.amountDef]
         }
 
+        /// Create stereo field limiter DSP
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("StereoFieldLimiterDSP")
         }

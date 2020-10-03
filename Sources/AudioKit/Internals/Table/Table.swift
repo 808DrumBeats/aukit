@@ -43,13 +43,18 @@ public enum TableType: Int, Codable, CaseIterable {
 
 /// A table of values accessible as a waveform or lookup mechanism
 public class Table: NSObject, MutableCollection, Codable {
+    /// Index by an integer
     public typealias Index = Int
+    /// Index distance, or count
     public typealias IndexDistance = Int
+    /// This is a collection of floats
     public typealias Element = Float
+    /// Subsequencable into slices
     public typealias SubSequence = ArraySlice<Element>
 
     // MARK: - Properties    /// Values stored in the table
 
+    /// Array of elements
     public internal(set) var content = [Element]()
 
     /// Phase of the table
@@ -59,18 +64,22 @@ public class Table: NSObject, MutableCollection, Codable {
         }
     }
 
+    /// Start point
     public var startIndex: Index {
         return content.startIndex
     }
 
+    /// End point
     public var endIndex: Index {
         return content.endIndex
     }
 
+    /// Number of elements
     public var count: IndexDistance {
         return content.count
     }
 
+    /// Grab an element by index
     public subscript(index: Index) -> Element {
         get {
             return content[index]
@@ -80,6 +89,7 @@ public class Table: NSObject, MutableCollection, Codable {
         }
     }
 
+    /// Grab elements by range
     public subscript(bounds: Range<Index>) -> SubSequence {
         get {
             return content[bounds]
@@ -139,6 +149,9 @@ public class Table: NSObject, MutableCollection, Codable {
     }
 
     /// Create table from an array of Element
+    /// - Parameters:
+    ///   - content: Array of elemnts
+    ///   - phase: Offset
     public init(_ content: [Element], phase: Float = 0) {
         self.type = .custom
         self.phase = phase
@@ -146,6 +159,7 @@ public class Table: NSObject, MutableCollection, Codable {
     }
 
     /// Create table from first channel of audio file
+    /// - Parameter file: audio file to use as source data
     public convenience init?(file: AVAudioFile) {
         let size = Int(file.length)
         self.init(count: size)
@@ -278,28 +292,43 @@ public class Table: NSObject, MutableCollection, Codable {
 }
 
 extension Table: RandomAccessCollection {
+    /// Indices for our elements
     public typealias Indices = Array<Element>.Indices
 
+    /// Index before
+    /// - Parameter i: current index
     @inline(__always)
     public func index(before i: Index) -> Index {
         return i - 1
     }
 
+    /// Index after
+    /// - Parameter i: current index
     @inline(__always)
     public func index(after i: Index) -> Index {
         return i + 1
     }
 
+    /// Index offset from current index
+    /// - Parameters:
+    ///   - i: current index
+    ///   - n: offset idstance
     @inline(__always)
     public func index(_ i: Index, offsetBy n: IndexDistance) -> Index {
         return i + n
     }
 
+    /// Form index after current index
+    /// - Parameter i: current index
     @inline(__always)
     public func formIndex(after i: inout Index) {
         i += 1
     }
 
+    /// Calculate distance from start to end indices
+    /// - Parameters:
+    ///   - start: start index
+    ///   - end: end index
     @inline(__always)
     public func distance(from start: Index, to end: Index) -> IndexDistance {
         return end - start

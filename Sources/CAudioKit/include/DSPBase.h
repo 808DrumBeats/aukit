@@ -5,6 +5,7 @@
 #import "Interop.h"
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
+#import "TPCircularBuffer.h"
 
 #include <stdarg.h>
 
@@ -40,6 +41,10 @@ AK_API void deleteDSP(DSPRef pDSP);
 /// Reset random seed to ensure deterministic results in tests.
 AK_API void akSetSeed(unsigned int);
 
+AK_API void akInstallTap(DSPRef dsp);
+AK_API void akRemoveTap(DSPRef dsp);
+AK_API bool akGetTapData(DSPRef dsp, size_t frames, float* leftData, float* rightData);
+
 #ifdef __cplusplus
 
 #import <Foundation/Foundation.h>
@@ -61,7 +66,11 @@ protected:
     
     /// Subclasses should process in place and set this to true if possible
     bool bCanProcessInPlace = false;
-    
+
+    /// Number of things attached to this node's data
+    size_t tapCount = 0;
+    size_t filledTapCount = 0;
+
     // To support AKAudioUnit functions
     bool isInitialized = false;
     std::atomic<bool> isStarted{true};
@@ -78,7 +87,7 @@ public:
     DSPBase(int inputBusCount=1);
     
     /// Virtual destructor allows child classes to be deleted with only DSPBase *pointer
-    virtual ~DSPBase() {}
+    virtual ~DSPBase();
     
     std::vector<AudioBufferList*> inputBufferLists;
     AudioBufferList* outputBufferList = nullptr;
@@ -157,6 +166,13 @@ public:
 
     virtual void startRamp(const AUParameterEvent& event);
 
+    virtual void installTap();
+    virtual void removeTap();
+    virtual bool getTapData(size_t frames, float* leftData, float* rightData);
+
+    TPCircularBuffer leftBuffer;
+    TPCircularBuffer rightBuffer;
+    
 private:
 
     /**
@@ -170,6 +186,7 @@ private:
     void handleOneEvent(AURenderEvent const *event);
     
     void performAllSimultaneousEvents(AUEventSampleTime now, AURenderEvent const *&event);
+
     
 };
 

@@ -5,16 +5,20 @@ import AVFoundation
 import CAudioKit
 
 /// A delay line with cubic interpolation.
-public class VariableDelay: Node, AudioUnitContainer, Toggleable {
+public class VariableDelay: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "vdla"
     public static let ComponentDescription = AudioComponentDescription(effect: "vdla")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for time
     public static let timeDef = NodeParameterDef(
         identifier: "time",
         name: "Delay time (Seconds)",
@@ -26,6 +30,7 @@ public class VariableDelay: Node, AudioUnitContainer, Toggleable {
     /// Delay time (in seconds) This value must not exceed the maximum delay time.
     @Parameter public var time: AUValue
 
+    /// Specification details for feedback
     public static let feedbackDef = NodeParameterDef(
         identifier: "feedback",
         name: "Feedback (%)",
@@ -39,17 +44,23 @@ public class VariableDelay: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for VariableDelay
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [VariableDelay.timeDef,
              VariableDelay.feedbackDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("VariableDelayDSP")
         }
 
+        /// Set the longest delay time
+        /// - Parameter maximumTime: Delay time in seconds
         public func setMaximumTime(_ maximumTime: AUValue) {
             akVariableDelaySetMaximumTime(dsp, maximumTime)
         }

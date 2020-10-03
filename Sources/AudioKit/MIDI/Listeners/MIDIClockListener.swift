@@ -11,18 +11,18 @@ import os.log
 /// If you wish to observer its events, then add your own MIDIBeatObserver
 ///
 public class MIDIClockListener: NSObject {
-    // Definition of 24 quantums per quarter note
-    let quantumsPerQuarterNote: UInt8
-    // Count of 24 quantums per quarter note
-    public var quarterNoteQuantumCounter: UInt8 = 0
-    // number of all time quantum F8 MIDI Clock messages seen
+    /// Definition of 24 quantums per quarter note
+    let quantumsPerQuarterNote: MIDIByte
+    /// Count of 24 quantums per quarter note
+    public var quarterNoteQuantumCounter: MIDIByte = 0
+    /// number of all time quantum F8 MIDI Clock messages seen
     public var quantumCounter: UInt64 = 0
-    // 6 F8 MIDI Clock messages = 1 SPP MIDI Beat
+    /// 6 F8 MIDI Clock messages = 1 SPP MIDI Beat
     public var sppMIDIBeatCounter: UInt64 = 0
-    // 6 F8 MIDI Clock quantum messages = 1 SPP MIDI Beat
-    public var sppMIDIBeatQuantumCounter: UInt8 = 0
-    // 1, 2, 3, 4 , 1, 2, 3, 4 - quarter note counter
-    public var fourCount: UInt8 = 0
+    /// 6 F8 MIDI Clock quantum messages = 1 SPP MIDI Beat
+    public var sppMIDIBeatQuantumCounter: MIDIByte = 0
+    /// 1, 2, 3, 4 , 1, 2, 3, 4 - quarter note counter
+    public var fourCount: MIDIByte = 0
 
     private var sendStart = false
     private var sendContinue = false
@@ -31,8 +31,12 @@ public class MIDIClockListener: NSObject {
     private var observers: [MIDIBeatObserver] = []
 
     /// MIDIClockListener requires to be an observer of both SRT and BPM events
+    /// - Parameters:
+    ///   - srt: MIDI System real-time listener
+    ///   - count: Quantums per quarter note
+    ///   - tempo: Tempo listener
     init(srtListener srt: MIDISystemRealTimeListener,
-         quantumsPerQuarterNote count: UInt8 = 24,
+         quantumsPerQuarterNote count: MIDIByte = 24,
          tempoListener tempo: MIDITempoListener) {
         quantumsPerQuarterNote = count
         srtListener = srt
@@ -54,7 +58,7 @@ public class MIDIClockListener: NSObject {
     func sppChange(_ positionPointer: UInt16) {
         sppMIDIBeatCounter = UInt64(positionPointer)
         quantumCounter = UInt64(6 * sppMIDIBeatCounter)
-        quarterNoteQuantumCounter = UInt8(quantumCounter % 24)
+        quarterNoteQuantumCounter = MIDIByte(quantumCounter % 24)
     }
 
     func midiClockBeat(time: MIDITimeStamp) {
@@ -111,16 +115,21 @@ public class MIDIClockListener: NSObject {
 
 extension MIDIClockListener {
 
+    /// Add MIDI beat observer
+    /// - Parameter observer: MIDI Beat observer to add
     public func addObserver(_ observer: MIDIBeatObserver) {
         observers.append(observer)
         Log("[MIDIClockListener:addObserver] (\(observers.count) observers)", log: OSLog.midi)
     }
 
+    /// Remove MIDI beat observer
+    /// - Parameter observer: MIDI Beat observer to remove
     public func removeObserver(_ observer: MIDIBeatObserver) {
         observers.removeAll { $0 == observer }
         Log("[MIDIClockListener:removeObserver] (\(observers.count) observers)", log: OSLog.midi)
     }
 
+    /// Remove all MIDI Beat observers
     public func removeAllObservers() {
         observers.removeAll()
     }
@@ -174,11 +183,13 @@ extension MIDIClockListener: MIDIBeatObserver {
 
 extension MIDIClockListener: MIDITempoObserver {
 
+    /// Resets the quantumc ounter
     public func midiClockFollowerMode() {
         Log("MIDI Clock Follower", log: OSLog.midi)
         quarterNoteQuantumCounter = 0
     }
 
+    /// Resets the quantum counter
     public func midiClockLeaderEnabled() {
         Log("MIDI Clock Leader Enabled", log: OSLog.midi)
         quarterNoteQuantumCounter = 0
@@ -186,11 +197,15 @@ extension MIDIClockListener: MIDITempoObserver {
 }
 
 extension MIDIClockListener: MIDISystemRealTimeObserver {
+    /// Stop MIDI System Real-time listener
+    /// - Parameter listener: MIDI System Real-time Listener
     public func stopSRT(listener: MIDISystemRealTimeListener) {
         Log("Beat: [Stop]", log: OSLog.midi)
         sendStopToObservers()
     }
 
+    /// Start MIDI System Real-time listener
+    /// - Parameter listener: MIDI System Real-time Listener
     public func startSRT(listener: MIDISystemRealTimeListener) {
         Log("Beat: [Start]", log: OSLog.midi)
         sppMIDIBeatCounter = 0
@@ -200,6 +215,8 @@ extension MIDIClockListener: MIDISystemRealTimeObserver {
         sendPreparePlayToObservers(continue: false)
     }
 
+    /// Continue MIDI System Real-time listener
+    /// - Parameter listener: MIDI System Real-time Listener
     public func continueSRT(listener: MIDISystemRealTimeListener) {
         Log("Beat: [Continue]", log: OSLog.midi)
         sendContinue = true

@@ -8,16 +8,20 @@ import CAudioKit
 /// independent and is determined by the reverberation time (defined as the time in seconds for a signal to
 /// decay to 1/1000, or 60dB down from its original amplitude).  Output will begin to appear immediately.
 /// 
-public class FlatFrequencyResponseReverb: Node, AudioUnitContainer, Toggleable {
+public class FlatFrequencyResponseReverb: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "alps"
     public static let ComponentDescription = AudioComponentDescription(effect: "alps")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for reverbDuration
     public static let reverbDurationDef = NodeParameterDef(
         identifier: "reverbDuration",
         name: "Reverb Duration (Seconds)",
@@ -31,16 +35,22 @@ public class FlatFrequencyResponseReverb: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for FlatFrequencyResponseReverb
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [FlatFrequencyResponseReverb.reverbDurationDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("FlatFrequencyResponseReverbDSP")
         }
 
+        /// Set loop duration
+        /// - Parameter duration: Duration in seconds
         public func setLoopDuration(_ duration: AUValue) {
             akFlatFrequencyResponseSetLoopDuration(dsp, duration)
         }

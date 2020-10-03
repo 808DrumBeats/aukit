@@ -6,7 +6,7 @@ import CAudioKit
 #if !os(tvOS)
 
 /// Type of shaker to use
-public enum ShakerType: UInt8 {
+public enum ShakerType: MIDIByte {
 
     /// Maraca
     case maraca = 0
@@ -80,14 +80,17 @@ public enum ShakerType: UInt8 {
 
 /// STK Shaker
 ///
-public class Shaker: Node, AudioUnitContainer, Toggleable {
-    /// Four letter unique description of the node
+public class Shaker: Node, AudioUnitContainer, Tappable, Toggleable {
+    /// Four letter unique description "shak"
     public static let ComponentDescription = AudioComponentDescription(instrument: "shak")
+
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
-    // MARK: - Properties
-
+    /// Internal audio unit
     public private(set) var internalAU: AudioUnitType?
+
+    // MARK: - Parameters
 
     /// Tells whether the node is processing (ie. started, playing, or active)
     open var isStarted: Bool {
@@ -96,17 +99,24 @@ public class Shaker: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Internal Audio Unit
 
+    /// Internal audio unti for shaker
     public class InternalAU: AudioUnitBase {
 
+        /// Create shaker DSP
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             return akCreateDSP("ShakerDSP")
         }
 
+        /// Trigger the shaker
+        /// - Parameters:
+        ///   - type: Type of shaker to create
+        ///   - amplitude: How hard to shake or velocity
         public func trigger(type: AUValue, amplitude: AUValue) {
 
             if let midiBlock = scheduleMIDIEventBlock {
-                let event = MIDIEvent(noteOn: UInt8(type),
-                                        velocity: UInt8(amplitude * 127.0),
+                let event = MIDIEvent(noteOn: MIDINoteNumber(type),
+                                        velocity: MIDIVelocity(amplitude * 127.0),
                                         channel: 0)
                 event.data.withUnsafeBufferPointer { ptr in
                     guard let ptr = ptr.baseAddress else { return }

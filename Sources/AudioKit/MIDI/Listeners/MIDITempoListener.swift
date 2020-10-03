@@ -16,6 +16,7 @@
 import Foundation
 import CoreMIDI
 
+/// Type to store tempo in BeatsPerMinute
 public typealias BPMType = TimeInterval
 
 /// A AudioKit midi listener that looks at midi clock messages and calculates a BPM
@@ -42,13 +43,18 @@ public typealias BPMType = TimeInterval
 ///
 public class MIDITempoListener: NSObject {
 
+    /// Clock listener
     public var clockListener: MIDIClockListener?
 
+    /// System Real-time Listener
     public var srtListener = MIDISystemRealTimeListener()
 
     var tempoObservers: [MIDITempoObserver] = []
 
+    /// Tempo string
     public var tempoString: String = ""
+
+    /// Tempo in "BPM Type"
     public var tempo: BPMType = 0
     var clockEvents: [UInt64] = []
     let clockEventLimit = 2
@@ -59,7 +65,9 @@ public class MIDITempoListener: NSObject {
     var bpmSmoothing: ValueSmoothing
 
     var clockTimeout: MIDITimeout?
-    public var incomingClockActive = false
+
+    /// Is the Incoming Clock active?
+    public var isIncomingClockActive = false
 
     let BEAT_TICKS = 24
     let oneThousand = UInt64(1_000)
@@ -91,10 +99,10 @@ public class MIDITempoListener: NSObject {
         }
 
         clockTimeout = MIDITimeout(timeoutInterval: 1.6, onMainThread: true, success: {}, timeout: {
-            if self.incomingClockActive == true {
+            if self.isIncomingClockActive == true {
                 self.midiClockActivityStopped()
             }
-            self.incomingClockActive = false
+            self.isIncomingClockActive = false
         })
         midiClockActivityStopped()
     }
@@ -108,6 +116,7 @@ public class MIDITempoListener: NSObject {
 // MARK: - BPM Analysis
 
 public extension MIDITempoListener {
+    /// Analyze tempo
     func analyze() {
         guard clockEvents.count > 1 else { return }
         guard clockEventLimit > 1 else { return }
@@ -157,16 +166,19 @@ public extension MIDITempoListener {
         }
     }
 
+    /// Reset all clock events except the last one
     func resetClockEventsLeavingOne() {
         guard clockEvents.count > 1 else { return }
         clockEvents = clockEvents.dropFirst(clockEvents.count - 1).map { $0 }
     }
 
+    /// Reset all clock events leaving half remaining
     func resetClockEventsLeavingHalf() {
         guard clockEvents.count > 1 else { return }
         clockEvents = clockEvents.dropFirst(clockEvents.count / 2).map { $0 }
     }
 
+    /// Reset all clock events leaving none
     func resetClockEventsLeavingNone() {
         guard clockEvents.count > 1 else { return }
         clockEvents = []
@@ -176,42 +188,19 @@ public extension MIDITempoListener {
 // MARK: - MIDITempoListener should be used as an MIDIListener
 
 extension MIDITempoListener: MIDIListener {
-
-    public func receivedMIDINoteOn(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDINoteOff(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDIController(_ controller: MIDIByte, value: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDIAftertouch(noteNumber: MIDINoteNumber, pressure: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDIAftertouch(_ pressure: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDIPitchWheel(_ pitchWheelValue: MIDIWord, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
-    public func receivedMIDIProgramChange(_ program: MIDIByte, channel: MIDIChannel, portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-        // Do nothing
-    }
-
+    /// Receive a MIDI system command (such as clock, SysEx, etc)
+    ///
+    /// - data:       Array of integers
+    /// - portID:     MIDI Unique Port ID
+    /// - offset:     the offset in samples that this event occurs in the buffer
+    ///
     public func receivedMIDISystemCommand(_ data: [MIDIByte], portID: MIDIUniqueID?, offset: MIDITimeStamp) {
-                if data[0] == MIDISystemCommand.clock.rawValue {
+        if data[0] == MIDISystemCommand.clock.rawValue {
             clockTimeout?.succeed()
             clockTimeout?.perform {
-                if self.incomingClockActive == false {
+                if self.isIncomingClockActive == false {
                     midiClockActivityStarted()
-                    self.incomingClockActive = true
+                    self.isIncomingClockActive = true
                 }
                 clockEvents.append(offset)
                 analyze()
@@ -226,32 +215,154 @@ extension MIDITempoListener: MIDIListener {
         }
         srtListener.receivedMIDISystemCommand(data, portID: portID, offset: offset)
     }
+    
+    /// Receive the MIDI note on event
+    ///
+    /// - Parameters:
+    ///   - noteNumber: MIDI Note number of activated note
+    ///   - velocity:   MIDI Velocity (0-127)
+    ///   - channel:    MIDI Channel (1-16)
+    ///   - portID:     MIDI Unique Port ID
+    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDINoteOn(noteNumber: MIDINoteNumber,
+                                   velocity: MIDIVelocity,
+                                   channel: MIDIChannel,
+                                   portID: MIDIUniqueID?,
+                                   offset: MIDITimeStamp) {
+        // Do nothing
+    }
 
+    /// Receive the MIDI note off event
+    ///
+    /// - Parameters:
+    ///   - noteNumber: MIDI Note number of released note
+    ///   - velocity:   MIDI Velocity (0-127) usually speed of release, often 0.
+    ///   - channel:    MIDI Channel (1-16)
+    ///   - portID:     MIDI Unique Port ID
+    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDINoteOff(noteNumber: MIDINoteNumber,
+                                    velocity: MIDIVelocity,
+                                    channel: MIDIChannel,
+                                    portID: MIDIUniqueID?,
+                                    offset: MIDITimeStamp) {
+        // Do nothing
+    }
+
+    /// Receive a generic controller value
+    ///
+    /// - Parameters:
+    ///   - controller: MIDI Controller Number
+    ///   - value:      Value of this controller
+    ///   - channel:    MIDI Channel (1-16)
+    ///   - portID:     MIDI Unique Port ID
+    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIController(_ controller: MIDIByte,
+                                       value: MIDIByte, channel: MIDIChannel,
+                                       portID: MIDIUniqueID?,
+                                       offset: MIDITimeStamp) {
+        // Do nothing
+    }
+
+    /// Receive single note based aftertouch event
+    ///
+    /// - Parameters:
+    ///   - noteNumber: Note number of touched note
+    ///   - pressure:   Pressure applied to the note (0-127)
+    ///   - channel:    MIDI Channel (1-16)
+    ///   - portID:     MIDI Unique Port ID
+    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIAftertouch(noteNumber: MIDINoteNumber,
+                                       pressure: MIDIByte,
+                                       channel: MIDIChannel,
+                                       portID: MIDIUniqueID?,
+                                       offset: MIDITimeStamp) {
+        // Do nothing
+    }
+
+    /// Receive global aftertouch
+    ///
+    /// - Parameters:
+    ///   - pressure: Pressure applied (0-127)
+    ///   - channel:  MIDI Channel (1-16)
+    ///   - portID:   MIDI Unique Port ID
+    ///   - offset:   the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIAftertouch(_ pressure: MIDIByte,
+                                       channel: MIDIChannel,
+                                       portID: MIDIUniqueID?,
+                                       offset: MIDITimeStamp) {
+        // Do nothing
+    }
+
+    /// Receive pitch wheel value
+    ///
+    /// - Parameters:
+    ///   - pitchWheelValue: MIDI Pitch Wheel Value (0-16383)
+    ///   - channel:         MIDI Channel (1-16)
+    ///   - portID:          MIDI Unique Port ID
+    ///   - offset:          the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIPitchWheel(_ pitchWheelValue: MIDIWord,
+                                       channel: MIDIChannel,
+                                       portID: MIDIUniqueID?,
+                                       offset: MIDITimeStamp) {
+        // Do nothing
+    }
+
+    /// Receive program change
+    ///
+    /// - Parameters:
+    ///   - program:  MIDI Program Value (0-127)
+    ///   - channel:  MIDI Channel (1-16)
+    ///   - portID:   MIDI Unique Port ID
+    ///   - offset:   the offset in samples that this event occurs in the buffer
+    ///
+    public func receivedMIDIProgramChange(_ program: MIDIByte,
+                                          channel: MIDIChannel,
+                                          portID: MIDIUniqueID?,
+                                          offset: MIDITimeStamp) {
+        // Do nothing
+    }
+
+    /// MIDI Setup has changed
     public func receivedMIDISetupChange() {
         // Do nothing
     }
 
+    /// MIDI Object Property has changed
     public func receivedMIDIPropertyChange(propertyChangeInfo: MIDIObjectPropertyChangeNotification) {
         // Do nothing
     }
 
+    /// Generic MIDI Notification
     public func receivedMIDINotification(notification: MIDINotification) {
         // Do nothing
     }
+
 }
 
 // MARK: - Management and Communications for BPM Observers
 
 extension MIDITempoListener {
+
+    /// Add a MIDI Tempo Observer
+    /// - Parameter observer: Tempo observer to add
     public func addObserver(_ observer: MIDITempoObserver) {
         tempoObservers.append(observer)
     }
 
+    /// Remove a tempo observer
+    /// - Parameter observer: Tempo observer to remove
     public func removeObserver(_ observer: MIDITempoObserver) {
         tempoObservers.removeAll { $0 == observer }
     }
 
-    public func removeAllObserver() {
+    /// Remove all tempo observers
+    public func removeAllObservers() {
         tempoObservers.removeAll()
     }
 

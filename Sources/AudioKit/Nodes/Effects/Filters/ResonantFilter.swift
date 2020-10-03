@@ -5,16 +5,20 @@ import AVFoundation
 import CAudioKit
 
 /// The output for reson appears to be very hot, so take caution when using this module.
-public class ResonantFilter: Node, AudioUnitContainer, Toggleable {
+public class ResonantFilter: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "resn"
     public static let ComponentDescription = AudioComponentDescription(effect: "resn")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
         name: "Center frequency of the filter, or frequency position of the peak response.",
@@ -26,6 +30,7 @@ public class ResonantFilter: Node, AudioUnitContainer, Toggleable {
     /// Center frequency of the filter, or frequency position of the peak response.
     @Parameter public var frequency: AUValue
 
+    /// Specification details for bandwidth
     public static let bandwidthDef = NodeParameterDef(
         identifier: "bandwidth",
         name: "Bandwidth of the filter.",
@@ -39,13 +44,17 @@ public class ResonantFilter: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for ResonantFilter
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [ResonantFilter.frequencyDef,
              ResonantFilter.bandwidthDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("ResonantFilterDSP")
         }

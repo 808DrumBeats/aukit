@@ -13,20 +13,26 @@ import CAudioKit
 /// allpass units, followed by four parallel comb filters, and two decorrelation delay lines in
 /// parallel at the output.
 /// 
-public class ChowningReverb: Node, AudioUnitContainer, Toggleable {
+public class ChowningReverb: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "jcrv"
     public static let ComponentDescription = AudioComponentDescription(effect: "jcrv")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for ChowningReverb
     public class InternalAU: AudioUnitBase {
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("ChowningReverbDSP")
         }

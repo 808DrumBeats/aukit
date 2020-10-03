@@ -10,16 +10,20 @@ import CAudioKit
 /// different rates in order to warp the waveform. For example, pdhalf can
 /// smoothly transition a sinewave into something approximating a sawtooth wave.
 /// 
-public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
+public class PWMOscillator: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "pwmo"
     public static let ComponentDescription = AudioComponentDescription(generator: "pwmo")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
         name: "Frequency (Hz)",
@@ -31,6 +35,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
     /// In cycles per second, or Hz.
     @Parameter public var frequency: AUValue
 
+    /// Specification details for amplitude
     public static let amplitudeDef = NodeParameterDef(
         identifier: "amplitude",
         name: "Amplitude",
@@ -42,6 +47,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
     /// Output amplitude
     @Parameter public var amplitude: AUValue
 
+    /// Specification details for pulseWidth
     public static let pulseWidthDef = NodeParameterDef(
         identifier: "pulseWidth",
         name: "Pulse Width",
@@ -53,6 +59,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
     /// Duty cycle width (range 0-1).
     @Parameter public var pulseWidth: AUValue
 
+    /// Specification details for detuningOffset
     public static let detuningOffsetDef = NodeParameterDef(
         identifier: "detuningOffset",
         name: "Frequency offset (Hz)",
@@ -64,6 +71,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
     /// Frequency offset in Hz.
     @Parameter public var detuningOffset: AUValue
 
+    /// Specification details for detuningMultiplier
     public static let detuningMultiplierDef = NodeParameterDef(
         identifier: "detuningMultiplier",
         name: "Frequency detuning multiplier",
@@ -77,8 +85,10 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for PWMOscillator
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [PWMOscillator.frequencyDef,
              PWMOscillator.amplitudeDef,
@@ -87,6 +97,8 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
              PWMOscillator.detuningMultiplierDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("PWMOscillatorDSP")
         }
@@ -128,6 +140,5 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
             self.detuningOffset = detuningOffset
             self.detuningMultiplier = detuningMultiplier
         }
-
     }
 }

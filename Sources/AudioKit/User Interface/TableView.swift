@@ -32,7 +32,7 @@ public class TableView: UIView {
         let padding = 0.9
 
         let border = UIBezierPath(rect: CGRect(x: 0, y: 0, width: frame.width, height: frame.height))
-        let bgcolor = Stylist.sharedInstance.nextColor
+        let bgcolor = UIColor.black
         bgcolor.setFill()
         border.fill()
         UIColor.black.setStroke()
@@ -70,8 +70,10 @@ public class TableView: UIView {
 
 import Cocoa
 
+/// Displays the values in the table into a nice graph
 public class TableView: NSView {
 
+    /// Table to view
     public var table: Table {
         didSet {
             let max = Double(table.max() ?? 1.0)
@@ -81,8 +83,13 @@ public class TableView: NSView {
         }
     }
 
+    /// Maximum absolute value
     public var absmax: Double = 1.0
 
+    /// Initialize the table view with table and size
+    /// - Parameters:
+    ///   - table: Table to view
+    ///   - frame: Display area
     public init(_ table: Table, frame: CGRect = CGRect(width: 440, height: 150)) {
         self.table = table
         super.init(frame: frame)
@@ -91,13 +98,14 @@ public class TableView: NSView {
         absmax = [max, abs(min)].max() ?? 1.0
     }
 
-    override public var isFlipped: Bool {
-        return true
-    }
-
+    /// Required but unimplemented initializer
+    /// - Parameter aDecoder: Decoder
     required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    /// Draw table view in  a rectange
+    /// - Parameter rect: Rectangle to draw in
     override public func draw(_ rect: CGRect) {
 
         let width = Double(frame.width)
@@ -105,7 +113,7 @@ public class TableView: NSView {
         let padding = 0.9
 
         let border = NSBezierPath(rect: NSRect(size: frame.size))
-        let bgcolor = Stylist.sharedInstance.nextColor
+        let bgcolor = NSColor.black
         bgcolor.setFill()
         border.fill()
         NSColor.black.setStroke()

@@ -6,16 +6,20 @@ import CAudioKit
 /// DynaRage Tube Compressor | Based on DynaRage Tube Compressor RE for Reason
 /// by Devoloop Srls
 ///
-public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
+public class DynaRageCompressor: Node, AudioUnitContainer, Tappable, Toggleable {
 
-    public static let ComponentDescription = AudioComponentDescription(effect: "dldr")
+    /// Unique four-letter identifier "dyrc"
+    public static let ComponentDescription = AudioComponentDescription(effect: "dyrc")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for ratio
     public static let ratioDef = NodeParameterDef(
         identifier: "ratio",
         name: "Ratio to compress with, a value > 1 will compress",
@@ -27,6 +31,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
     /// Ratio to compress with, a value > 1 will compress
     @Parameter public var ratio: AUValue
 
+    /// Specification details for threshold
     public static let thresholdDef = NodeParameterDef(
         identifier: "threshold",
         name: "Threshold (in dB) 0 = max",
@@ -38,6 +43,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
     /// Threshold (in dB) 0 = max
     @Parameter public var threshold: AUValue
 
+    /// Specification details for attack duration
     public static let attackDurationDef = NodeParameterDef(
         identifier: "attackDuration",
         name: "Attack Duration",
@@ -49,6 +55,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
     /// Attack dration
     @Parameter public var attackDuration: AUValue
 
+    /// Specification details for release duration
     public static let releaseDurationDef = NodeParameterDef(
         identifier: "releaseDuration",
         name: "Release Duration",
@@ -60,6 +67,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
     /// Release duration
     @Parameter public var releaseDuration: AUValue
 
+    /// Specification details for rage amount
     public static let rageDef = NodeParameterDef(
         identifier: "rage",
         name: "Rage",
@@ -71,6 +79,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
     /// Rage Amount
     @Parameter public var rage: AUValue
 
+    /// Specification details for range enabling
     public static let rageEnabledDef = NodeParameterDef(
         identifier: "rageEnabled",
         name: "Rage Enabled",
@@ -84,8 +93,10 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal audio unit for DynaRageCompressor
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [DynaRageCompressor.ratioDef,
              DynaRageCompressor.thresholdDef,
@@ -95,6 +106,8 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
              DynaRageCompressor.rageEnabledDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("DynaRageCompressorDSP")
         }

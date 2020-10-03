@@ -10,18 +10,22 @@ import CAudioKit
 /// at different rates in order to warp the waveform. For example, pdhalf can
 /// smoothly transition a sinewave into something approximating a sawtooth wave.
 /// 
-public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
+public class PhaseDistortionOscillator: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "pdho"
     public static let ComponentDescription = AudioComponentDescription(generator: "pdho")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
     fileprivate var waveform: Table?
 
+    /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
         name: "Frequency (Hz)",
@@ -33,6 +37,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
     /// Frequency in cycles per second
     @Parameter public var frequency: AUValue
 
+    /// Specification details for amplitude
     public static let amplitudeDef = NodeParameterDef(
         identifier: "amplitude",
         name: "Amplitude",
@@ -44,6 +49,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
     /// Output Amplitude.
     @Parameter public var amplitude: AUValue
 
+    /// Specification details for phaseDistortion
     public static let phaseDistortionDef = NodeParameterDef(
         identifier: "phaseDistortion",
         name: "Amount of distortion, within the range [-1, 1]. 0 is no distortion.",
@@ -55,6 +61,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
     /// Amount of distortion, within the range [-1, 1]. 0 is no distortion.
     @Parameter public var phaseDistortion: AUValue
 
+    /// Specification details for detuningOffset
     public static let detuningOffsetDef = NodeParameterDef(
         identifier: "detuningOffset",
         name: "Frequency offset (Hz)",
@@ -66,6 +73,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
     /// Frequency offset in Hz.
     @Parameter public var detuningOffset: AUValue
 
+    /// Specification details for detuningMultiplier
     public static let detuningMultiplierDef = NodeParameterDef(
         identifier: "detuningMultiplier",
         name: "Frequency detuning multiplier",
@@ -79,8 +87,10 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for PhaseDistortionOscillator
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [PhaseDistortionOscillator.frequencyDef,
              PhaseDistortionOscillator.amplitudeDef,
@@ -89,6 +99,8 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
              PhaseDistortionOscillator.detuningMultiplierDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("PhaseDistortionOscillatorDSP")
         }
@@ -135,6 +147,5 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
             self.detuningOffset = detuningOffset
             self.detuningMultiplier = detuningMultiplier
         }
-
     }
 }

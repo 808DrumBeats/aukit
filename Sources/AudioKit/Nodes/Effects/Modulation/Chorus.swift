@@ -5,16 +5,20 @@ import CAudioKit
 
 /// Shane's Chorus
 ///
-public class Chorus: Node, AudioUnitContainer, Toggleable {
+public class Chorus: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "chrs"
     public static let ComponentDescription = AudioComponentDescription(effect: "chrs")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
         name: "Frequency (Hz)",
@@ -26,6 +30,7 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
     /// Modulation Frequency (Hz)
     @Parameter public var frequency: AUValue
 
+    /// Specification details for depth
     public static let depthDef = NodeParameterDef(
         identifier: "depth",
         name: "Depth 0-1",
@@ -37,6 +42,7 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
     /// Modulation Depth (fraction)
     @Parameter public var depth: AUValue
 
+    /// Specification details for feedback
     public static let feedbackDef = NodeParameterDef(
         identifier: "feedback",
         name: "Feedback 0-1",
@@ -48,6 +54,7 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
     /// Feedback (fraction)
     @Parameter public var feedback: AUValue
 
+    /// Specification details for dry wet mix
     public static let dryWetMixDef = NodeParameterDef(
         identifier: "dryWetMix",
         name: "Dry Wet Mix 0-1",
@@ -61,8 +68,10 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal audio unit for Chorus
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             return [Chorus.frequencyDef,
                     Chorus.depthDef,
@@ -70,6 +79,8 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
                     Chorus.dryWetMixDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             return akChorusCreateDSP()
         }

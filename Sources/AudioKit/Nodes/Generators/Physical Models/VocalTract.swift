@@ -10,16 +10,20 @@ import CAudioKit
 /// segmented cylindrical 1d waveguide model, and the glottal pulse wave is a
 /// LF glottal pulse model.
 /// 
-public class VocalTract: Node, AudioUnitContainer, Toggleable {
+public class VocalTract: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "vocw"
     public static let ComponentDescription = AudioComponentDescription(generator: "vocw")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
         name: "Glottal frequency.",
@@ -31,6 +35,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
     /// Glottal frequency.
     @Parameter public var frequency: AUValue
 
+    /// Specification details for tonguePosition
     public static let tonguePositionDef = NodeParameterDef(
         identifier: "tonguePosition",
         name: "Tongue position (0-1)",
@@ -42,6 +47,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
     /// Tongue position (0-1)
     @Parameter public var tonguePosition: AUValue
 
+    /// Specification details for tongueDiameter
     public static let tongueDiameterDef = NodeParameterDef(
         identifier: "tongueDiameter",
         name: "Tongue diameter (0-1)",
@@ -53,6 +59,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
     /// Tongue diameter (0-1)
     @Parameter public var tongueDiameter: AUValue
 
+    /// Specification details for tenseness
     public static let tensenessDef = NodeParameterDef(
         identifier: "tenseness",
         name: "Vocal tenseness. 0 = all breath. 1=fully saturated.",
@@ -64,6 +71,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
     /// Vocal tenseness. 0 = all breath. 1=fully saturated.
     @Parameter public var tenseness: AUValue
 
+    /// Specification details for nasality
     public static let nasalityDef = NodeParameterDef(
         identifier: "nasality",
         name: "Sets the velum size. Larger values of this creates more nasally sounds.",
@@ -77,8 +85,10 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for VocalTract
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [VocalTract.frequencyDef,
              VocalTract.tonguePositionDef,
@@ -87,6 +97,8 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
              VocalTract.nasalityDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("VocalTractDSP")
         }
@@ -128,6 +140,5 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
             self.tenseness = tenseness
             self.nasality = nasality
         }
-
     }
 }

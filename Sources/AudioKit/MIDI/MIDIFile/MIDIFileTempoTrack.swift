@@ -2,26 +2,34 @@
 
 #if !os(tvOS)
 
+/// MIDI File Tempo Track
 public struct MIDIFileTempoTrack {
 
+    /// Associated MIDI File Track
     public let track: MIDIFileTrack
 
+    /// Length of MIDI File tempo track
     public var length: Double {
         return track.length
     }
 
+    /// Track name
     public var name: String? {
         return track.name
     }
 
+    /// Array of events included on the track
     public var events: [MIDIEvent] {
         return track.events
     }
 
+    /// Custom MIDI meta events contained on the track
     public var metaEvents: [MIDICustomMetaEvent] {
         return track.metaEvents
     }
 
+    /// Initialize with a MIDI File Track Chunk
+    /// - Parameter trackChunk: MIDI File track chunk
     init?(trackChunk: MIDIFileTrackChunk) {
         let tempoTrack = MIDIFileTrack(chunk: trackChunk)
         guard let tempoData = tempoTrack.metaEvents.first(where: { $0.type == .setTempo })?.data else {
@@ -31,8 +39,10 @@ public struct MIDIFileTempoTrack {
         self.tempoData = tempoData
     }
 
-    public var tempoData = [UInt8]()
+    /// Array of tempo byts
+    public var tempoData = [MIDIByte]()
 
+    /// Current tempo
     public var tempo: Float {
         let microsecondsPerSecond: Float = 60_000_000
         let int = tempoData.suffix(3).integerValue

@@ -4,14 +4,17 @@ import AVFoundation
 import Foundation
 
 extension MusicTrackManager {
+    /// Array of Apple MIDI Events
     open var eventData: [AppleMIDIEvent]? {
         return getRawEventData()
     }
 
+    /// Array of Apple MIDI Events
     open var noteData: [AppleMIDIEvent]? {
         return getRawEventData(ofType: kMusicEventType_MIDINoteMessage)
     }
 
+    /// Array of MIDI Program Change Events
     open var programChangeEvents: [MIDIProgramChangeEvent] {
         var pgmEvents = [MIDIProgramChangeEvent]()
         if let events = eventData {
@@ -34,6 +37,7 @@ extension MusicTrackManager {
         return pgmEvents
     }
 
+    /// Get debug information
     public func debug() {
         guard let events = eventData else {
             return
@@ -116,15 +120,24 @@ extension MusicTrackManager {
     }
 }
 
+/// Apple MIDI Event
 public struct AppleMIDIEvent {
+    /// Start time
     public var time: MusicTimeStamp
+    /// Event type
     public var type: MusicEventType
+    /// Data contained in the event
     public var data: UnsafeRawPointer?
+    /// Size of data
     public var dataSize: UInt32
 }
 
+/// MIDI Program Change Event
 public struct MIDIProgramChangeEvent {
+    /// Start time
     public var time: MusicTimeStamp
+    /// MIDI Channel
     public var channel: MIDIChannel
+    /// Program change number
     public var number: MIDIByte
 }

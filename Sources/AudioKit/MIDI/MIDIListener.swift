@@ -15,6 +15,7 @@ import AVFoundation
 
 let MIDIListenerLogging = false
 
+/// MIDI Listener protocol
 public protocol MIDIListener {
 
     /// Receive the MIDI note on event
@@ -111,10 +112,10 @@ public protocol MIDIListener {
     ///   - portID:   MIDI Unique Port ID
     ///   - offset:   the offset in samples that this event occurs in the buffer
     ///
-  func receivedMIDIProgramChange(_ program: MIDIByte,
-                                 channel: MIDIChannel,
-                                 portID: MIDIUniqueID?,
-                                 offset: MIDITimeStamp)
+    func receivedMIDIProgramChange(_ program: MIDIByte,
+                                   channel: MIDIChannel,
+                                   portID: MIDIUniqueID?,
+                                   offset: MIDITimeStamp)
 
     /// Receive a MIDI system command (such as clock, SysEx, etc)
     ///
@@ -139,6 +140,8 @@ public protocol MIDIListener {
 /// Default listener functions
 public extension MIDIListener {
 
+    /// Equality test
+    /// - Parameter listener: Another listener
     func isEqualTo(_ listener: MIDIListener) -> Bool {
         return self == listener
     }

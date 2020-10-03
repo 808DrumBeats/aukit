@@ -5,16 +5,20 @@ import AVFoundation
 import CAudioKit
 
 /// A first-order recursive low-pass filter with variable frequency response.
-public class ToneFilter: Node, AudioUnitContainer, Toggleable {
+public class ToneFilter: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "tone"
     public static let ComponentDescription = AudioComponentDescription(effect: "tone")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for halfPowerPoint
     public static let halfPowerPointDef = NodeParameterDef(
         identifier: "halfPowerPoint",
         name: "Half-Power Point (Hz)",
@@ -28,12 +32,16 @@ public class ToneFilter: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for ToneFilter
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [ToneFilter.halfPowerPointDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("ToneFilterDSP")
         }

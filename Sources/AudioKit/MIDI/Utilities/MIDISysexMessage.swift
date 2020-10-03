@@ -2,14 +2,20 @@
 
 import Foundation
 
+/// MIDI System Exclusive Message
 public struct MIDISysExMessage: MIDIMessage {
-    public let data: [UInt8]
+    /// Data in bytes
+    public let data: [MIDIByte]
+    /// Length of sysex message
     public let length: Int
+    /// Pretty printout
     public var description: String {
         return "MIDI SysEx message \(length) bytes long"
     }
 
-    public init?(bytes: [UInt8]) {
+    /// Initialize with bytes
+    /// - Parameter bytes: MIDI Bytes
+    public init?(bytes: [MIDIByte]) {
         guard
             bytes.count > 2,
             bytes[0] == 0xF0,

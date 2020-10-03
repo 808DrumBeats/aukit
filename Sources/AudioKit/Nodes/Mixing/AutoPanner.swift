@@ -5,16 +5,20 @@ import CAudioKit
 
 /// Table-lookup panning with linear interpolation
 ///
-public class AutoPanner: Node, AudioUnitContainer, Toggleable {
+public class AutoPanner: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Four letter unique description "apan"
     public static let ComponentDescription = AudioComponentDescription(effect: "apan")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
         name: "Frequency (Hz)",
@@ -26,6 +30,7 @@ public class AutoPanner: Node, AudioUnitContainer, Toggleable {
     /// Frequency (Hz)
     @Parameter public var frequency: AUValue
 
+    /// Specification details for depth
     public static let depthDef = NodeParameterDef(
         identifier: "depth",
         name: "Depth",
@@ -39,13 +44,17 @@ public class AutoPanner: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal audio unit for AutoPanner
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [AutoPanner.frequencyDef,
              AutoPanner.depthDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("AutoPannerDSP")
         }

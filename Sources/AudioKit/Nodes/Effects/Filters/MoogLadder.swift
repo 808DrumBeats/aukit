@@ -9,16 +9,20 @@ import CAudioKit
 /// "Non-Linear Digital Implementation of the Moog Ladder Filter" (Proceedings of DaFX04, Univ of Napoli).
 /// This implementation is probably a more accurate digital representation of the original analogue filter.
 /// 
-public class MoogLadder: Node, AudioUnitContainer, Toggleable {
+public class MoogLadder: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "mgld"
     public static let ComponentDescription = AudioComponentDescription(effect: "mgld")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for cutoffFrequency
     public static let cutoffFrequencyDef = NodeParameterDef(
         identifier: "cutoffFrequency",
         name: "Cutoff Frequency (Hz)",
@@ -30,6 +34,7 @@ public class MoogLadder: Node, AudioUnitContainer, Toggleable {
     /// Filter cutoff frequency.
     @Parameter public var cutoffFrequency: AUValue
 
+    /// Specification details for resonance
     public static let resonanceDef = NodeParameterDef(
         identifier: "resonance",
         name: "Resonance (%)",
@@ -43,13 +48,17 @@ public class MoogLadder: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for MoogLadder
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [MoogLadder.cutoffFrequencyDef,
              MoogLadder.resonanceDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("MoogLadderDSP")
         }

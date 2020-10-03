@@ -7,18 +7,22 @@ import CAudioKit
 /// Reads from the table sequentially and repeatedly at given frequency.
 /// Linear interpolation is applied for table look up from internal phase values.
 /// 
-public class Oscillator: Node, AudioUnitContainer, Toggleable {
+public class Oscillator: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "oscl"
     public static let ComponentDescription = AudioComponentDescription(generator: "oscl")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
     fileprivate var waveform: Table?
 
+    /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
         name: "Frequency (Hz)",
@@ -30,6 +34,7 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
     /// Frequency in cycles per second
     @Parameter public var frequency: AUValue
 
+    /// Specification details for amplitude
     public static let amplitudeDef = NodeParameterDef(
         identifier: "amplitude",
         name: "Amplitude",
@@ -41,6 +46,7 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
     /// Output Amplitude.
     @Parameter public var amplitude: AUValue
 
+    /// Specification details for detuningOffset
     public static let detuningOffsetDef = NodeParameterDef(
         identifier: "detuningOffset",
         name: "Frequency offset (Hz)",
@@ -52,6 +58,7 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
     /// Frequency offset in Hz.
     @Parameter public var detuningOffset: AUValue
 
+    /// Specification details for detuningMultiplier
     public static let detuningMultiplierDef = NodeParameterDef(
         identifier: "detuningMultiplier",
         name: "Frequency detuning multiplier",
@@ -65,8 +72,10 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for Oscillator
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [Oscillator.frequencyDef,
              Oscillator.amplitudeDef,
@@ -74,6 +83,8 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
              Oscillator.detuningMultiplierDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("OscillatorDSP")
         }

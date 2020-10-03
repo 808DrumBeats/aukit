@@ -8,247 +8,272 @@ readme: ../README.md
 
 
 custom_categories:
-  - name: AudioKit Core
+  - name: Internals
     children:
-    - AudioKit
-    - AKAudioFile
-    - AKCallbackInstrument
-    - AKComponent
-    - AKCustomUgen
-    - AKDevice
-    - AKLog(fullname:file:line:_:)
-    - AKNodeRecorder
-    - AKSettings
-    - AKTable
-    - AKTableType
-    - AKTester
-    - AKTiming
-    - AKTry(_:)
-    - CheckError(_:)
-    - fourCC(_:)
+    - AudioEngine
+    - AudioUnitBase
+    - AudioUnitContainer
+    - AudioUnitPropertyListener
+    - AutomationCurve
+    - CallbackInstrument
+    - Device
+    - DeviceID
+    - NodeParameter
+    - NodeParameterDef
+    - NodeParameterType
+    - NodeRecorder
+    - ParameterAutomationPoint
+    - Settings
+    - Table
+    - TableType
 
   - name: MIDI
     children:
-    - AKMIDI
-    - AKMIDICallback
-    - AKMIDICallbackInstrument
-    - AKMIDIClockListener
-    - AKMIDIControl
-    - AKMIDIEvent
-    - AKMIDIFile
-    - AKMIDIFileChunkEvent
-    - AKMIDIFileTrack
-    - AKMIDIInstrument
-    - AKMIDIListener
-    - AKMIDIMetaEvent
-    - AKMIDIMetaEventType
-    - AKMIDIMonoPolyListener
-    - AKMIDINode
-    - AKMIDINoteData
-    - AKMIDIOMNIListener
-    - AKMIDISampler
-    - AKMIDIStatus
-    - AKMIDIStatusType
-    - AKMIDISystemCommand
-    - AKMIDISystemCommandType
-    - AKMIDISystemRealTimeListener
-    - AKMIDITempoListener
-    - AKMIDITimeOut
-    - AKMIDITransformer
-    - AKRawMIDIPacket
+    - AppleMIDIEvent
+    - BluetoothMIDIButton
+    - CMIDICallback
+    - EndpointInfo
+    - MIDI
+    - MIDIBeatObserver
+    - MIDIByte
+    - MIDICallback
+    - MIDICallbackInstrument
+    - MIDIChannel
+    - MIDIClockListener
+    - MIDIControl
+    - MIDICustomMetaEvent
+    - MIDICustomMetaEventType
+    - MIDIEvent
+    - MIDIFile
+    - MIDIFileChunk
+    - MIDIFileChunkEvent
+    - MIDIFileChunkType
+    - MIDIFileTempoTrack
+    - MIDIFileTrack
     - MIDIFileTrackChunk
+    - MIDIFileTrackNoteMap
+    - MIDIHelper
+    - MIDIInstrument
+    - MIDIListener
+    - MIDIMessage
+    - MIDIMonoPolyListener
+    - MIDINode
+    - MIDINoteData
+    - MIDINoteDuration
+    - MIDINoteNumber
+    - MIDIOMNIListener
     - MIDIPacket
     - MIDIPacketList
+    - MIDIPlayer
     - MIDIProgramChangeEvent
+    - MIDISampler
+    - MIDIStatus
+    - MIDIStatusType
+    - MIDISysExMessage
+    - MIDISystemCommand
+    - MIDISystemCommandType
+    - MIDISystemRealTimeListener
+    - MIDISystemRealTimeObserver
+    - MIDITempoListener
+    - MIDITempoObserver
+    - MIDITransformer
     - MIDITimeFormat
-    - AKBluetoothMIDIButton
+    - MIDITimeout
+    - MIDITrackView
+    - MIDIVariableLengthQuantity
+    - MIDIVelocity
+    - MIDIWord
+    - ObserverProtocol
 
   - name: Sequencing
     children:
-    - AKAppleSequencer
-    - AKDuration
-    - AKMusicTrack
-    - AKSequencer
-    - AKSequencerTrack
+    - AppleSequencer
+    - Duration
+    - MusicTrackManager
+    - NoteEventSequence
+    - Sequencer
+    - SequenceEvent
+    - SequenceNote
+    - SequencerTrack
 
   - name: Tuning
     children:
-    - AKTuningTable
-    - AKTuningTableBase
-    - AKTuningTableDelta12ET
-    - AKTuningTableETNN
+    - TuningTable
+    - TuningTableBase
+    - TuningTableDelta12ET
+    - TuningTableETNN
+
+  - name: Utilities
+    children:
+    - audition(_:)
+    - CheckError(_:)
+    - CVoidCallback
+    - ExceptionCatcher(_:)
+    - FormatConverter
+    - fourCC(_:)
+    - Log(_:log:type:file:function:line:)
+    - Occupiable
+    - OSLog
+    - OSStatus
+    - SampleIndex
+
 
   - name: Nodes
     children:
-    - AKNode
-    - AKPolyphonic
-    - AKPolyphonicNode
-    - AKToggleable
-    - AKOperationGenerator
+    - Node
+    - Polyphonic
+    - PolyphonicNode
+    - Toggleable
+    - OperationGenerator
 
   - name: Delay Nodes
     children:
-    - AKDelay
-    - AKStereoDelay
-    - AKVariableDelay
+    - Delay
+    - StereoDelay
+    - VariableDelay
 
   - name: Distortion Nodes
     children:
-    - AKBitCrusher
-    - AKClipper
-    - AKDecimator
-    - AKDistortion
-    - AKRingModulator
-    - AKTanhDistortion
+    - BitCrusher
+    - Clipper
+    - Decimator
+    - DiodeClipper
+    - Distortion
+    - RingModulator
+    - TanhDistortion
 
   - name: Dynamics Nodes
     children:
-    - AKCompressor
-    - AKDynamicsProcessor
-    - AKDynamicRangeCompressor
-    - AKDynaRageCompressor
-    - AKExpander
-    - AKPeakLimiter
+    - Compressor
+    - DynamicsProcessor
+    - DynamicRangeCompressor
+    - DynaRageCompressor
+    - Expander
+    - PeakLimiter
 
   - name: Effects Nodes
     children:
-    - AKOperationEffect
-    - AKPitchShifter
-    - AKRhinoGuitarProcessor
+    - OperationEffect
+    - PitchShifter
+    - RhinoGuitarProcessor
   
   - name: Modulation Effect Nodes
     children:
-    - AKChorus
-    - AKFlanger
-    - AKPhaser
+    - Chorus
+    - Flanger
+    - Phaser
 
   - name: Envelopes
     children:
-    - AKAmplitudeEnvelope 
-    - AKTremolo
+    - AmplitudeEnvelope 
+    - Tremolo
 
   - name: Filter Nodes
     children:
-    - AKAutoWah
-    - AKBandPassButterworthFilter
-    - AKBandRejectButterworthFilter
-    - AKCombFilterReverb
-    - AKDCBlock
-    - AKEqualizerFilter
-    - AKFormantFilter
-    - AKHighPassButterworthFilter
-    - AKHighPassFilter
-    - AKHighShelfFilter
-    - AKHighShelfParametricEqualizerFilter
-    - AKKorgLowPassFilter
-    - AKLowPassButterworthFilter
-    - AKLowPassFilter
-    - AKLowShelfFilter
-    - AKLowShelfParametricEqualizerFilter
-    - AKModalResonanceFilter
-    - AKMoogLadder
-    - AKPeakingParametricEqualizerFilter
-    - AKResonantFilter
-    - AKRolandTB303Filter
-    - AKStringResonator
-    - AKThreePoleLowpassFilter
-    - AKToneFilter
-    - AKToneComplementFilter
+    - AutoWah
+    - BandPassButterworthFilter
+    - BandPassFilter
+    - BandRejectButterworthFilter
+    - CombFilterReverb
+    - DCBlock
+    - EqualizerFilter
+    - FormantFilter
+    - HighPassButterworthFilter
+    - HighPassFilter
+    - HighShelfFilter
+    - HighShelfParametricEqualizerFilter
+    - KorgLowPassFilter
+    - LowPassButterworthFilter
+    - LowPassFilter
+    - LowShelfFilter
+    - LowShelfParametricEqualizerFilter
+    - ModalResonanceFilter
+    - MoogLadder
+    - ParametricEQ
+    - PeakingParametricEqualizerFilter
+    - ResonantFilter
+    - RolandTB303Filter
+    - StringResonator
+    - ThreePoleLowpassFilter
+    - ToneFilter
+    - ToneComplementFilter
 
   - name: Reverb Nodes
     children:
-    - AKChowningReverb
-    - AKCostelloReverb
-    - AKConvolution
-    - AKFlatFrequencyResponseReverb
-    - AKReverb
-    - AKReverb2
-    - AKZitaReverb
+    - ChowningReverb
+    - CostelloReverb
+    - Convolution
+    - FlatFrequencyResponseReverb
+    - Reverb
+    - Reverb2
+    - ZitaReverb
 
   - name: Noise Generator Nodes
     children:
-    - AKBrownianNoise
-    - AKPinkNoise
-    - AKWhiteNoise
+    - BrownianNoise
+    - PinkNoise
+    - WhiteNoise
 
   - name: Oscillator Nodes
     children:
-    - AKFMOscillator
-    - AKMorphingOscillator
-    - AKOscillator
-    - AKPhaseDistortionOscillator
-    - AKPWMOscillator
-    - AKSynth
+    - FMOscillator
+    - MorphingOscillator
+    - Oscillator
+    - PhaseDistortionOscillator
+    - PWMOscillator
+    - Synth
+    - SynthAudioUnit
 
   - name: Physical Models
     children:
-    - AKClarinet
-    - AKDrip
-    - AKFlute
-    - AKMandolinString
-    - AKMetalBar
-    - AKPluckedString
-    - AKRhodesPianoKey
-    - AKShaker
-    - AKShakerType
-    - AKSynthKick
-    - AKSynthSnare
-    - AKTubularBells
-    - AKVocalTract
-
-  - name: Input Node
-    children:
-    - AKStereoInput
+    - Clarinet
+    - Drip
+    - Flute
+    - MandolinString
+    - MetalBar
+    - PluckedString
+    - RhodesPianoKey
+    - Shaker
+    - ShakerType
+    - SynthKick
+    - SynthSnare
+    - TubularBells
+    - VocalTract
 
   - name: Mixing Nodes
     children:
-    - AK3DPanner
-    - AKAutoPanner
-    - AKBalancer
-    - AKBooster
-    - AKDryWetMixer
-    - AKFader
-    - AKMixer
-    - AKPanner
-    - AKStereoFieldLimiter
+    - AutoPanner
+    - Balancer
+    - DryWetMixer
+    - Fader
+    - Mixer
+    - Panner
+    - StereoFieldLimiter
 
   - name: Playback Nodes
     children:
 
-    - AKAbstractPlayer
-    - AKAppleSampler
-    - AKAudioPlayer
-    - AKClip
-    - AKClipMerger
-    - AKClipPlayer
-    - AKClipRecorder
-    - AKDynamicPlayer
-    - AKFileClip
-    - AKFileClipSequence
-    - AKMetronome
-    - AKPhaseLockedVocoder
-    - AKPlayer
-    - AKRecordingResult
-    - AKSampler
-    - AKSamplePlayer
-    - AKTimePitch
-    - AKVariSpeed
-    - ClipMergeDelegate
-    - ClipMergerError
-    - ClipRecordingError
-    - FileClip
-    - Sample
-    - SampleTriggerModer
+    - AppleSampler
+    - AudioPlayer
+    - PhaseLockedVocoder
+    - PresetBuilder
+    - Sampler
+    - SamplerAudioUnit
+    - SampleTriggerMode
+    - SpeechSynthesizer
+    - TimePitch
+    - VariSpeed
 
   - name: Operations
     children:
-    - AKParameter
-    - AKComputedParameter
-    - AKOperation
-    - AKStereoOperation
+    - ComputedParameter
     - Numeric
+    - Operation
+    - OperationParameter
+    - Parameter
+    - StereoOperation
 
-  - name: Math
+  - name: Operation Math
     children:
     - abs(_:)
     - ceil(_:)
@@ -266,47 +291,86 @@ custom_categories:
     - "-(_:)"
     - "/(_:_:)"
 
-  - name: Random Number Generators
-    children:
-    - random(_:_:)
-
   - name: Plotting Tools
     children:
-    - AKRollingOutputPlot
-    - AKNodeFFTPlot
-    - AKNodeOutputPlot
-    - AKOutputWaveformPlot
+    - FloatChannelData
+    - NodeFFTPlot
+    - NodeOutputPlot
+    - Waveform
+    - WaveformDataRequest
+    - WaveformLayer
 
   - name: Taps
     children:
-    - AKAmplitudeTap
-    - AKFFTTap
-    - AKPitchTap
+    - AmplitudeTap
+    - FFTTap
+    - PitchTap
+    - RawDataTap
+    - TapNode
 
   - name: UI Elements
     children:
-    - AKADSRView
-    - AKButton
-    - AKBypassButton
-    - AKKeyboardView
-    - AKKeyboardDelegate
-    - AKPlaygroundLoop
-    - AKPlaygroundView
-    - AKPresetLoaderView
-    - AKPropertySlider
-    - AKResourcesAudioFileLoaderView
-    - AKStepper
-    - AKTelephoneView
+    - ADSRCallback
+    - ADSRView
+    - CrossPlatformColor
+    - KeyboardView
+    - KeyboardDelegate
     - MultitouchGestureRecognizer
+    - MultitouchGestureRecognizerDelegate
+    - PlaygroundLoop
+    - Stylist
+    - TableView
+    - Theme
 
-  - name: Apple Extensions
+  - name: Math Approximation
     children:
-    - AVAudioCommonFormat
+    - ~!=(_:_:)
+    - ~<(_:_:)
+    - ~<=(_:_:)
+    - ~==(_:_:)
+    - ~>(_:_:)
+    - ~>=(_:_:)
+
+  - name: Apple Audio Extensions
+    children:
+    - AUParameter
+    - AUParameterTree
+    - AUValue
+    - AudioComponentDescription
+    - AudioUnit
+    - AudioUnitParameterOptions
     - AVAudioEngine
     - AVAudioFile
     - AVAudioNode
     - AVAudioPCMBuffer
+    - AVAudioSequencer
+    - AVAudioSession
     - AVAudioTime
-    - AVAudioUnit
-    - AudioComponentDescription
-    - AudioUnit
+
+  - name: Music Notation
+    children:
+    - BPM
+    - BPMType
+    - TimeSignature
+
+  - name: Type Extensions
+    children:
+    - Array
+    - Bool
+    - CGRect
+    - ClosedRange
+    - Dictionary
+    - Double
+    - Int
+    - Notification
+    - RangeReplaceableCollection
+    - Set
+    - String
+    - UInt8
+
+
+
+
+
+
+

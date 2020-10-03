@@ -5,16 +5,20 @@ import AVFoundation
 import CAudioKit
 
 /// This is an implementation of Zoelzer's parametric equalizer filter.
-public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggleable {
+public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "peq2"
     public static let ComponentDescription = AudioComponentDescription(effect: "peq2")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for centerFrequency
     public static let centerFrequencyDef = NodeParameterDef(
         identifier: "centerFrequency",
         name: "Corner Frequency (Hz)",
@@ -26,6 +30,7 @@ public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggl
     /// Corner frequency.
     @Parameter public var centerFrequency: AUValue
 
+    /// Specification details for gain
     public static let gainDef = NodeParameterDef(
         identifier: "gain",
         name: "Gain",
@@ -37,6 +42,7 @@ public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggl
     /// Amount at which the corner frequency value shall be changed. A value of 1 is a flat response.
     @Parameter public var gain: AUValue
 
+    /// Specification details for q
     public static let qDef = NodeParameterDef(
         identifier: "q",
         name: "Q",
@@ -50,14 +56,18 @@ public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggl
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for HighShelfParametricEqualizerFilter
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [HighShelfParametricEqualizerFilter.centerFrequencyDef,
              HighShelfParametricEqualizerFilter.gainDef,
              HighShelfParametricEqualizerFilter.qDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("HighShelfParametricEqualizerFilterDSP")
         }

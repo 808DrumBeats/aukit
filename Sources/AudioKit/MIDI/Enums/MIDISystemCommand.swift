@@ -66,6 +66,7 @@ public enum MIDISystemCommand: MIDIByte, MIDIMessage {
         }
     }
 
+    /// Printable string
     public var description: String {
         switch self {
         case .sysEx:
@@ -95,18 +96,24 @@ public enum MIDISystemCommand: MIDIByte, MIDIMessage {
         }
     }
 
+    /// System command byte
     public var byte: MIDIByte {
         return rawValue
     }
 
-    public var data: [UInt8] {
+    /// System command data
+    public var data: [MIDIByte] {
         return [byte]
     }
 }
 
+/// MIDI System Command Type
 public enum MIDISystemCommandType {
+    /// Real-Time
     case systemRealtime
+    /// Common
     case systemCommon
+    /// Sysex
     case systemExclusive
 
     var description: String {

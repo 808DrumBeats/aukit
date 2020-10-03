@@ -5,16 +5,20 @@ import AVFoundation
 import CAudioKit
 
 /// Dynamic range compressor from Faust
-public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
+public class DynamicRangeCompressor: Node, AudioUnitContainer, Tappable, Toggleable {
 
+    /// Unique four-letter identifier "cpsr"
     public static let ComponentDescription = AudioComponentDescription(effect: "cpsr")
 
+    /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU
 
+    /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
 
     // MARK: - Parameters
 
+    /// Specification details for ratio
     public static let ratioDef = NodeParameterDef(
         identifier: "ratio",
         name: "Ratio to compress with, a value > 1 will compress",
@@ -26,6 +30,7 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
     /// Ratio to compress with, a value > 1 will compress
     @Parameter public var ratio: AUValue
 
+    /// Specification details for threshold
     public static let thresholdDef = NodeParameterDef(
         identifier: "threshold",
         name: "Threshold (in dB) 0 = max",
@@ -37,6 +42,7 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
     /// Threshold (in dB) 0 = max
     @Parameter public var threshold: AUValue
 
+    /// Specification details for attackDuration
     public static let attackDurationDef = NodeParameterDef(
         identifier: "attackDuration",
         name: "Attack duration",
@@ -48,6 +54,7 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
     /// Attack duration
     @Parameter public var attackDuration: AUValue
 
+    /// Specification details for releaseDuration
     public static let releaseDurationDef = NodeParameterDef(
         identifier: "releaseDuration",
         name: "Release duration",
@@ -61,8 +68,10 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
 
     // MARK: - Audio Unit
 
+    /// Internal Audio Unit for DynamicRangeCompressor
     public class InternalAU: AudioUnitBase {
-
+        /// Get an array of the parameter definitions
+        /// - Returns: Array of parameter definitions
         public override func getParameterDefs() -> [NodeParameterDef] {
             [DynamicRangeCompressor.ratioDef,
              DynamicRangeCompressor.thresholdDef,
@@ -70,6 +79,8 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
              DynamicRangeCompressor.releaseDurationDef]
         }
 
+        /// Create the DSP Refence for this node
+        /// - Returns: DSP Reference
         public override func createDSP() -> DSPRef {
             akCreateDSP("DynamicRangeCompressorDSP")
         }

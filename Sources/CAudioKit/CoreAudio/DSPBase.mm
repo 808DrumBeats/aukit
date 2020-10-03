@@ -91,6 +91,9 @@ DSPBase::DSPBase(int inputBusCount)
 , inputBufferLists(inputBusCount)
 {
     std::fill(parameters, parameters+maxParameters, nullptr);
+
+    TPCircularBufferInit(&leftBuffer, 4096 * sizeof(float));
+    TPCircularBufferInit(&rightBuffer, 4096 * sizeof(float));
 }
 
 void DSPBase::setBuffer(const AVAudioPCMBuffer* buffer, size_t busIndex)
@@ -180,6 +183,11 @@ void DSPBase::deinit()
 {
     isInitialized = false;
 }
+DSPBase::~DSPBase()
+{
+    TPCircularBufferCleanup(&leftBuffer);
+    TPCircularBufferCleanup(&rightBuffer);
+}
 
 void DSPBase::processWithEvents(AudioTimeStamp const *timestamp, AUAudioFrameCount frameCount,
                                   AURenderEvent const *events)
@@ -203,7 +211,7 @@ void DSPBase::processWithEvents(AudioTimeStamp const *timestamp, AUAudioFrameCou
         if (event == nullptr) {
             AUAudioFrameCount const bufferOffset = frameCount - framesRemaining;
             process(framesRemaining, bufferOffset);
-            return;
+            break;
         }
 
         // start late events late.
@@ -223,7 +231,10 @@ void DSPBase::processWithEvents(AudioTimeStamp const *timestamp, AUAudioFrameCou
         }
         performAllSimultaneousEvents(now, event);
     }
-    
+    if (tapCount > 0) {
+        TPCircularBufferProduceBytes(&leftBuffer,  outputBufferList->mBuffers[0].mData, frameCount * sizeof(float));
+        TPCircularBufferProduceBytes(&rightBuffer, outputBufferList->mBuffers[1].mData, frameCount * sizeof(float));
+    }
 }
 
 /** From Apple Example code */
@@ -329,6 +340,59 @@ void DSPBase::addParameter(const char* name, AUParameterAddress address) {
 
 }
 
+void DSPBase::installTap() {
+    tapCount++;
+}
+
+void DSPBase::removeTap() {
+    if (tapCount > 0) { tapCount--; }
+}
+
+bool DSPBase::getTapData(size_t frames, float* leftData, float* rightData) {
+    // Consume bytes and return arrays
+
+    int availableBytes = 0;
+    float *data = (float*) TPCircularBufferTail(&leftBuffer, &availableBytes);
+    int n = availableBytes / sizeof(float);
+    if (n < frames) { return false; }
+    for(int i = 0; i < frames; i++) {
+        leftData[i] = data[i];
+    }
+
+    data = (float*) TPCircularBufferTail(&rightBuffer, &availableBytes);
+    n = availableBytes / sizeof(float);
+    if (n < frames) { return false; }
+    for(int i = 0; i < frames; i++) {
+        rightData[i] = data[i];
+    }
+
+    filledTapCount++;
+
+    if (filledTapCount >= tapCount) {
+        TPCircularBufferConsume(&leftBuffer, frames * sizeof(float));
+        TPCircularBufferConsume(&rightBuffer, frames * sizeof(float));
+        filledTapCount = 0;
+    }
+
+    return true;
+}
+
 void akSetSeed(unsigned int seed) {
     srand(seed);
+}
+
+AK_API void akInstallTap(DSPRef dspRef) {
+    auto dsp = dynamic_cast<DSPBase *>(dspRef);
+    assert(dsp);
+    dsp->installTap();
+}
+AK_API void akRemoveTap(DSPRef dspRef) {
+    auto dsp = dynamic_cast<DSPBase *>(dspRef);
+    assert(dsp);
+    dsp->removeTap();
+}
+AK_API bool akGetTapData(DSPRef dspRef, size_t frames, float* leftData, float* rightData) {
+    auto dsp = dynamic_cast<DSPBase *>(dspRef);
+    assert(dsp);
+    return dsp->getTapData(frames, leftData, rightData);
 }

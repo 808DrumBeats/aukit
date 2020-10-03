@@ -34,9 +34,8 @@ This file is still in development. I have tried loading some forms of MIDI files
 I have recently set up the playback to be synced with automated tempos which change over time.
 */
 
-//Display a MIDI Sequence in a track
-
-public class MIDITrackView: Button {
+/// Display a MIDI Sequence in a track
+public class MIDITrackView: UIView {
  //Quarter note at 120 bpm is 20.8333... pixels - standard
     var length: Double!
     var playbackCursorRect: CGRect!
@@ -47,15 +46,18 @@ public class MIDITrackView: Button {
     var readyToPlay: Bool = false
     var playbackCursorPosition: Double = 0.0
     var noteGroupPosition: Double = 0.0
+    /// MIDI Track Note Map
     public var midiTrackNoteMap: MIDIFileTrackNoteMap!
+    /// Sampler
     public var sampler: MIDISampler!
+    /// Sequencer
     public var sequencer: AppleSequencer!
     var previousTempo = 0.0
     var trackLength: Double {
         return midiTrackNoteMap.endOfTrack
     }
 
-    //How far the view is zoomed in
+    /// How far the view is zoomed in
     public var noteZoomConstant: Double = 10_000.0
 
     /// Initialize the Track View
@@ -64,29 +66,26 @@ public class MIDITrackView: Button {
                             sampler: MIDISampler,
                             sequencer: AppleSequencer) {
         self.init(frame: frame)
-        self.borderWidth = 0.0
         clipsToBounds = true
         self.sampler = sampler
         self.sequencer = sequencer
-        self.midiTrackNoteMap = MIDIFileTrackNoteMap(midiFile: MIDIFile(url: midiFile), trackNum: trackNumber)
+        self.midiTrackNoteMap = MIDIFileTrackNoteMap(midiFile: MIDIFile(url: midiFile), trackNumber: trackNumber)
         populateViewNotes()
     }
 
     /// Default init from superclass
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        self.borderWidth = 0.0
         clipsToBounds = true
     }
 
     /// Initialization within Interface Builder
     public required init?(coder: NSCoder) {
         super.init(coder: coder)
-        self.borderWidth = 0.0
         clipsToBounds = true
     }
 
-    //Cursor which displays for the first few seconds of the midi clip until it goes out of bounds
+    /// Cursor which displays for the first few seconds of the midi clip until it goes out of bounds
     public func play() {
         playbackCursorRect = CGRect(x: 0, y: 0, width: 3, height: Double(self.frame.height))
         playbackCursorView = UIView(frame: playbackCursorRect)
@@ -111,6 +110,8 @@ public class MIDITrackView: Button {
             repeats: true)
         }
     }
+
+    /// Stop
     public func stop() {
         if let ctimer = cursorTimer {
             ctimer.invalidate()
@@ -121,6 +122,7 @@ public class MIDITrackView: Button {
         sequencer.stop()
     }
 
+    /// Populate view notes
     public func populateViewNotes() {
 
         let noteDescriptor = midiTrackNoteMap
@@ -149,22 +151,22 @@ public class MIDITrackView: Button {
         noteGroupPosition = Double(collectiveNoteViewRect.origin.x)
         self.addSubview(collectiveNoteView)
         for note in noteList {
-            let noteNum = note.noteNum - loNote
-            let noteStart = Double(note.noteBeginningTime)
+            let noteNumber = note.noteNumber - loNote
+            let noteStart = Double(note.noteStartTime)
             let noteDuration = Double(note.noteDuration)
             let noteLength = Double(noteDuration * zoomConstant)
             let notePosition = Double(noteStart * zoomConstant)
-            let noteLevel = (maxHeight - (Double(noteNum) * noteHeight))
+            let noteLevel = (maxHeight - (Double(noteNumber) * noteHeight))
             let singleNoteRect = CGRect(x: notePosition, y: noteLevel, width: noteLength, height: noteHeight)
             let singleNoteView = UIView(frame: singleNoteRect)
-            singleNoteView.backgroundColor = self.highlightedColor
+            singleNoteView.backgroundColor = UIColor.white
             collectiveNoteView.addSubview(singleNoteView)
         }
 
         readyToPlay = true
     }
 
-    //Move the playback cursor across the screen
+    /// Move the playback cursor across the screen
     @objc func updateCursor() {
         if previousTempo != sequencer.tempo {
             previousTempo = sequencer.tempo
@@ -196,7 +198,7 @@ public class MIDITrackView: Button {
         }
     }
 
- //Move the note view across the screen
+ /// Move the note view across the screen
     @objc func scrollNotes() {
         if previousTempo != sequencer.tempo {
             previousTempo = sequencer.tempo

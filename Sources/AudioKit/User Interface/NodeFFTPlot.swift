@@ -7,7 +7,10 @@ import Foundation
 /// Plot the FFT output from any node in an signal processing graph
 public class NodeFFTPlot: EZAudioPlot, EZAudioFFTDelegate {
 
+    /// Is the FFT Plot connected to a node
     public var isConnected = false
+
+    /// Is the FFT Plot not connected to a node
     public var isNotConnected: Bool { return !isConnected }
 
     internal func setupNode(_ input: Node) {
@@ -36,6 +39,7 @@ public class NodeFFTPlot: EZAudioPlot, EZAudioFFTDelegate {
     }
 
 
+    /// Pause plot
     public func pause() {
         if isConnected {
             node.avAudioUnitOrNode.removeTap(onBus: 0)
@@ -43,13 +47,14 @@ public class NodeFFTPlot: EZAudioPlot, EZAudioFFTDelegate {
         }
     }
 
+    /// Resume plot
     public func resume() {
         setupNode(node)
     }
 
     internal var bufferSize: UInt32 = 1_024
 
-    /// EZAudioFFT container
+    // EZAudioFFT container
     fileprivate var fft: EZAudioFFT?
 
     /// The node whose output to graph
@@ -85,7 +90,7 @@ public class NodeFFTPlot: EZAudioPlot, EZAudioFFTDelegate {
         self.node = input
         super.init(frame: frame)
         self.plotType = .buffer
-        self.backgroundColor = CrossPlatformColor.white
+        self.backgroundColor = .white
         self.shouldCenterYAxis = true
         self.bufferSize = UInt32(bufferSize)
     }
@@ -105,6 +110,7 @@ public class NodeFFTPlot: EZAudioPlot, EZAudioFFTDelegate {
         }
     }
 
+    /// Start the plot
     public func start() {
         setupNode(node)
     }

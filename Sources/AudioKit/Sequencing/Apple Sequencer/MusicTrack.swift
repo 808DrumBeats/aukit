@@ -19,6 +19,7 @@ open class MusicTrackManager {
 
     /// Pointer to the Music Track
     open var trackPointer: UnsafeMutablePointer<MusicTrack>?
+    /// Pointer to the initial music track
     open var initTrackPointer: UnsafeMutablePointer<MusicTrack>?
 
     /// Nicer function for not empty
@@ -48,6 +49,8 @@ open class MusicTrackManager {
 
     // MARK: - Initialization
 
+    /// Initialize with a name
+    /// - Parameter name: Name of the track
     public init(name: String = "Unnamed") {
         self.name = name
         guard let seq = sequencer.sequence else { fatalError() }
@@ -567,9 +570,9 @@ open class MusicTrackManager {
         // Find least and most significant bytes, remembering they are 7 bit numbers.
         let lsb = value & 0x7f
         let msb = (value >> 7) & 0x7f
-        var pitchBendMessage = MIDIChannelMessage(status: UInt8(14 << 4) | UInt8(channel & 0xf),
-                                                  data1: UInt8(lsb),
-                                                  data2: UInt8(msb),
+        var pitchBendMessage = MIDIChannelMessage(status: MIDIByte(14 << 4) | MIDIByte(channel & 0xf),
+                                                  data1: MIDIByte(lsb),
+                                                  data2: MIDIByte(msb),
                                                   reserved: 0)
         MusicTrackNewMIDIChannelEvent(track, position.musicTimeStamp, &pitchBendMessage)
     }
@@ -650,6 +653,7 @@ open class MusicTrackManager {
         return copiedTrack
     }
 
+    /// Reset to initial values
     public func resetToInit() {
         var initLengthCopy: Double = initLength
         clear()
