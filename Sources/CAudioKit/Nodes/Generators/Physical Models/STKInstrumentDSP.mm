@@ -1,8 +1,10 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
-#include "STKInstrumentDSP.hpp"
+#include "STKInstrumentDSP.h"
 
-STKInstrumentDSP::STKInstrumentDSP() : DSPBase(/*inputBusCount*/0) { }
+STKInstrumentDSP::STKInstrumentDSP() : DSPBase(/*inputBusCount*/0) {
+    isStarted = false;
+}
 
 void STKInstrumentDSP::reset() {
     if(auto instr = getInstrument()) {
@@ -11,7 +13,7 @@ void STKInstrumentDSP::reset() {
 }
 
 void STKInstrumentDSP::handleMIDIEvent(AUMIDIEvent const& midiEvent) {
-
+    isStarted = true;
     uint8_t status = midiEvent.data[0] & 0xF0;
 
     uint8_t veloc = midiEvent.data[2];

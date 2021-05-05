@@ -18,7 +18,6 @@ FOUNDATION_EXPORT const unsigned char AudioKitVersionString[];
 #import "SoundpipeDSPBase.h"
 
 #import "ExceptionCatcher.h"
-#import "Globals.h"
 #import "AUParameterTreeExt.h"
 
 // Testing
@@ -68,15 +67,6 @@ AK_API void akCallbackInstrumentSetCallback(DSPRef dsp, CMIDICallback callback);
 // Custom debug
 #define PhaseDistortionOscillatorDebugPhase 0
 #define OscillatorDebugPhase 0
-
-// EZAudio
-#import "EZAudio.h"
-#import "EZAudioPlot.h"
-#import "EZAudioFFT.h"
-
-// TPCircularBuffer
-#import "TPCircularBuffer+Unit.h"
-#import "TPCircularBuffer+AudioBufferList.h"
 
 // Misc
 #import "BufferedAudioBus.h"

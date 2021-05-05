@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -9,7 +9,6 @@ let package = Package(
         .macOS(.v10_14), .iOS(.v11), .tvOS(.v11)
     ],
     products: [
-        // Products define the executables and libraries produced by a package, and make them visible to other packages.
         .library(
             name: "AudioKit",
             type: .static,
@@ -20,11 +19,18 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
     ],
     targets: [
-        .target(name: "STK", publicHeadersPath: "include"),
+        .target(name: "Stk",
+                exclude: ["rawwaves", "LICENSE"],
+                publicHeadersPath: "include"),
         .target(name: "soundpipe",
+                exclude: [
+                    "README.md",
+                    "lib/kissfft/COPYING",
+                    "lib/kissfft/README",
+                    "lib/inih/LICENSE.txt",
+                ],
                 publicHeadersPath: "include",
                 cSettings: [
-                    .define("NO_LIBSNDFILE"),
                     .headerSearchPath("lib/kissfft"),
                     .headerSearchPath("lib/inih"),
                     .headerSearchPath("Sources/soundpipe/lib/inih"),
@@ -34,11 +40,20 @@ let package = Package(
         .target(
             name: "sporth",
             dependencies: ["soundpipe"],
-            publicHeadersPath: "include",
-            cSettings: [.define("NO_LIBSNDFILE")]),
+            exclude: ["README.md"],
+            publicHeadersPath: "include"),
         .target(
             name: "CAudioKit",
-            dependencies: ["STK", "soundpipe", "sporth"],
+            dependencies: ["Stk", "soundpipe", "sporth"],
+            exclude: [
+                "AudioKitCore/Modulated Delay/README.md",
+                "AudioKitCore/Sampler/Wavpack/license.txt",
+                "AudioKitCore/Common/README.md",
+                "Nodes/Effects/Distortion/DiodeClipper.soul",
+                "AudioKitCore/Common/Envelope.hpp",
+                "AudioKitCore/Sampler/README.md",
+                "AudioKitCore/README.md",
+            ],
             publicHeadersPath: "include",
             cxxSettings: [
                 .headerSearchPath("CoreAudio"),
@@ -50,10 +65,31 @@ let package = Package(
         ),
         .target(
             name: "AudioKit",
-            dependencies: ["CAudioKit"]),
+            dependencies: ["CAudioKit"],
+            exclude: [
+                "Nodes/Generators/Physical Models/README.md",
+                "Internals/Table/README.md",
+                "Nodes/Playback/Samplers/Sampler/Sampler.md",
+                "Nodes/Playback/Samplers/Apple Sampler/AppleSamplerNotes.md",
+                "Nodes/Playback/Samplers/Samplers.md",
+                "Nodes/Playback/Samplers/Sampler/README.md",
+                "Nodes/Effects/Guitar Processors/README.md",
+                "Nodes/Playback/Samplers/PreparingSampleSets.md",
+                "Internals/README.md",
+                "Nodes/Effects/Modulation/ModDelay.svg",
+                "MIDI/README.md",
+                "Analysis/README.md",
+                "Nodes/Effects/Modulation/ModulatedDelayEffects.md",
+                "Nodes/Effects/Modulation/README.md",
+                "Nodes/Playback/Samplers/Apple Sampler/Skeleton.aupreset",
+                "Nodes/Effects/README.md",
+                "Operations/README.md",
+                "Nodes/README.md",
+            ]),
         .testTarget(
             name: "AudioKitTests",
-            dependencies: ["AudioKit"]),
+            dependencies: ["AudioKit"],
+            resources: [.copy("TestResources/")]),
         .testTarget(
             name: "CAudioKitTests",
             dependencies: ["CAudioKit"])

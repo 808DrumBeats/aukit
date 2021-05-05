@@ -15,20 +15,31 @@ open class RawDataTap: BaseTap {
 
     /// Initialize the raw data tap
     ///
-    /// - parameter input: Node to analyze
-    /// - parameter bufferSize: Size of buffer to analyze
-    /// - parameter handler: Callback to call when results are available
-    public init(_ input: Node, bufferSize: UInt32 = 4_096, handler: @escaping Handler) {
+    /// - Parameters:
+    ///   - input: Node to analyze
+    ///   - bufferSize: Size of buffer to analyze
+    ///   - handler: Callback to call when results are available
+    public init(_ input: Node, bufferSize: UInt32 = 1_024, handler: @escaping Handler = { _ in }) {
         self.data = Array(repeating: 0.0, count: Int(bufferSize))
+        self.handler = handler
         super.init(input, bufferSize: bufferSize)
     }
 
-    // AVAudioNodeTapBlock - time is unused in this case
-    override internal func doHandleTapBlock(buffer: AVAudioPCMBuffer, at time: AVAudioTime) {
+    /// Overide this method to handle Tap in derived class
+    /// - Parameters:
+    ///   - buffer: Buffer to analyze
+    ///   - time: Unused in this case
+    override open func doHandleTapBlock(buffer: AVAudioPCMBuffer, at time: AVAudioTime) {
         guard buffer.floatChannelData != nil else { return }
 
-        let arraySize = Int(buffer.frameLength)
-        data = Array(UnsafeBufferPointer(start: buffer.floatChannelData![0], count: arraySize))
+        let offset = Int(buffer.frameCapacity - buffer.frameLength)
+        var tempData = [Float]()
+        if let tail = buffer.floatChannelData?[0] {
+            for idx in 0 ..< bufferSize {
+                tempData.append(tail[offset + Int(idx)])
+            }
+        }
+        data = tempData
         handler(data)
     }
 

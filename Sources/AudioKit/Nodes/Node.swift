@@ -39,7 +39,7 @@ open class Node {
     /// - Parameter avAudioUnit: AVAudioUnit to initialize with
     public init(avAudioUnit: AVAudioUnit) {
         self.avAudioUnit = avAudioUnit
-        self.avAudioNode = avAudioUnit
+        avAudioNode = avAudioUnit
     }
 
     /// Initialize the node from an AVAudioNode
@@ -80,7 +80,7 @@ open class Node {
 
                 // Mixers will decide which input bus to use.
                 if let mixer = avAudioNode as? AVAudioMixerNode {
-                    mixer.connect(input: connection.avAudioNode, bus: mixer.nextAvailableInputBus)
+                    mixer.connectMixer(input: connection.avAudioNode)
                 } else {
                     avAudioNode.connect(input: connection.avAudioNode, bus: bus)
                 }
@@ -90,9 +90,17 @@ open class Node {
         }
     }
 
+    func disconnectAV() {
+        if let engine = avAudioNode.engine {
+            engine.disconnectNodeInput(avAudioNode)
+            for (_, connection) in connections.enumerated() {
+                connection.disconnectAV()
+            }
+        }
+    }
+
     /// Work-around for an AVAudioEngine bug.
     func initLastRenderTime() {
-
         // We don't have a valid lastRenderTime until we query it.
         _ = avAudioNode.lastRenderTime
 
@@ -110,6 +118,7 @@ public protocol Polyphonic {
     ///   - noteNumber: MIDI Note Number
     ///   - velocity:   MIDI Velocity
     ///   - frequency:  Play this frequency
+    ///   - channel:    MIDI Channel
     func play(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, frequency: AUValue, channel: MIDIChannel)
 
     /// Play a sound corresponding to a MIDI note
@@ -117,14 +126,17 @@ public protocol Polyphonic {
     /// - Parameters:
     ///   - noteNumber: MIDI Note Number
     ///   - velocity:   MIDI Velocity
+    ///   - channel:    MIDI Channel
     ///
     func play(noteNumber: MIDINoteNumber, velocity: MIDIVelocity, channel: MIDIChannel)
 
     /// Stop a sound corresponding to a MIDI note
     ///
-    /// - parameter noteNumber: MIDI Note Number
+    /// - Parameters:
+    ///   - noteNumber: MIDI Note Number
+    ///   - channel:    MIDI Channel
     ///
-    func stop(noteNumber: MIDINoteNumber)
+    func stop(noteNumber: MIDINoteNumber, channel: MIDIChannel)
 }
 
 /// Bare bones implementation of Polyphonic protocol
@@ -167,48 +179,26 @@ open class PolyphonicNode: Node, Polyphonic {
     ///
     /// - parameter noteNumber: MIDI Note Number
     ///
-    open func stop(noteNumber: MIDINoteNumber) {
+    open func stop(noteNumber: MIDINoteNumber, channel: MIDIChannel = 0) {
         Log("Stopping note \(noteNumber), override in subclass")
     }
-}
 
-/// Protocol to allow nodes to be tapped using AudioKit's tapping system (not AVAudioEngine's installTap)
-public protocol Tappable {
-    /// Install tap on this node
-    func installTap()
-    /// Remove tap on this node
-    func removeTap()
-    /// Get the latest data for this node
-    /// - Parameter sampleCount: Number of samples to retrieve
-    /// - Returns: Float channel data for two channels
-    func getTapData(sampleCount: Int) -> FloatChannelData
-}
-
-/// Default functions for nodes that conform to Tappable
-extension Tappable where Self: AudioUnitContainer {
-    /// Install tap on this node
-    public func installTap() {
-        akInstallTap(internalAU?.dsp)
-    }
-    /// Remove tap on this node
-    public func removeTap() {
-        akRemoveTap(internalAU?.dsp)
-    }
-    /// Get the latest data for this node
-    /// - Parameter sampleCount: Number of samples to retrieve
-    /// - Returns: Float channel data for two channels
-    public func getTapData(sampleCount: Int) -> FloatChannelData {
-        var leftData = [Float](repeating: 0, count: sampleCount)
-        var rightData = [Float](repeating: 0, count: sampleCount)
-        var success = false
-        leftData.withUnsafeMutableBufferPointer { leftPtr in
-            rightData.withUnsafeMutableBufferPointer { rightPtr in
-                success = akGetTapData(internalAU?.dsp, sampleCount, leftPtr.baseAddress!, rightPtr.baseAddress!)
+    #if !os(tvOS)
+        /// Schedule an event with an offset
+        ///
+        /// - Parameters:
+        ///   - event: MIDI Event to schedule
+        ///   - offset: Time in samples
+        ///
+        public func scheduleMIDIEvent(event: MIDIEvent, offset: UInt64) {
+            if let midiBlock = avAudioUnit?.auAudioUnit.scheduleMIDIEventBlock {
+                event.data.withUnsafeBufferPointer { ptr in
+                    guard let ptr = ptr.baseAddress else { return }
+                    midiBlock(AUEventSampleTimeImmediate + AUEventSampleTime(offset), 0, event.data.count, ptr)
+                }
             }
         }
-        if !success { return [] }
-        return [leftData, rightData]
-    }
+    #endif
 }
 
 /// Protocol for dictating that a node can be in a started or stopped state

@@ -274,12 +274,8 @@ public class Sampler: PolyphonicNode, AudioUnitContainer {
 
     // MARK: - Initialization
 
-    /// Initialize this sampler node for one file. There are many parameters, change them after initialization
-    ///
-    /// - Parameters:
-    ///   - sampleDescriptor: File describing how the audio file should be used
-    ///   - file: Audio file to use for sample
-    public init(sampleDescriptor: SampleDescriptor, file: AVAudioFile) {
+    /// Initialize without any descriptors
+    public init() {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
@@ -287,6 +283,15 @@ public class Sampler: PolyphonicNode, AudioUnitContainer {
             self.avAudioNode = avAudioUnit
             self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
         }
+    }
+
+    /// Initialize this sampler node for one file. There are many parameters, change them after initialization
+    ///
+    /// - Parameters:
+    ///   - sampleDescriptor: File describing how the audio file should be used
+    ///   - file: Audio file to use for sample
+    public convenience init(sampleDescriptor: SampleDescriptor, file: AVAudioFile) {
+        self.init()
         self.loadAudioFile(from: sampleDescriptor, file: file)
     }
 
@@ -297,14 +302,8 @@ public class Sampler: PolyphonicNode, AudioUnitContainer {
     ///
     /// - Parameters:
     ///   - filesWSampleDescriptors: An array of sample descriptors and files
-    public init(filesWithSampleDescriptors: [FileWithSampleDescriptor]) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
-            self.avAudioNode = avAudioUnit
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-        }
+    public convenience init(filesWithSampleDescriptors: [FileWithSampleDescriptor]) {
+        self.init()
 
         for fileWithSampleDescriptor in filesWithSampleDescriptors {
             self.loadAudioFile(from: fileWithSampleDescriptor.sampleDescriptor, file: fileWithSampleDescriptor.file)
@@ -314,14 +313,8 @@ public class Sampler: PolyphonicNode, AudioUnitContainer {
     /// Initialize this sampler node with an SFZ style file. There are many parameters, change them after initialization
     ///
     /// - Parameter sfzURL: URL of the SFZ sound font file
-    public init(sfzURL: URL) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
-            self.avAudioNode = avAudioUnit
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-        }
+    public convenience init(sfzURL: URL) {
+        self.init()
         self.loadSFZ(url: sfzURL)
     }
 
@@ -330,14 +323,8 @@ public class Sampler: PolyphonicNode, AudioUnitContainer {
     /// - Parameters:
     ///   - sfzPath: Path to SFZ file
     ///   - sfzFileName: Name of SFZ file
-    public init(sfzPath: String, sfzFileName: String) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
-            self.avAudioNode = avAudioUnit
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-        }
+    public convenience init(sfzPath: String, sfzFileName: String) {
+        self.init()
         self.loadSFZ(path: sfzPath, fileName: sfzFileName)
     }
 
@@ -423,7 +410,7 @@ public class Sampler: PolyphonicNode, AudioUnitContainer {
 
     /// Stop the sampler playback of a specific note
     /// - Parameter noteNumber: MIDI Note number
-    public override func stop(noteNumber: MIDINoteNumber) {
+    public override func stop(noteNumber: MIDINoteNumber, channel: MIDIChannel = 0) {
         internalAU?.stopNote(noteNumber: noteNumber, immediate: false)
     }
 

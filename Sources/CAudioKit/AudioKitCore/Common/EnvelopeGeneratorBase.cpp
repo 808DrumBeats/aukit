@@ -1,6 +1,6 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
-#include "EnvelopeGeneratorBase.hpp"
+#include "EnvelopeGeneratorBase.h"
 #include <cmath>
 
 namespace AudioKitCore
@@ -90,6 +90,7 @@ namespace AudioKitCore
 
     bool MultiSegmentEnvelopeGenerator::skipEmptySegments() //skips over any segment w/ length 0, so as to not influence the state of the envelope
     {
+        assert(segments);
         SegmentDescriptor seg = (*segments)[curSegIndex];
         int length = seg.lengthSamples;
         while (length == 0) { //skip any segments that are 0-length

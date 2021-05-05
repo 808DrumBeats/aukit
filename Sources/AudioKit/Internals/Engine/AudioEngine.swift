@@ -21,8 +21,22 @@ extension AVAudioNode {
     public func connect(input: AVAudioNode, bus: Int, format: AVAudioFormat? = Settings.audioFormat) {
         if let engine = engine {
             var points = engine.outputConnectionPoints(for: input, outputBus: 0)
-            if points.contains(where: { $0.node === self }) { return }
+            if points.contains(where: {
+                $0.node === self && $0.bus == bus
+            }) { return }
             points.append(AVAudioConnectionPoint(node: self, bus: bus))
+            engine.connect(input, to: points, fromBus: 0, format: format)
+        }
+    }
+}
+
+extension AVAudioMixerNode {
+    /// Make a connection without breaking other connections.
+    public func connectMixer(input: AVAudioNode, format: AVAudioFormat? = Settings.audioFormat) {
+        if let engine = engine {
+            var points = engine.outputConnectionPoints(for: input, outputBus: 0)
+            if points.contains(where: { $0.node === self }) { return }
+            points.append(AVAudioConnectionPoint(node: self, bus: nextAvailableInputBus))
             engine.connect(input, to: points, fromBus: 0, format: format)
         }
     }
@@ -36,6 +50,7 @@ public class AudioEngine {
     // maximum number of frames the engine will be asked to render in any single render call
     let maximumFrameCount: AVAudioFrameCount = 1_024
 
+    /// Main mixer at the end of the signal chain
     public private(set) var mainMixerNode: Mixer?
 
     /// Input node mixer
@@ -51,6 +66,9 @@ public class AudioEngine {
     let _input = InputNode()
 
     /// Input for microphone or other device is created when this is accessed
+    /// If adjusting AudioKit.Settings, do so before setting up the microphone.
+    /// Setting the .defaultToSpeaker option in AudioKit.Settings.session.setCategory after setting up your mic
+    /// can cause the AVAudioEngine to stop running.
     public var input: InputNode? {
         if #available(macOS 10.14, *) {
             guard Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription") != nil else {
@@ -108,7 +126,7 @@ public class AudioEngine {
     private func createEngineMixer() {
         guard mainMixerNode == nil else { return }
 
-        let mixer = Mixer()
+        let mixer = Mixer(name: "AudioKit Engine Mixer")
         avEngine.attach(mixer.avAudioNode)
         avEngine.connect(mixer.avAudioNode, to: avEngine.outputNode, format: Settings.audioFormat)
         mainMixerNode = mixer
@@ -120,6 +138,19 @@ public class AudioEngine {
         mixer.removeAllInputs()
         mixer.detach()
         mainMixerNode = nil
+    }
+    
+    /// Disconnect and reconnect every node
+    /// Use this for instance after you change AK sample rate
+    public func rebuildGraph() {
+        // save the old output
+        let out = output
+        
+        // disconnect everything
+        out?.disconnectAV()
+        
+        // reset the output to the saved one, triggering the re-connect functions
+        output = out
     }
 
     /// Start the engine
@@ -134,6 +165,11 @@ public class AudioEngine {
     /// Stop the engine
     public func stop() {
         avEngine.stop()
+    }
+
+    /// Pause the engine
+    public func pause() {
+        avEngine.pause()
     }
 
     /// Start testing for a specified total duration

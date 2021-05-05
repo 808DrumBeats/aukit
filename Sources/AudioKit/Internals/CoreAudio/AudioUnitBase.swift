@@ -10,31 +10,35 @@ open class AudioUnitBase: AUAudioUnit {
 
     private var inputBusArray: [AUAudioUnitBus] = []
     private var outputBusArray: [AUAudioUnitBus] = []
+    private var internalBuffers: [AVAudioPCMBuffer] = []
 
     /// Allocate the render resources
     override public func allocateRenderResources() throws {
         try super.allocateRenderResources()
 
-        let format = Settings.audioFormat
+        if let inputFormat = inputBusArray.first?.format {
 
-        try inputBusArray.forEach { if $0.format != format { try $0.setFormat(format) } }
-        try outputBusArray.forEach { if $0.format != format { try $0.setFormat(format) } }
-
-        // we don't need to allocate a buffer if we can process in place
-        if !canProcessInPlace || inputBusArray.count > 1 {
-            for i in inputBusArray.indices {
-                let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: maximumFramesToRender)
-                setBufferDSP(dsp, buffer, i)
+            // we don't need to allocate a buffer if we can process in place
+            if !canProcessInPlace || inputBusArray.count > 1 {
+                for i in inputBusArray.indices {
+                    if let buffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: maximumFramesToRender) {
+                        setBufferDSP(dsp, buffer.mutableAudioBufferList, i)
+                        internalBuffers.append(buffer)
+                    }
+                }
             }
         }
 
-        allocateRenderResourcesDSP(dsp, format)
+        if let outputFormat = outputBusArray.first?.format {
+            allocateRenderResourcesDSP(dsp, outputFormat.channelCount, outputFormat.sampleRate)
+        }
     }
 
     /// Delllocate Render Resources
     override public func deallocateRenderResources() {
         super.deallocateRenderResources()
         deallocateRenderResourcesDSP(dsp)
+        internalBuffers = []
     }
 
     /// Reset the DSP
@@ -105,7 +109,7 @@ open class AudioUnitBase: AUAudioUnit {
     /// - Parameters:
     ///   - componentDescription: Audio Component Description
     ///   - options: Audio Component Instantiation Options
-    /// - Throws: <#description#>
+    /// - Throws: error
     override public init(componentDescription: AudioComponentDescription,
                          options: AudioComponentInstantiationOptions = []) throws {
         try super.init(componentDescription: componentDescription, options: options)
@@ -115,7 +119,7 @@ open class AudioUnitBase: AUAudioUnit {
         if dsp == nil { throw CommonError.InvalidDSPObject }
 
         // create audio bus connection points
-        let format = Settings.audioFormat
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
         for _ in 0..<inputBusCountDSP(dsp) {
             inputBusArray.append(try AUAudioUnitBus(format: format))
         }

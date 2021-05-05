@@ -27,13 +27,13 @@ extension MIDIOMNIListener: MIDIListener {
     ///   - velocity:   MIDI Velocity (0-127)
     ///   - channel:    MIDI Channel (1-16)
     ///   - portID:     MIDI Unique Port ID
-    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:  MIDI Event TimeStamp
     ///
     public func receivedMIDINoteOn(noteNumber: MIDINoteNumber,
                                    velocity: MIDIVelocity,
                                    channel: MIDIChannel,
-                                   portID: MIDIUniqueID?,
-                                   offset: MIDITimeStamp) {
+                                   portID: MIDIUniqueID? = nil,
+                                   timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
 
@@ -44,13 +44,13 @@ extension MIDIOMNIListener: MIDIListener {
     ///   - velocity:   MIDI Velocity (0-127) usually speed of release, often 0.
     ///   - channel:    MIDI Channel (1-16)
     ///   - portID:     MIDI Unique Port ID
-    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:  MIDI Event TimeStamp
     ///
     public func receivedMIDINoteOff(noteNumber: MIDINoteNumber,
                                     velocity: MIDIVelocity,
                                     channel: MIDIChannel,
-                                    portID: MIDIUniqueID?,
-                                    offset: MIDITimeStamp) {
+                                    portID: MIDIUniqueID? = nil,
+                                    timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
 
@@ -61,12 +61,12 @@ extension MIDIOMNIListener: MIDIListener {
     ///   - value:      Value of this controller
     ///   - channel:    MIDI Channel (1-16)
     ///   - portID:     MIDI Unique Port ID
-    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:  MIDI Event TimeStamp
     ///
     public func receivedMIDIController(_ controller: MIDIByte,
                                        value: MIDIByte, channel: MIDIChannel,
-                                       portID: MIDIUniqueID?,
-                                       offset: MIDITimeStamp) {
+                                       portID: MIDIUniqueID? = nil,
+                                       timeStamp: MIDITimeStamp? = nil) {
         if controller == MIDIControl.omniModeOff.rawValue {
             guard omniMode == true else { return }
             omniMode = false
@@ -86,13 +86,13 @@ extension MIDIOMNIListener: MIDIListener {
     ///   - pressure:   Pressure applied to the note (0-127)
     ///   - channel:    MIDI Channel (1-16)
     ///   - portID:     MIDI Unique Port ID
-    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:  MIDI Event TimeStamp
     ///
     public func receivedMIDIAftertouch(noteNumber: MIDINoteNumber,
                                        pressure: MIDIByte,
                                        channel: MIDIChannel,
-                                       portID: MIDIUniqueID?,
-                                       offset: MIDITimeStamp) {
+                                       portID: MIDIUniqueID? = nil,
+                                       timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
 
@@ -102,12 +102,12 @@ extension MIDIOMNIListener: MIDIListener {
     ///   - pressure: Pressure applied (0-127)
     ///   - channel:  MIDI Channel (1-16)
     ///   - portID:   MIDI Unique Port ID
-    ///   - offset:   the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:MIDI Event TimeStamp
     ///
     public func receivedMIDIAftertouch(_ pressure: MIDIByte,
                                        channel: MIDIChannel,
-                                       portID: MIDIUniqueID?,
-                                       offset: MIDITimeStamp) {
+                                       portID: MIDIUniqueID? = nil,
+                                       timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
 
@@ -117,12 +117,12 @@ extension MIDIOMNIListener: MIDIListener {
     ///   - pitchWheelValue: MIDI Pitch Wheel Value (0-16383)
     ///   - channel:         MIDI Channel (1-16)
     ///   - portID:          MIDI Unique Port ID
-    ///   - offset:          the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:       MIDI Event TimeStamp
     ///
     public func receivedMIDIPitchWheel(_ pitchWheelValue: MIDIWord,
                                        channel: MIDIChannel,
-                                       portID: MIDIUniqueID?,
-                                       offset: MIDITimeStamp) {
+                                       portID: MIDIUniqueID? = nil,
+                                       timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
 
@@ -132,12 +132,12 @@ extension MIDIOMNIListener: MIDIListener {
     ///   - program:  MIDI Program Value (0-127)
     ///   - channel:  MIDI Channel (1-16)
     ///   - portID:   MIDI Unique Port ID
-    ///   - offset:   the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:MIDI Event TimeStamp
     ///
     public func receivedMIDIProgramChange(_ program: MIDIByte,
                                           channel: MIDIChannel,
-                                          portID: MIDIUniqueID?,
-                                          offset: MIDITimeStamp) {
+                                          portID: MIDIUniqueID? = nil,
+                                          timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
 
@@ -145,11 +145,11 @@ extension MIDIOMNIListener: MIDIListener {
     ///
     /// - data:       Array of integers
     /// - portID:     MIDI Unique Port ID
-    /// - offset:     the offset in samples that this event occurs in the buffer
+    /// - offset:     MIDI Event TimeStamp
     ///
     public func receivedMIDISystemCommand(_ data: [MIDIByte],
-                                          portID: MIDIUniqueID?,
-                                          offset: MIDITimeStamp) {
+                                          portID: MIDIUniqueID? = nil,
+                                          timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
 

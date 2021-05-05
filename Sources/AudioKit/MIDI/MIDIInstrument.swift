@@ -15,7 +15,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     open var midiIn = MIDIEndpointRef()
 
     /// Name of the instrument
-    open var name = "AudioKit MIDI Instrument"
+    open var name = "(unset)"
 
     /// Active MPE notes
     open var mpeActiveNotes: [(note: MIDINoteNumber, channel: MIDIChannel)] = []
@@ -26,7 +26,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     ///
     public init(midiInputName: String? = nil) {
         super.init(avAudioNode: AVAudioNode())
-        name = midiInputName ?? name
+        name = midiInputName ?? MemoryAddress(of: self).description
         enableMIDI(name: name)
         hideVirtualMIDIPort()
     }
@@ -38,8 +38,9 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     ///   - name: Name to connect with
     ///
     open func enableMIDI(_ midiClient: MIDIClientRef = MIDI.sharedInstance.client,
-                         name: String = "AudioKit MIDI Instrument") {
-        CheckError(MIDIDestinationCreateWithBlock(midiClient, name as CFString, &midiIn) { packetList, _ in
+                         name: String? = nil) {
+        let cfName = (name ?? self.name) as CFString
+        CheckError(MIDIDestinationCreateWithBlock(midiClient, cfName, &midiIn) { packetList, _ in
             for e in packetList.pointee {
                 e.forEach { (event) in
                     self.handle(event: event)
@@ -56,9 +57,9 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
                         data2: event.data[1],
                         data3: event.data[2])
     }
-
+    
     // MARK: - Handling MIDI Data
-
+    
     /// Handle MIDI commands that come in externally
     /// - Parameters:
     ///   - noteNumber: MIDI Note Numbe
@@ -70,7 +71,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
                                  velocity: MIDIVelocity,
                                  channel: MIDIChannel,
                                  portID: MIDIUniqueID? = nil,
-                                 offset: MIDITimeStamp = 0) {
+                                 timeStamp: MIDITimeStamp? = nil) {
         mpeActiveNotes.append((noteNumber, channel))
         if velocity > 0 {
             start(noteNumber: noteNumber, velocity: velocity, channel: channel)
@@ -78,7 +79,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
             stop(noteNumber: noteNumber, channel: channel)
         }
     }
-
+    
     /// Handle MIDI commands that come in externally
     /// - Parameters:
     ///   - noteNumber: MIDI Note Numbe
@@ -90,11 +91,11 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
                                   velocity: MIDIVelocity,
                                   channel: MIDIChannel,
                                   portID: MIDIUniqueID? = nil,
-                                  offset: MIDITimeStamp = 0) {
+                                  timeStamp: MIDITimeStamp? = nil) {
         stop(noteNumber: noteNumber, channel: channel)
         mpeActiveNotes.removeAll(where: { $0 == (noteNumber, channel) })
     }
-
+    
     /// Receive a generic controller value
     ///
     /// - Parameters:
@@ -102,15 +103,15 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     ///   - value:      Value of this controller
     ///   - channel:    MIDI Channel (1-16)
     ///   - portID:     MIDI Unique Port ID
-    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:  MIDI Event TimeStamp
     ///
-    public func receivedMIDIController(_ controller: MIDIByte,
-                                       value: MIDIByte, channel: MIDIChannel,
-                                       portID: MIDIUniqueID?,
-                                       offset: MIDITimeStamp) {
+    open func receivedMIDIController(_ controller: MIDIByte,
+                                     value: MIDIByte, channel: MIDIChannel,
+                                     portID: MIDIUniqueID? = nil,
+                                     timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
-
+    
     /// Receive single note based aftertouch event
     ///
     /// - Parameters:
@@ -118,85 +119,85 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     ///   - pressure:   Pressure applied to the note (0-127)
     ///   - channel:    MIDI Channel (1-16)
     ///   - portID:     MIDI Unique Port ID
-    ///   - offset:     the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:  MIDI Event TimeStamp
     ///
-    public func receivedMIDIAftertouch(noteNumber: MIDINoteNumber,
-                                       pressure: MIDIByte,
-                                       channel: MIDIChannel,
-                                       portID: MIDIUniqueID?,
-                                       offset: MIDITimeStamp) {
+    open func receivedMIDIAftertouch(noteNumber: MIDINoteNumber,
+                                     pressure: MIDIByte,
+                                     channel: MIDIChannel,
+                                     portID: MIDIUniqueID? = nil,
+                                     timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
-
+    
     /// Receive global aftertouch
     ///
     /// - Parameters:
     ///   - pressure: Pressure applied (0-127)
     ///   - channel:  MIDI Channel (1-16)
     ///   - portID:   MIDI Unique Port ID
-    ///   - offset:   the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:MIDI Event TimeStamp
     ///
-    public func receivedMIDIAftertouch(_ pressure: MIDIByte,
-                                       channel: MIDIChannel,
-                                       portID: MIDIUniqueID?,
-                                       offset: MIDITimeStamp) {
+    open func receivedMIDIAftertouch(_ pressure: MIDIByte,
+                                     channel: MIDIChannel,
+                                     portID: MIDIUniqueID? = nil,
+                                     timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
-
+    
     /// Receive pitch wheel value
     ///
     /// - Parameters:
     ///   - pitchWheelValue: MIDI Pitch Wheel Value (0-16383)
     ///   - channel:         MIDI Channel (1-16)
     ///   - portID:          MIDI Unique Port ID
-    ///   - offset:          the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:       MIDI Event TimeStamp
     ///
-    public func receivedMIDIPitchWheel(_ pitchWheelValue: MIDIWord,
-                                       channel: MIDIChannel,
-                                       portID: MIDIUniqueID?,
-                                       offset: MIDITimeStamp) {
+    open func receivedMIDIPitchWheel(_ pitchWheelValue: MIDIWord,
+                                     channel: MIDIChannel,
+                                     portID: MIDIUniqueID? = nil,
+                                     timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
-
+    
     /// Receive program change
     ///
     /// - Parameters:
     ///   - program:  MIDI Program Value (0-127)
     ///   - channel:  MIDI Channel (1-16)
     ///   - portID:   MIDI Unique Port ID
-    ///   - offset:   the offset in samples that this event occurs in the buffer
+    ///   - timeStamp:MIDI Event TimeStamp
     ///
-    public func receivedMIDIProgramChange(_ program: MIDIByte,
-                                          channel: MIDIChannel,
-                                          portID: MIDIUniqueID?,
-                                          offset: MIDITimeStamp) {
+    open func receivedMIDIProgramChange(_ program: MIDIByte,
+                                        channel: MIDIChannel,
+                                        portID: MIDIUniqueID? = nil,
+                                        timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
-
+    
     /// Receive a MIDI system command (such as clock, SysEx, etc)
     ///
     /// - data:       Array of integers
     /// - portID:     MIDI Unique Port ID
-    /// - offset:     the offset in samples that this event occurs in the buffer
+    /// - offset:     MIDI Event TimeStamp
     ///
-    public func receivedMIDISystemCommand(_ data: [MIDIByte],
-                                          portID: MIDIUniqueID?,
-                                          offset: MIDITimeStamp) {
+    open func receivedMIDISystemCommand(_ data: [MIDIByte],
+                                        portID: MIDIUniqueID? = nil,
+                                        timeStamp: MIDITimeStamp? = nil) {
         // Do nothing
     }
 
     /// MIDI Setup has changed
-    public func receivedMIDISetupChange() {
+    open func receivedMIDISetupChange() {
         // Do nothing
     }
 
     /// MIDI Object Property has changed
-    public func receivedMIDIPropertyChange(propertyChangeInfo: MIDIObjectPropertyChangeNotification) {
+    open func receivedMIDIPropertyChange(propertyChangeInfo: MIDIObjectPropertyChangeNotification) {
         // Do nothing
     }
 
     /// Generic MIDI Notification
-    public func receivedMIDINotification(notification: MIDINotification) {
+    open func receivedMIDINotification(notification: MIDINotification) {
         // Do nothing
     }
 
@@ -212,7 +213,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     open func start(noteNumber: MIDINoteNumber,
                     velocity: MIDIVelocity,
                     channel: MIDIChannel,
-                    offset: MIDITimeStamp = 0) {
+                    timeStamp: MIDITimeStamp? = nil) {
         play(noteNumber: noteNumber, velocity: velocity, channel: channel)
     }
 
@@ -224,7 +225,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     ///
     open func stop(noteNumber: MIDINoteNumber,
                    channel: MIDIChannel,
-                   offset: MIDITimeStamp = 0) {
+                   timeStamp: MIDITimeStamp? = nil) {
         // Override in subclass
     }
 
@@ -236,7 +237,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     ///
     open func receivedMIDIProgramChange(_ program: MIDIByte,
                                         channel: MIDIChannel,
-                                        offset: MIDITimeStamp = 0) {
+                                        timeStamp: MIDITimeStamp? = nil) {
         // Override in subclass
     }
 
@@ -260,28 +261,20 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
             case .polyphonicAftertouch:
                 receivedMIDIAftertouch(noteNumber: data2,
                                        pressure: data3,
-                                       channel: channel,
-                                       portID: nil,
-                                       offset: 0)
+                                       channel: channel)
             case .channelAftertouch:
                 receivedMIDIAftertouch(data2,
-                                       channel: channel,
-                                       portID: nil,
-                                       offset: 0)
+                                       channel: channel)
             case .controllerChange:
                 receivedMIDIController(data2,
                                        value: data3,
-                                       channel: channel,
-                                       portID: nil,
-                                       offset: 0)
+                                       channel: channel)
             case .programChange:
                 receivedMIDIProgramChange(data2, channel: channel)
             case .pitchWheel:
                 receivedMIDIPitchWheel(MIDIWord(byte1: data2,
                                                 byte2: data3),
-                                       channel: channel,
-                                       portID: nil,
-                                       offset: 0)
+                                       channel: channel)
             }
         }
     }

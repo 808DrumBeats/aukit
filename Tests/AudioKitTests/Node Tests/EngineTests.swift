@@ -4,8 +4,6 @@ import AVFoundation
 import CAudioKit
 import XCTest
 
-// TODO: Needs engine inputNode tests
-
 class EngineTests: XCTestCase {
     // Changing Settings.audioFormat will change subsequent node connections
     // from 44_100 which the MD5's were created with so be sure to change it back at the end of a test
@@ -13,7 +11,7 @@ class EngineTests: XCTestCase {
     func testEngineSampleRateGraphConsistency() {
         let previousFormat = Settings.audioFormat
 
-        let newRate: Double = 48_000
+        let newRate: Double = 48000
         guard let newAudioFormat = AVAudioFormat(standardFormatWithSampleRate: newRate,
                                                  channels: 2) else {
             XCTFail("Failed to create format at \(newRate)")
@@ -26,7 +24,7 @@ class EngineTests: XCTestCase {
         }
 
         let engine = AudioEngine()
-        let oscillator = Oscillator()
+        let oscillator = Oscillator(waveform: Table(.triangle))
         let mixer = Mixer(oscillator)
 
         // assign input and engine references
@@ -54,11 +52,11 @@ class EngineTests: XCTestCase {
     func testEngineSampleRateChanged() {
         let previousFormat = Settings.audioFormat
 
-        guard let audioFormat441k = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2) else {
+        guard let audioFormat441k = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2) else {
             XCTFail("Failed to create format at 44.1k")
             return
         }
-        guard let audioFormat48k = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2) else {
+        guard let audioFormat48k = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
             XCTFail("Failed to create format at 48k")
             return
         }
@@ -99,7 +97,7 @@ class EngineTests: XCTestCase {
 
     func testEngineMainMixerCreated() {
         let engine = AudioEngine()
-        let oscillator = Oscillator()
+        let oscillator = Oscillator(waveform: Table(.triangle))
         engine.output = oscillator
 
         guard let mainMixerNode = engine.mainMixerNode else {
@@ -113,10 +111,10 @@ class EngineTests: XCTestCase {
 
     func testEngineSwitchOutputWhileRunning() {
         let engine = AudioEngine()
-        let oscillator = Oscillator()
+        let oscillator = Oscillator(waveform: Table(.triangle))
         oscillator.frequency = 220
         oscillator.amplitude = 0.1
-        let oscillator2 = Oscillator()
+        let oscillator2 = Oscillator(waveform: Table(.triangle))
         oscillator2.frequency = 440
         oscillator2.amplitude = 0.1
         engine.output = oscillator
@@ -153,24 +151,36 @@ class EngineTests: XCTestCase {
 
     func testConnectionTreeDescriptionForSingleNodeAdded() {
         let engine = AudioEngine()
-        let oscillator = Oscillator()
+        let oscillator = Oscillator(waveform: Table(.triangle))
         engine.output = oscillator
         XCTAssertEqual(engine.connectionTreeDescription,
-        """
-        \(Node.connectionTreeLinePrefix)↳Mixer("Mixer")
-        \(Node.connectionTreeLinePrefix) ↳Oscillator
-        """)
+                       """
+                       \(Node.connectionTreeLinePrefix)↳Mixer("AudioKit Engine Mixer")
+                       \(Node.connectionTreeLinePrefix) ↳Oscillator
+                       """)
     }
-    
+
     func testConnectionTreeDescriptionForMixerWithName() {
         let engine = AudioEngine()
         let mixerName = "MixerNameFoo"
         let mixerWithName = Mixer(name: mixerName)
         engine.output = mixerWithName
         XCTAssertEqual(engine.connectionTreeDescription,
-        """
-        \(Node.connectionTreeLinePrefix)↳Mixer("Mixer")
-        \(Node.connectionTreeLinePrefix) ↳Mixer("\(mixerName)")
-        """)
+                       """
+                       \(Node.connectionTreeLinePrefix)↳Mixer("AudioKit Engine Mixer")
+                       \(Node.connectionTreeLinePrefix) ↳Mixer("\(mixerName)")
+                       """)
+    }
+
+    func testConnectionTreeDescriptionForMixerWithoutName() {
+        let engine = AudioEngine()
+        let mixerWithoutName = Mixer()
+        engine.output = mixerWithoutName
+        let addressOfMixerWithoutName = MemoryAddress(of: mixerWithoutName)
+        XCTAssertEqual(engine.connectionTreeDescription,
+                       """
+                       \(Node.connectionTreeLinePrefix)↳Mixer("AudioKit Engine Mixer")
+                       \(Node.connectionTreeLinePrefix) ↳Mixer("\(addressOfMixerWithoutName)")
+                       """)
     }
 }

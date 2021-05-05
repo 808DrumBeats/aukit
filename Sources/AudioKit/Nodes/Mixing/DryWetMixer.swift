@@ -5,10 +5,10 @@ import CAudioKit
 
 /// Balanceable Mix between two signals, usually used for a dry signal and wet signal
 ///
-public class DryWetMixer: Node, AudioUnitContainer, Tappable, Toggleable {
+public class DryWetMixer: Node, AudioUnitContainer, Toggleable {
 
     /// Unique four-letter identifier "dwmx"
-   public static let ComponentDescription = AudioComponentDescription(effect: "dwmx")
+   public static let ComponentDescription = AudioComponentDescription(mixer: "dwmx")
 
     /// Internal type of audio unit for this node
     public typealias AudioUnitType = InternalAU

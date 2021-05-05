@@ -21,7 +21,7 @@ open class SequencerTrack {
     /// Speed of the track in beats per minute
     public var tempo: BPM = 120 {
         didSet {
-            updateSequence()
+            akSequencerEngineSetTempo(engine, tempo)
         }
     }
 
@@ -66,7 +66,7 @@ open class SequencerTrack {
             }
         }
 
-        akSequencerEngineDestroy(engine)
+        akSequencerEngineRelease(engine)
     }
 
     /// Start the track
@@ -89,6 +89,7 @@ open class SequencerTrack {
     /// Stop playback
     public func stop() {
         akSequencerEngineSetPlaying(engine, false)
+        akSequencerEngineStopPlayingNotes(engine)
     }
 
     /// Set the current position to the start ofthe track
@@ -132,23 +133,18 @@ open class SequencerTrack {
                                           loopEnabled: loopEnabled,
                                           numberOfLoops: 0)
 
-        sequence.events.withUnsafeBufferPointer { (eventsPtr: UnsafeBufferPointer<SequenceEvent>) -> Void in
-            sequence.notes.withUnsafeBufferPointer { (notesPtr: UnsafeBufferPointer<SequenceNote>) -> Void in
-                guard let observer = SequencerEngineUpdateSequence(engine,
-                                                                     eventsPtr.baseAddress,
-                                                                     sequence.events.count,
-                                                                     notesPtr.baseAddress,
-                                                                     sequence.notes.count,
-                                                                     settings,
-                                                                     Settings.sampleRate,
-                                                                     block) else { return }
+        let orderedEvents = sequence.beatTimeOrderedEvents()
+        orderedEvents.withUnsafeBufferPointer { (eventsPtr: UnsafeBufferPointer<SequenceEvent>) -> Void in
+            guard let observer = akSequencerEngineUpdateSequence(engine,
+                                                                 eventsPtr.baseAddress,
+                                                                 orderedEvents.count,
+                                                                 settings,
+                                                                 Settings.sampleRate,
+                                                                 block) else { return }
 
-                guard let auAudioUnit = targetNode?.avAudioUnit?.auAudioUnit else { return }
+            guard let auAudioUnit = targetNode?.avAudioUnit?.auAudioUnit else { return }
 
-                if let token = renderObserverToken {
-                    auAudioUnit.removeRenderObserver(token)
-                }
-
+            if renderObserverToken == nil {
                 renderObserverToken = auAudioUnit.token(byAddingRenderObserver: observer)
             }
         }

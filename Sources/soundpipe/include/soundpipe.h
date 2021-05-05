@@ -1,7 +1,6 @@
 #ifndef SOUNDPIPE_H
 #define SOUNDPIPE_H
 
-#include "dr_wav.h"
 #include "md5.h"
 
 #ifdef __cplusplus
@@ -10,6 +9,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #define SP_BUFSIZE 4096
 #ifndef SPFLOAT
@@ -571,6 +571,17 @@ int sp_dust_create(sp_dust **p);
 int sp_dust_destroy(sp_dust **p);
 int sp_dust_init(sp_data *sp, sp_dust *p);
 int sp_dust_compute(sp_data *sp, sp_dust *p, SPFLOAT *in, SPFLOAT *out);
+typedef struct {
+    SPFLOAT freq, amp, iphs;
+    int32_t   lphs;
+    int inc;
+} sp_dynamicosc;
+
+int sp_dynamicosc_create(sp_dynamicosc **customosc);
+int sp_dynamicosc_destroy(sp_dynamicosc **customosc);
+int sp_dynamicosc_init(sp_data *sp, sp_dynamicosc *dynamicosc, SPFLOAT iphs);
+int sp_dynamicosc_compute(sp_data *sp, sp_dynamicosc *dynamicosc, sp_ftbl *ft, SPFLOAT *in, SPFLOAT *out, bool shouldInc);
+
 typedef struct {
   SPFLOAT freq, bw, gain;
   SPFLOAT z1,z2, sr;
@@ -1736,29 +1747,6 @@ int sp_waveset_destroy(sp_waveset **p);
 int sp_waveset_init(sp_data *sp, sp_waveset *p, SPFLOAT ilen);
 int sp_waveset_compute(sp_data *sp, sp_waveset *p, SPFLOAT *in, SPFLOAT *out);
 
-#define WAVIN_BUFSIZE 1024
-typedef struct {
-    SPFLOAT buf[WAVIN_BUFSIZE];
-    int count;
-    drwav wav;
-    unsigned long pos;
-    unsigned long buf_start;
-    unsigned long buf_end;
-} sp_wavin;
-int sp_wavin_create(sp_wavin **p);
-int sp_wavin_destroy(sp_wavin **p);
-int sp_wavin_init(sp_data *sp, sp_wavin *p, const char *filename);
-int sp_wavin_compute(sp_data *sp, sp_wavin *p, SPFLOAT *in, SPFLOAT *out);
-int sp_wavin_get_sample(sp_data *sp, sp_wavin *p, SPFLOAT *out, SPFLOAT pos);
-int sp_wavin_reset_to_start(sp_data *sp, sp_wavin *p);
-int sp_wavin_seek(sp_data *sp, sp_wavin *p, unsigned long sample);
-
-typedef struct sp_wavout sp_wavout;
-int sp_wavout_create(sp_wavout **p);
-int sp_wavout_destroy(sp_wavout **p);
-int sp_wavout_init(sp_data *sp, sp_wavout *p, const char *filename);
-int sp_wavout_compute(sp_data *sp, sp_wavout *p, SPFLOAT *in, SPFLOAT *out);
-
 typedef struct {
     /* LPF1 */
     SPFLOAT lpf1_a;
@@ -1863,3 +1851,8 @@ int sp_padsynth_normalize(int N, SPFLOAT *smp);
 #endif
 
 #endif
+
+// Suppress warnings from Xcode
+#include "kiss_fft.h"
+#include "kiss_fftr.h"
+#include "vocwrapper.h"

@@ -14,53 +14,49 @@ class SequencerEngineTests: XCTestCase {
         let engine = akSequencerEngineCreate()
 
         let settings = SequenceSettings(maximumPlayCount: 1,
-                                          length: 4,
-                                          tempo: 120,
-                                          loopEnabled: true,
-                                          numberOfLoops: 0)
+                                        length: 4,
+                                        tempo: 120,
+                                        loopEnabled: true,
+                                        numberOfLoops: 0)
 
-        var events = [MIDIEvent]()
+        var scheduledEvents = [MIDIEvent]()
 
         let block: AUScheduleMIDIEventBlock = { (sampleTime, cable, length, midiBytes) in
-
             var bytes = [MIDIByte]()
             for index in 0 ..< length {
                 bytes.append(midiBytes[index])
             }
-            events.append(MIDIEvent(data: bytes, offset: MIDITimeStamp(sampleTime - AUEventSampleTimeImmediate)))
-
+            let timeStamp = MIDITimeStamp(sampleTime - AUEventSampleTimeImmediate)
+            scheduledEvents.append(MIDIEvent(data: bytes, timeStamp: timeStamp))
         }
 
-        sequence.events.withUnsafeBufferPointer { (eventsPtr: UnsafeBufferPointer<SequenceEvent>) -> Void in
-            sequence.notes.withUnsafeBufferPointer { (notesPtr: UnsafeBufferPointer<SequenceNote>) -> Void in
-                let observer = SequencerEngineUpdateSequence(engine,
-                                                               eventsPtr.baseAddress,
-                                                               sequence.events.count,
-                                                               notesPtr.baseAddress,
-                                                               sequence.notes.count,
-                                                               settings,
-                                                               44100,
-                                                               block)!
+        let orderedEvents = sequence.beatTimeOrderedEvents()
+        orderedEvents.withUnsafeBufferPointer { (eventsPtr: UnsafeBufferPointer<SequenceEvent>) -> Void in
+            let observer = akSequencerEngineUpdateSequence(engine,
+                                                         eventsPtr.baseAddress,
+                                                         orderedEvents.count,
+                                                         settings,
+                                                         44100,
+                                                         block)!
 
-                var timeStamp = AudioTimeStamp()
-                timeStamp.mSampleTime = 0
+            var timeStamp = AudioTimeStamp()
+            timeStamp.mSampleTime = 0
 
-                akSequencerEngineSetPlaying(engine, true)
+            akSequencerEngineSetPlaying(engine, true)
 
-                for index in 0..<renderCallCount {
-                    timeStamp.mSampleTime = Double(Int(frameCount) * index)
-                    observer(.unitRenderAction_PreRender, &timeStamp, frameCount, 0 /* outputBusNumber*/)
-                }
-
+            for index in 0..<renderCallCount {
+                timeStamp.mSampleTime = Double(Int(frameCount) * index)
+                observer(.unitRenderAction_PreRender, &timeStamp, frameCount, 0 /* outputBusNumber*/)
             }
         }
 
         // One second at 120bpm is two beats
-        XCTAssertEqual(akSequencerEngineGetPosition(engine), fmod(2.0 * Double(Int(frameCount) * renderCallCount) / 44100, 4), accuracy: 0.0001)
+        XCTAssertEqual(akSequencerEngineGetPosition(engine),
+                       fmod(2.0 * Double(Int(frameCount) * renderCallCount) / 44100, 4),
+                       accuracy: 0.0001)
 
-        akSequencerEngineDestroy(engine)
-
-        return events
+        akSequencerEngineRelease(engine)
+        return scheduledEvents
     }
 
     func testBasicSequence() {
@@ -74,10 +70,10 @@ class SequencerEngineTests: XCTestCase {
         XCTAssertEqual(events.count, 2)
         XCTAssertEqual(events[0].noteNumber!, 60)
         XCTAssertEqual(events[0].status!.type, .noteOn)
-        XCTAssertEqual(events[0].offset, 11025)
+        XCTAssertEqual(events[0].timeStamp, 11025)
         XCTAssertEqual(events[1].noteNumber!, 60)
         XCTAssertEqual(events[1].status!.type, .noteOff)
-        XCTAssertEqual(events[1].offset, 13230)
+        XCTAssertEqual(events[1].timeStamp, 13230)
     }
 
     func testEmpty() {
@@ -98,7 +94,7 @@ class SequencerEngineTests: XCTestCase {
         XCTAssertEqual(events.count, 6)
 
         XCTAssertEqual(events.map { $0.noteNumber! }, [60, 63, 67, 60, 63, 67])
-        XCTAssertEqual(events.map { $0.offset }, [0, 0, 0, 22050, 22050, 22050])
+        XCTAssertEqual(events.map { $0.timeStamp }, [0, 0, 0, 22050, 22050, 22050])
     }
 
     func testLoop() {
@@ -111,10 +107,8 @@ class SequencerEngineTests: XCTestCase {
         XCTAssertEqual(events.count, 20)
 
         XCTAssertEqual(events.map { $0.noteNumber! },
-                       [60, 60, 63, 63, 60, 60, 63, 63, 60, 60,
-                        63, 63, 60, 60, 63, 63, 60, 60, 63, 63])
-        XCTAssertEqual(events.map { $0.offset },[0, 157, 34, 191, 136, 37, 170, 71, 16, 173, 50,
-                                                 207, 152, 53, 186, 87, 32, 189, 66, 223])
+                       [60, 60, 63, 63, 60, 60, 63, 63, 60, 60, 63, 63, 60, 60, 63, 63, 60, 60, 63, 63])
+        XCTAssertEqual(events.map { $0.timeStamp }, [0, 157, 34, 191, 136, 37, 170, 71, 16, 173, 50, 207, 152, 53, 186, 87, 32, 189, 66, 223])
     }
 
     func testOverlap() {
@@ -127,8 +121,106 @@ class SequencerEngineTests: XCTestCase {
         let events = observerTest(sequence: seq)
         XCTAssertEqual(events.count, 4)
 
-        XCTAssertEqual(events.map { $0.noteNumber! }, [60, 63, 60, 63])
-        XCTAssertEqual(events.map { $0.offset }, [0, 2205, 22050, 4410])
+        XCTAssertEqual(events.map { $0.noteNumber! }, [60, 63, 63, 60])
+        XCTAssertEqual(events.map { $0.timeStamp }, [0, 2205, 4410, 22050])
+    }
+    
+    func testSameNoteRepeating() {
+
+        var seq = NoteEventSequence()
+
+        seq.add(noteNumber: 60, position: 0.0, duration: 1.0)
+        seq.add(noteNumber: 60, position: 1.0, duration: 0.5)
+
+        let events = observerTest(sequence: seq)
+        XCTAssertEqual(events.count, 4)
+
+        XCTAssertEqual(events.map { $0.noteNumber! }, [60, 60, 60, 60])
+        XCTAssertEqual(events.map { $0.status!.type }, [.noteOn, .noteOff, .noteOn, .noteOff])
+        XCTAssertEqual(events.map { $0.timeStamp }, [0, 22050, 22050, 33075])
     }
 
+    func testSameNoteRepeatingInChords() {
+
+        var seq = NoteEventSequence()
+
+        seq.add(noteNumber: 60, position: 0.0, duration: 1.0)
+        seq.add(noteNumber: 62, position: 0.0, duration: 1.0)
+        seq.add(noteNumber: 64, position: 0.0, duration: 1.0)
+        seq.add(noteNumber: 61, position: 1.0, duration: 0.5)
+        seq.add(noteNumber: 64, position: 1.0, duration: 0.5)
+        seq.add(noteNumber: 62, position: 1.0, duration: 0.5)
+
+        let events = observerTest(sequence: seq)
+        XCTAssertEqual(events.count, 12)
+
+        XCTAssertEqual(events.map { $0.noteNumber! }, [60, 62, 64, 60, 62, 64, 61, 64, 62, 61, 64, 62])
+        XCTAssertEqual(events.map { $0.status!.type }, [.noteOn, .noteOn, .noteOn, .noteOff, .noteOff,.noteOff,
+                                                        .noteOn, .noteOn, .noteOn, .noteOff, .noteOff,.noteOff])
+        XCTAssertEqual(events.map { $0.timeStamp }, [0, 0, 0, 22050, 22050, 22050, 22050, 22050, 22050, 33075, 33075, 33075])
+    }
+
+    func testSameNoteRepeatingInChordsAcrossLoop() {
+
+        var seq = NoteEventSequence()
+
+        seq.add(noteNumber: 60, position: 0.0, duration: 1.0)
+        seq.add(noteNumber: 62, position: 0.0, duration: 1.0)
+        seq.add(noteNumber: 64, position: 0.0, duration: 1.0)
+        seq.add(noteNumber: 60, position: 1.0, duration: 1.0)
+        seq.add(noteNumber: 62, position: 1.0, duration: 1.0)
+        seq.add(noteNumber: 64, position: 1.0, duration: 1.0)
+
+        let events = observerTest(sequence: seq, frameCount:512, renderCallCount: 44_100 * 4 / 512)
+        XCTAssertEqual(events.count, 24)
+
+        XCTAssertEqual(events.map { $0.noteNumber! }, [60, 62, 64, 60, 62, 64,
+                                                       60, 62, 64, 60, 62, 64,
+                                                       60, 62, 64, 60, 62, 64,
+                                                       60, 62, 64, 60, 62, 64])
+        XCTAssertEqual(events.compactMap { $0.status!.type }, [.noteOn, .noteOn, .noteOn, .noteOff, .noteOff,.noteOff,
+                                                               .noteOn, .noteOn, .noteOn, .noteOff, .noteOff,.noteOff,
+                                                               .noteOn, .noteOn, .noteOn, .noteOff, .noteOff,.noteOff,
+                                                               .noteOn, .noteOn, .noteOn, .noteOff, .noteOff,.noteOff])
+        XCTAssertEqual(events.map { $0.timeStamp }, [0, 0, 0, 34, 34, 34,
+                                                  34, 34, 34, 68, 68, 68,
+                                                  136, 136, 136, 170, 170, 170,
+                                                  170, 170, 170, 204, 204, 204])
+    }
+
+    // events that start late in the loop are stopped after the engine is destroyed
+    func testShortNotesAcrossLoop() {
+
+        var seq = NoteEventSequence()
+
+        seq.add(noteNumber: 60, position: 0.0, duration: 2.0)
+        seq.add(noteNumber: 62, position: 0.0, duration: 2.0)
+        seq.add(noteNumber: 65, position: 0.0, duration: 2.0)
+        seq.add(noteNumber: 60, position: 3.98, duration: 0.5)
+        seq.add(noteNumber: 64, position: 3.98, duration: 0.5)
+        seq.add(noteNumber: 67, position: 3.98, duration: 0.5)
+
+        /// 6 render calls at 120bpm, 44100 buffersize is 12 beats, default loop is 4 beats
+        let events = observerTest(sequence: seq, renderCallCount: 6)
+        XCTAssertEqual(events.count, 30)
+
+        XCTAssertEqual(events.map { $0.noteNumber! }, [60, 62, 65, 60, 62, 65,
+                                                       60, 64, 67, 60, 62, 65, 60, 62, 65,
+                                                       60, 64, 67, 60, 62, 65, 60, 62, 65,
+                                                       60, 64, 67,
+                                                       67, 64, 60]) // engine destroyed
+
+        XCTAssertEqual(events.compactMap { $0.status!.type }, [.noteOn, .noteOn, .noteOn, .noteOff, .noteOff, .noteOff,
+                                                               .noteOn, .noteOn, .noteOn, .noteOn, .noteOn, .noteOn,
+                                                               .noteOff, .noteOff, .noteOff, .noteOn, .noteOn, .noteOn,
+                                                               .noteOn, .noteOn, .noteOn, .noteOff, .noteOff, .noteOff,
+                                                               .noteOn, .noteOn, .noteOn,
+                                                               .noteOff, .noteOff, .noteOff]) // engine destroyed
+        XCTAssertEqual(events.map { $0.timeStamp }, [0, 0, 0, 0, 0, 0,
+                                                  43658, 43658, 43658, 0, 0, 0,
+                                                  0, 0, 0, 43658, 43658, 43658,
+                                                  0, 0, 0, 0, 0, 0,
+                                                  43658, 43658, 43658,
+                                                  1, 1, 1]) // engine destroyed
+    }
 }

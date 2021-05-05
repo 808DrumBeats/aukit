@@ -9,7 +9,7 @@ public class Settings: NSObject {
     /// Enum of available buffer lengths
     /// from Shortest: 2 power 5 samples (32 samples = 0.7 ms @ 44100 kz)
     /// to Longest: 2 power 12 samples (4096 samples = 92.9 ms @ 44100 Hz)
-    public enum BufferLength: Int {
+    public enum BufferLength: Int, CaseIterable {
         /// Shortest: 32 samples = 0.7 ms @ 44100 kz
         case shortest = 5
 
@@ -33,6 +33,13 @@ public class Settings: NSObject {
 
         /// Longest: 4096 samples = 92.9 ms @ 44100 Hz
         case longest = 12
+        
+        /// Initialize the buffer length with a specific size in samples
+        public init?(bufferSizeInSamples: UInt) {
+            guard let size = BufferLength.allCases.first(where: { $0.samplesCount == bufferSizeInSamples })
+            else { return nil }
+            self = size
+        }
 
         /// The buffer Length expressed as number of samples
         public var samplesCount: AVAudioFrameCount {
@@ -58,7 +65,6 @@ public class Settings: NSObject {
         set {
             audioFormat = AVAudioFormat(standardFormatWithSampleRate: newValue,
                                         channels: audioFormat.channelCount) ?? AVAudioFormat()
-            __akDefaultSampleRate = Float(sampleRate)
         }
     }
 
@@ -70,15 +76,8 @@ public class Settings: NSObject {
         set {
             audioFormat = AVAudioFormat(standardFormatWithSampleRate: audioFormat.sampleRate,
                                         channels: newValue) ?? AVAudioFormat()
-            __akDefaultChannelCount = Int32(channelCount)
         }
     }
-
-    /// Whether we should be listening to audio input (microphone)
-    public static var audioInputEnabled: Bool = false
-
-    /// Allows AudioKit to send Notifications
-    public static var notificationsEnabled: Bool = false
 
     /// AudioKit buffer length is set using Settings.bufferLength
     /// default is .VeryLong for a buffer set to 2 power 10 = 1024 samples (232 ms)
@@ -98,10 +97,4 @@ public class Settings: NSObject {
 
     /// Turn on or off AudioKit logging
     public static var enableLogging: Bool = true
-
-    /// If set to false, AudioKit will not handle the AVAudioSession category change
-    /// notification (AVAudioEngineConfigurationChange) and will not restart the AVAudioEngine
-    /// instance when such notifications are posted. The developer can instead subscribe
-    /// to these notifications and restart AudioKit after rebuiling their audio chain.
-    public static var enableConfigurationChangeHandling: Bool = true
 }

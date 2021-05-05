@@ -6,46 +6,75 @@
 
 #include "SequencerEngine.h"
 #include <vector>
+#include <bitset>
 #include <stdio.h>
 #include <atomic>
-#include <mutex>
-
+#include "../../Internals/Utilities/readerwriterqueue.h"
+#include "../../Internals/Utilities/AtomicDataPtr.h"
 #define NOTEON 0x90
 #define NOTEOFF 0x80
 
+using moodycamel::ReaderWriterQueue;
+
+/// NOTE: To support more than a single channel, RunningStatus can be made larger
+/// e.g. typedef std::bitset<128 * 16> RunningStatus; would track 16 channels of notes
+typedef std::bitset<128> RunningStatus;
+
+struct SequencerEvent {
+    bool notesOff = false;
+    double seekPosition = NAN;
+    double tempo = NAN;
+};
+
+struct SequencerData {
+    double sampleRate = 44100;
+    std::vector<SequenceEvent> events;
+    SequenceSettings settings = {
+        .maximumPlayCount = 0,
+        .length = 4.0,
+        .tempo = 120.0,
+        .loopEnabled = true,
+        .numberOfLoops = 0
+    };
+
+    AUScheduleMIDIEventBlock midiBlock = nullptr;
+};
+
+struct SequencerEngineImpl;
+
+/// This uses another level of indirection to ensure that SequencerEngineImpl
+/// is not destroyed while a render observer is still active.
 struct SequencerEngine {
-    std::vector<SequenceNote> playingNotes;
+    std::shared_ptr<SequencerEngineImpl> impl;
+};
+
+struct SequencerEngineImpl {
+    RunningStatus runningStatus;
     long positionInSamples = 0;
     UInt64 framesCounted = 0;
-    SequenceSettings settings = {0, 4.0, 120.0, true, 0};
-    double sampleRate = 44100.0;
     std::atomic<bool> isStarted{false};
-    AUScheduleMIDIEventBlock midiBlock = nullptr;
 
-    // Mutex for changes from the main thread.
-    std::mutex updateMutex;
+    AtomicDataPtr<SequencerData> data;
 
-    // Tell the DSP thread to turn off notes.
-    bool notesOff{false};
-
-    // Tell the DSP thread to seek.
-    double seekPosition{NAN};
+    ReaderWriterQueue<SequencerEvent> eventQueue;
 
     // Current position as reported to the UI.
     std::atomic<double> uiPosition{0};
 
-    SequencerEngine() {
-        // Try to reserve enough notes so allocation on the DSP
-        // thread is unlikely. (This is not ideal)
-        playingNotes.reserve(256);
+    SequencerEngineImpl() {
+        runningStatus.reset();
+    }
+
+    ~SequencerEngineImpl() {
+        stopAllPlayingNotes();
     }
 
     int beatToSamples(double beat) const {
-        return (int)(beat / settings.tempo * 60 * sampleRate);
+        return (int)(beat / data->settings.tempo * 60 * data->sampleRate);
     }
 
     long lengthInSamples() const {
-        return beatToSamples(settings.length);
+        return beatToSamples(data->settings.length);
     }
 
     long positionModulo() const {
@@ -60,7 +89,7 @@ struct SequencerEngine {
     }
 
     double currentPositionInBeats() const {
-        return (double)positionModulo() / sampleRate * (settings.tempo / 60);
+        return (double)positionModulo() / data->sampleRate * (data->settings.tempo / 60);
     }
 
     bool validTriggerTime(double beat) {
@@ -68,28 +97,38 @@ struct SequencerEngine {
     }
 
     void sendMidiData(UInt8 status, UInt8 data1, UInt8 data2, int offset, double time) {
-        if(midiBlock) {
+        if(data->midiBlock) {
             UInt8 midiBytes[3] = {status, data1, data2};
-            midiBlock(AUEventSampleTimeImmediate + offset, 0, 3, midiBytes);
+            updateRunningStatus(status, data1, data2);
+            data->midiBlock(AUEventSampleTimeImmediate + offset, 0, 3, midiBytes);
         }
     }
 
-    void addPlayingNote(SequenceNote note, int offset) {
-        if (note.noteOn.data2 > 0) {
-            sendMidiData(note.noteOn.status, note.noteOn.data1, note.noteOn.data2, offset, note.noteOn.beat);
-            playingNotes.push_back(note);
-        } else {
-            sendMidiData(note.noteOff.status, note.noteOff.data1, note.noteOff.data2, offset, note.noteOn.beat);
+    /// Update note playing status
+    void updateRunningStatus(UInt8 status, UInt8 data1, UInt8 data2) {
+        if(status == NOTEOFF) {
+            runningStatus.set(data1, 0);
+        }
+        if(status == NOTEON) {
+            runningStatus.set(data1, 1);
         }
     }
 
-    void stopPlayingNote(SequenceNote note, int offset, int index) {
-        sendMidiData(note.noteOff.status, note.noteOff.data1, note.noteOff.data2, offset, note.noteOff.beat);
-        playingNotes.erase(playingNotes.begin() + index);
+    /// Stop all notes whose running status is currently on
+    /// If panic is set to true, a note-off message will be sent for all notes
+    void stopAllPlayingNotes(bool panic = false) {
+        if(runningStatus.any() || (panic == true)) {
+            for(int i = (int)runningStatus.size() - 1; i >= 0; i--) {
+                if(runningStatus[i] == 1 || (panic == true)) {
+                    sendMidiData(NOTEOFF, (UInt8)i, 0, 1, 0);
+                }
+            }
+        }
     }
 
     void stop() {
         isStarted = false;
+        stopAllPlayingNotes();
     }
 
     void seekTo(double position) {
@@ -98,50 +137,48 @@ struct SequencerEngine {
 
     void processEvents() {
 
-        // Process updates from the main thread.
-        std::unique_lock<std::mutex> lock(updateMutex, std::try_to_lock);
-        if(lock.owns_lock()) {
-            if(notesOff) {
-                while (playingNotes.size() > 0) {
-                    stopPlayingNote(playingNotes[0], 0, 0);
-                }
-                notesOff = false;
+        SequencerEvent event;
+        while(eventQueue.try_dequeue(event)) {
+            if(event.notesOff) {
+                stopAllPlayingNotes();
             }
 
-            double seekPos = seekPosition;
-            if(!isnan(seekPos)) {
-                seekTo(seekPos);
-                seekPosition = NAN;
+            if(!isnan(event.seekPosition)) {
+                seekTo(event.seekPosition);
+            }
+
+            if(!isnan(event.tempo)) {
+                double lastPosition = currentPositionInBeats(); // 1) save where we are before we manipulate time
+                data->settings.tempo = event.tempo;             // 2) manipulate time
+                seekTo(lastPosition);                           // 3) go back to where we were before time manipulation
             }
         }
 
     }
 
-    void process(const std::vector<SequenceEvent>& events,
-                 const std::vector<SequenceNote>& notes,
-                 AUAudioFrameCount frameCount) {
+    void process(AUAudioFrameCount frameCount) {
 
+        data.update();
         processEvents();
 
         if (isStarted) {
-            if (positionInSamples >= lengthInSamples()){
-                if (!settings.loopEnabled) { //stop if played enough
+            if (positionInSamples >= lengthInSamples()) {
+                if (!data->settings.loopEnabled) { //stop if played enough
                     stop();
                     return;
                 }
             }
+
+            auto& events = data->events;
+
             long currentStartSample = positionModulo();
             long currentEndSample = currentStartSample + frameCount;
 
-            for (int i = 0; i < events.size(); i++) {
+            for (auto& event : events) {
                 // go through every event
-                int triggerTime = beatToSamples(events[i].beat);
-                if (currentStartSample <= triggerTime && triggerTime < currentEndSample) {
-                    // this event is supposed to trigger between currentStartSample and currentEndSample
-                    int offset = (int)(triggerTime - currentStartSample);
-                    sendMidiData(events[i].status, events[i].data1, events[i].data2,
-                                 offset, events[i].beat);
-                } else if (currentEndSample > lengthInSamples() && settings.loopEnabled) {
+                int triggerTime = beatToSamples(event.beat);
+
+                if (currentEndSample > lengthInSamples() && data->settings.loopEnabled) {
                     // this buffer extends beyond the length of the loop and looping is on
                     int loopRestartInBuffer = (int)(lengthInSamples() - currentStartSample);
                     int samplesOfBufferForNewLoop = frameCount - loopRestartInBuffer;
@@ -149,48 +186,15 @@ struct SequencerEngine {
                         // this event would trigger early enough in the next loop that it should happen in this buffer
                         // ie. this buffer contains events from the previous loop, and the next loop
                         int offset = (int)triggerTime + loopRestartInBuffer;
-                        sendMidiData(events[i].status, events[i].data1, events[i].data2,
-                                     offset, events[i].beat);
+                        sendMidiData(event.status, event.data1, event.data2,
+                                     offset, event.beat);
                     }
-                }
-            }
-
-            // Check scheduled notes for note ons
-            for (int i = 0; i < notes.size(); i++) {
-                int triggerTime = beatToSamples(notes[i].noteOn.beat);
-                if (currentStartSample <= triggerTime && triggerTime < currentEndSample) {
+                } else if (currentStartSample <= triggerTime && triggerTime < currentEndSample) {
+                    // this event is supposed to trigger between currentStartSample and currentEndSample
                     int offset = (int)(triggerTime - currentStartSample);
-                    addPlayingNote(notes[i], offset);
-                } else if (currentEndSample > lengthInSamples() && settings.loopEnabled) {
-                    int loopRestartInBuffer = (int)(lengthInSamples() - currentStartSample);
-                    int samplesOfBufferForNewLoop = frameCount - loopRestartInBuffer;
-                    if (triggerTime < samplesOfBufferForNewLoop) {
-                        int offset = (int)triggerTime + loopRestartInBuffer;
-                        addPlayingNote(notes[i], offset);
-                    }
+                    sendMidiData(event.status, event.data1, event.data2,
+                                 offset, event.beat);
                 }
-            }
-
-            // Check the playing notes for note offs
-            int i = 0;
-            while (i < playingNotes.size()) {
-                int triggerTime = beatToSamples(playingNotes[i].noteOff.beat);
-                if (currentStartSample <= triggerTime && triggerTime < currentEndSample) {
-                    int offset = (int)(triggerTime - currentStartSample);
-                    stopPlayingNote(playingNotes[i], offset, i);
-                    continue;
-                }
-
-                if (currentEndSample > lengthInSamples() && settings.loopEnabled) {
-                    int loopRestartInBuffer = (int)(lengthInSamples() - currentStartSample);
-                    int samplesOfBufferForNewLoop = frameCount - loopRestartInBuffer;
-                    if (triggerTime < samplesOfBufferForNewLoop) {
-                        int offset = (int)triggerTime + loopRestartInBuffer;
-                        stopPlayingNote(playingNotes[i], offset, i);
-                        continue;
-                    }
-                }
-                i++;
             }
 
             positionInSamples += frameCount;
@@ -203,25 +207,31 @@ struct SequencerEngine {
 
 /// Creates the audio-thread-only state for the sequencer.
 SequencerEngineRef akSequencerEngineCreate(void) {
-    return new SequencerEngine;
+    return new SequencerEngine { .impl = std::make_shared<SequencerEngineImpl>() };
 }
 
-void akSequencerEngineDestroy(SequencerEngineRef engine) {
+void akSequencerEngineRelease(SequencerEngineRef engine) {
+    engine->impl->stopAllPlayingNotes();
     delete engine;
 }
 
 /// Updates the sequence and returns a new render observer.
-AURenderObserver SequencerEngineUpdateSequence(SequencerEngineRef engine,
+AURenderObserver akSequencerEngineUpdateSequence(SequencerEngineRef engine,
                                                  const SequenceEvent* eventsPtr,
                                                  size_t eventCount,
-                                                 const SequenceNote* notesPtr,
-                                                 size_t noteCount,
                                                  SequenceSettings settings,
                                                  double sampleRate,
                                                  AUScheduleMIDIEventBlock block) {
 
-    const std::vector<SequenceEvent> events{eventsPtr, eventsPtr+eventCount};
-    const std::vector<SequenceNote> notes{notesPtr, notesPtr+noteCount};
+    // impl is captured in the render observer block.
+    auto impl = engine->impl;
+
+    auto data = new SequencerData;
+    data->settings = settings;
+    data->sampleRate = sampleRate;
+    data->midiBlock = block;
+    data->events = {eventsPtr, eventsPtr+eventCount};
+    impl->data.set(data);
 
     return ^void(AudioUnitRenderActionFlags actionFlags,
                  const AudioTimeStamp *timestamp,
@@ -229,34 +239,38 @@ AURenderObserver SequencerEngineUpdateSequence(SequencerEngineRef engine,
                  NSInteger outputBusNumber)
     {
         if (actionFlags != kAudioUnitRenderAction_PreRender) return;
-
-        engine->sampleRate = sampleRate;
-        engine->midiBlock = block;
-        engine->settings = settings;
-        engine->process(events, notes, frameCount);
+        impl->process(frameCount);
     };
 }
 
 double akSequencerEngineGetPosition(SequencerEngineRef engine) {
-    return engine->uiPosition;
+    return engine->impl->uiPosition;
 }
 
 void akSequencerEngineSeekTo(SequencerEngineRef engine, double position) {
-    std::unique_lock<std::mutex> lock(engine->updateMutex);
-    engine->seekPosition = position;
+    SequencerEvent event;
+    event.seekPosition = position;
+    engine->impl->eventQueue.enqueue(event);
 }
 
 void akSequencerEngineSetPlaying(SequencerEngineRef engine, bool playing) {
-    engine->isStarted = playing;
+    engine->impl->isStarted = playing;
 }
 
 bool akSequencerEngineIsPlaying(SequencerEngineRef engine) {
-    return engine->isStarted;
+    return engine->impl->isStarted;
 }
 
 void akSequencerEngineStopPlayingNotes(SequencerEngineRef engine) {
-    std::unique_lock<std::mutex> lock(engine->updateMutex);
-    engine->notesOff = true;
+    SequencerEvent event;
+    event.notesOff = true;
+    engine->impl->eventQueue.enqueue(event);
+}
+
+void akSequencerEngineSetTempo(SequencerEngineRef engine, double tempo) {
+    SequencerEvent event;
+    event.tempo = tempo;
+    engine->impl->eventQueue.enqueue(event);
 }
 
 #endif

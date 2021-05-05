@@ -3,6 +3,7 @@
 import AudioToolbox
 import AVFoundation
 import CoreAudio
+import Accelerate
 
 /// Normally set in AVFoundation or AudioToolbox,
 /// we create it here so users don't have to import those frameworks
@@ -275,8 +276,156 @@ extension AVAudioSession.CategoryOptions: Occupiable {}
 #endif
 
 extension Sequence where Self.Element: Equatable {
+    /// Easer to read alternative to !contains
     @inline(__always)
     public func doesNotContain(_ member: Element) -> Bool {
         return !contains(member)
     }
+}
+
+extension String {
+    /// Useful fo converting camel case enums to UI strings
+    public func titleCase() -> String {
+        return self
+            .replacingOccurrences(of: "([A-Z])",
+                                  with: " $1",
+                                  options: .regularExpression,
+                                  range: range(of: self))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .capitalized // If input is in llamaCase
+    }
+}
+
+extension Double {
+    /// Map the value to a new range
+    /// Return a value on [from.lowerBound,from.upperBound] to a [to.lowerBound, to.upperBound] range
+    ///
+    /// - Parameters:
+    ///   - from source: Current range (Default: 0...1.0)
+    ///   - to target: Desired range (Default: 0...1.0)
+    public func mapped(from source: ClosedRange<Double> = 0...1.0, to target: ClosedRange<Double> = 0...1.0) -> Double {
+        return ((self - source.lowerBound) / (source.upperBound - source.lowerBound)) * (target.upperBound - target.lowerBound) + target.lowerBound
+    }
+}
+
+extension CGFloat {
+    /// Map the value to a new range
+    /// Return a value on [from.lowerBound,from.upperBound] to a [to.lowerBound, to.upperBound] range
+    ///
+    /// - Parameters:
+    ///   - from source: Current range (Default: 0...1.0)
+    ///   - to target: Desired range (Default: 0...1.0)
+    public func mapped(from source: ClosedRange<CGFloat> = 0...1.0, to target: ClosedRange<CGFloat> = 0...1.0) -> CGFloat {
+        return ((self - source.lowerBound) / (source.upperBound - source.lowerBound)) * (target.upperBound - target.lowerBound) + target.lowerBound
+    }
+    
+    /// Map the value to a new inverted range
+    /// Return a value on [from.lowerBound,from.upperBound] to the inverse of a [to.lowerBound, to.upperBound] range
+    ///
+    /// - Parameters:
+    ///   - from source: Current range (Default: 0...1.0)
+    ///   - to target: Desired range (Default: 0...1.0)
+    public func mappedInverted(from source: ClosedRange<CGFloat> = 0...1.0, to target: ClosedRange<CGFloat> = 0...1.0) -> CGFloat {
+        return target.upperBound - self.mapped(from: source, to: target) + target.lowerBound
+    }
+
+    /// Map the value to a new range at a base-10 logarithmic scaling
+    /// Return a value on [from.lowerBound,from.upperBound] to a [to.lowerBound, to.upperBound] range
+    ///
+    /// - Parameters:
+    ///   - from source: Current range (Default: 0...1.0)
+    ///   - to target: Desired range (Default: 0...1.0)
+    public func mappedLog10(from source: ClosedRange<CGFloat> = 0...1.0, to target: ClosedRange<CGFloat> = 0...1.0) -> CGFloat {
+        let logN = log10(self)
+        let logStart1 = log10(source.lowerBound)
+        let logStop1 = log10(source.upperBound)
+        let result = ((logN - logStart1 ) / (logStop1 - logStart1)) * (target.upperBound - target.lowerBound) + target.lowerBound
+        if result.isNaN {
+            return 0.0
+        } else {
+            return ((logN - logStart1 ) / (logStop1 - logStart1)) * (target.upperBound - target.lowerBound) + target.lowerBound
+        }
+    }
+    
+    /// Map the value to a new range at a base e^log(n) scaling
+    /// Return a value on [from.lowerBound,from.upperBound] to a [to.lowerBound, to.upperBound] range
+    ///
+    /// - Parameters:
+    ///   - from source: Current range (Default: 0...1.0)
+    ///   - to target: Desired range (Default: 0...1.0)
+    public func mappedExp(from source: ClosedRange<CGFloat> = 0...1.0, to target: ClosedRange<CGFloat> = 0...1.0) -> CGFloat {
+        let logStart2 = log(target.lowerBound);
+        let logStop2 = log(target.upperBound);
+        let scale = (logStop2-logStart2) / (source.upperBound-source.lowerBound);
+        return exp(logStart2 + scale*(self-source.lowerBound))
+    }
+}
+
+extension Int {
+    /// Map the value to a new range
+    /// Return a value on [from.lowerBound,from.upperBound] to a [to.lowerBound, to.upperBound] range
+    ///
+    /// - Parameters:
+    ///   - from source: Current range
+    ///   - to target: Desired range (Default: 0...1.0)
+    public func mapped(from source: ClosedRange<Int>, to target: ClosedRange<CGFloat> = 0...1.0) -> CGFloat {
+        return (CGFloat(self - source.lowerBound) / CGFloat(source.upperBound - source.lowerBound)) * (target.upperBound - target.lowerBound) + target.lowerBound
+    }
+}
+
+public extension Array where Element == Float {
+    /// Takes an array of floating point values and down samples it to have a lesser number of samples
+    /// Returns an array of downsampled floating point values
+    ///
+    /// Parameters:
+    ///   - sampleCount: the number of samples we will downsample the array to
+    func downSample(to sampleCount: Int = 128) -> [Element] {
+        let numberOfInputSamples = self.count
+        let inputLength = vDSP_Length(numberOfInputSamples)
+
+        let filterLength: vDSP_Length = 2
+        let filter = [Float](repeating: 1 / Float(filterLength), count: Int(filterLength))
+
+        let decimationFactor = numberOfInputSamples / sampleCount
+        let outputLength = vDSP_Length((inputLength - filterLength) / vDSP_Length(decimationFactor))
+
+        var outputFloats = [Float](repeating: 0, count: Int(outputLength))
+        vDSP_desamp(self,
+                    decimationFactor,
+                    filter,
+                    &outputFloats,
+                    outputLength,
+                    filterLength)
+        return outputFloats
+    }
+}
+
+/// Load the audio information from a url to an audio file
+/// Returns the floating point array of values, sample rate, and frame count
+///
+/// - Parameters:
+///   - audioURL: Url to audio file
+public func loadAudioSignal(audioURL: URL) -> (signal: [Float], rate: Double, frameCount: Int)? {
+    do {
+        let file = try AVAudioFile(forReading: audioURL)
+        let audioFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                        sampleRate: file.fileFormat.sampleRate,
+                                        channels: file.fileFormat.channelCount, interleaved: false)
+        if let format = audioFormat {
+            let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: UInt32(file.length))
+            do {
+                if let buffer = buf {
+                    try file.read(into: buffer)
+                    let floatArray = Array(UnsafeBufferPointer(start: buffer.floatChannelData![0],
+                                                               count: Int(buffer.frameLength)))
+                    return (signal: floatArray, rate: file.fileFormat.sampleRate, frameCount: Int(file.length))
+                }
+            } catch {
+                Log("Error in Load Audio Signal: could not read audio file into buffer", type: .error)
+            }
+        }
+    } catch {
+        Log("Error in Load Audio Signal: could not read url into audio file", type: .error)
+    }
+    return nil
 }
