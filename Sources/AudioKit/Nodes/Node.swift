@@ -12,23 +12,7 @@ open class Node {
     open var avAudioNode: AVAudioNode
 
     /// The internal AVAudioUnit, which is a subclass of AVAudioNode with more capabilities
-    open var avAudioUnit: AVAudioUnit? {
-        didSet {
-            guard let avAudioUnit = avAudioUnit else { return }
-
-            let mirror = Mirror(reflecting: self)
-
-            for child in mirror.children {
-                if let param = child.value as? ParameterBase, let label = child.label {
-                    // Property wrappers create a variable with an underscore
-                    // prepended. Drop the underscore to look up the parameter.
-                    let name = String(label.dropFirst())
-                    param.projectedValue.associate(with: avAudioUnit,
-                                                   identifier: name)
-                }
-            }
-        }
-    }
+    open var avAudioUnit: AVAudioUnit?
 
     /// Returns either the avAudioUnit or avAudioNode (prefers the avAudioUnit if it exists)
     open var avAudioUnitOrNode: AVAudioNode {

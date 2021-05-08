@@ -9,10 +9,10 @@ import CAudioKit
 public class PluckedString: Node, AudioUnitContainer, Toggleable {
 
     /// Unique four-letter identifier "pluk"
-    public static let ComponentDescription = AudioComponentDescription(generator: "pluk")
+    public static let ComponentDescription = AudioComponentDescription(instrument: "pluk")
 
     /// Internal type of audio unit for this node
-    public typealias AudioUnitType = InternalAU
+    public typealias AudioUnitType = AudioUnitBase
 
     /// Internal audio unit 
     public private(set) var internalAU: AudioUnitType?
@@ -29,7 +29,7 @@ public class PluckedString: Node, AudioUnitContainer, Toggleable {
         flags: .default)
 
     /// Variable frequency. Values less than the initial frequency are doubled until greater than that.
-    @Parameter public var frequency: AUValue
+    @Parameter(frequencyDef) public var frequency: AUValue
 
     /// Specification details for amplitude
     public static let amplitudeDef = NodeParameterDef(
@@ -41,25 +41,7 @@ public class PluckedString: Node, AudioUnitContainer, Toggleable {
         flags: .default)
 
     /// Amplitude
-    @Parameter public var amplitude: AUValue
-
-    // MARK: - Audio Unit
-
-    /// Internal Audio Unit for PluckedString
-    public class InternalAU: AudioUnitBase {
-        /// Get an array of the parameter definitions
-        /// - Returns: Array of parameter definitions
-        public override func getParameterDefs() -> [NodeParameterDef] {
-            [PluckedString.frequencyDef,
-             PluckedString.amplitudeDef]
-        }
-
-        /// Create the DSP Refence for this node
-        /// - Returns: DSP Reference
-        public override func createDSP() -> DSPRef {
-            akCreateDSP("PluckedStringDSP")
-        }
-    }
+    @Parameter(amplitudeDef) public var amplitude: AUValue
 
     // MARK: - Initialization
 
@@ -109,8 +91,7 @@ public class PluckedString: Node, AudioUnitContainer, Toggleable {
     open func trigger(frequency: AUValue, amplitude: AUValue = 1) {
         self.frequency = frequency
         self.amplitude = amplitude
-        internalAU?.start()
-        internalAU?.triggerFrequency(frequency, amplitude: amplitude)
+        trigger()
     }
 
 }
