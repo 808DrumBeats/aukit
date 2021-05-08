@@ -23,6 +23,7 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         identifier: "pregain",
         name: "Pregain",
         address: akGetParameterAddress("TanhDistortionParameterPregain"),
+        defaultValue: 2.0,
         range: 0.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -35,6 +36,7 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         identifier: "postgain",
         name: "Postgain",
         address: akGetParameterAddress("TanhDistortionParameterPostgain"),
+        defaultValue: 0.5,
         range: 0.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -47,6 +49,7 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         identifier: "positiveShapeParameter",
         name: "Positive Shape Parameter",
         address: akGetParameterAddress("TanhDistortionParameterPositiveShapeParameter"),
+        defaultValue: 0.0,
         range: -10.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -59,6 +62,7 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         identifier: "negativeShapeParameter",
         name: "Negative Shape Parameter",
         address: akGetParameterAddress("TanhDistortionParameterNegativeShapeParameter"),
+        defaultValue: 0.0,
         range: -10.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -79,15 +83,14 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        pregain: AUValue = 2.0,
-        postgain: AUValue = 0.5,
-        positiveShapeParameter: AUValue = 0.0,
-        negativeShapeParameter: AUValue = 0.0
+        pregain: AUValue = pregainDef.defaultValue,
+        postgain: AUValue = postgainDef.defaultValue,
+        positiveShapeParameter: AUValue = positiveShapeParameterDef.defaultValue,
+        negativeShapeParameter: AUValue = negativeShapeParameterDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

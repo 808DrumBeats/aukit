@@ -30,6 +30,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "frequency",
         name: "Frequency (Hz)",
         address: akGetParameterAddress("PhaseDistortionOscillatorParameterFrequency"),
+        defaultValue: 440,
         range: 0 ... 20_000,
         unit: .hertz,
         flags: .default)
@@ -42,6 +43,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "amplitude",
         name: "Amplitude",
         address: akGetParameterAddress("PhaseDistortionOscillatorParameterAmplitude"),
+        defaultValue: 1,
         range: 0 ... 10,
         unit: .generic,
         flags: .default)
@@ -54,6 +56,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "phaseDistortion",
         name: "Amount of distortion, within the range [-1, 1]. 0 is no distortion.",
         address: akGetParameterAddress("PhaseDistortionOscillatorParameterPhaseDistortion"),
+        defaultValue: 0,
         range: -1 ... 1,
         unit: .generic,
         flags: .default)
@@ -66,6 +69,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "detuningOffset",
         name: "Frequency offset (Hz)",
         address: akGetParameterAddress("PhaseDistortionOscillatorParameterDetuningOffset"),
+        defaultValue: 0,
         range: -1_000 ... 1_000,
         unit: .hertz,
         flags: .default)
@@ -78,6 +82,7 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "detuningMultiplier",
         name: "Frequency detuning multiplier",
         address: akGetParameterAddress("PhaseDistortionOscillatorParameterDetuningMultiplier"),
+        defaultValue: 1,
         range: 0.9 ... 1.11,
         unit: .generic,
         flags: .default)
@@ -99,16 +104,15 @@ public class PhaseDistortionOscillator: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         waveform: Table = Table(.sine),
-        frequency: AUValue = 440,
-        amplitude: AUValue = 1,
-        phaseDistortion: AUValue = 0,
-        detuningOffset: AUValue = 0,
-        detuningMultiplier: AUValue = 1
+        frequency: AUValue = frequencyDef.defaultValue,
+        amplitude: AUValue = amplitudeDef.defaultValue,
+        phaseDistortion: AUValue = phaseDistortionDef.defaultValue,
+        detuningOffset: AUValue = detuningOffsetDef.defaultValue,
+        detuningMultiplier: AUValue = detuningMultiplierDef.defaultValue
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

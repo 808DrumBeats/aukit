@@ -29,6 +29,7 @@ public class OperationGenerator: Node, AudioUnitContainer, Toggleable {
             identifier: "parameter\(number)",
             name: "Parameter \(number)",
             address: akGetParameterAddress("OperationGeneratorParameter\(number)"),
+            defaultValue: 0,
             range: floatRange,
             unit: .generic,
             flags: .default)
@@ -152,7 +153,6 @@ public class OperationGenerator: Node, AudioUnitContainer, Toggleable {
         super.init(avAudioNode: AVAudioNode())
         instantiateAudioUnit { avAudioUnit in
 
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
             self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
             

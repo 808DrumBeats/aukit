@@ -23,6 +23,7 @@ public class Tremolo: Node, AudioUnitContainer, Toggleable {
         identifier: "frequency",
         name: "Frequency (Hz)",
         address: akGetParameterAddress("TremoloParameterFrequency"),
+        defaultValue: 10.0,
         range: 0.0 ... 100.0,
         unit: .hertz,
         flags: .default)
@@ -35,6 +36,7 @@ public class Tremolo: Node, AudioUnitContainer, Toggleable {
         identifier: "depth",
         name: "Depth",
         address: akGetParameterAddress("TremoloParameterDepth"),
+        defaultValue: 1.0,
         range: 0.0 ... 1.0,
         unit: .percent,
         flags: .default)
@@ -54,14 +56,13 @@ public class Tremolo: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        frequency: AUValue = 10.0,
-        depth: AUValue = 1.0,
+        frequency: AUValue = frequencyDef.defaultValue,
+        depth: AUValue = depthDef.defaultValue,
         waveform: Table = Table(.positiveSine)
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

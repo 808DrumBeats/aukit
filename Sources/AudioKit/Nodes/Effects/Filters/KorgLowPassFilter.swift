@@ -23,6 +23,7 @@ public class KorgLowPassFilter: Node, AudioUnitContainer, Toggleable {
         identifier: "cutoffFrequency",
         name: "Filter cutoff",
         address: akGetParameterAddress("KorgLowPassFilterParameterCutoffFrequency"),
+        defaultValue: 1_000.0,
         range: 0.0 ... 22_050.0,
         unit: .hertz,
         flags: .default)
@@ -35,6 +36,7 @@ public class KorgLowPassFilter: Node, AudioUnitContainer, Toggleable {
         identifier: "resonance",
         name: "Filter resonance (should be between 0-2)",
         address: akGetParameterAddress("KorgLowPassFilterParameterResonance"),
+        defaultValue: 1.0,
         range: 0.0 ... 2.0,
         unit: .generic,
         flags: .default)
@@ -47,6 +49,7 @@ public class KorgLowPassFilter: Node, AudioUnitContainer, Toggleable {
         identifier: "saturation",
         name: "Filter saturation.",
         address: akGetParameterAddress("KorgLowPassFilterParameterSaturation"),
+        defaultValue: 0.0,
         range: 0.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -66,14 +69,13 @@ public class KorgLowPassFilter: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        cutoffFrequency: AUValue = 1_000.0,
-        resonance: AUValue = 1.0,
-        saturation: AUValue = 0.0
+        cutoffFrequency: AUValue = cutoffFrequencyDef.defaultValue,
+        resonance: AUValue = resonanceDef.defaultValue,
+        saturation: AUValue = saturationDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

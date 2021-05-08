@@ -23,6 +23,7 @@ public class StereoDelay: Node, AudioUnitContainer, Toggleable {
         identifier: "time",
         name: "Delay time (Seconds)",
         address: akGetParameterAddress("StereoDelayParameterTime"),
+        defaultValue: 0,
         range: 0 ... 2.0,
         unit: .seconds,
         flags: .default)
@@ -35,6 +36,7 @@ public class StereoDelay: Node, AudioUnitContainer, Toggleable {
         identifier: "feedback",
         name: "Feedback (%)",
         address: akGetParameterAddress("StereoDelayParameterFeedback"),
+        defaultValue: 0,
         range: 0.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -44,24 +46,26 @@ public class StereoDelay: Node, AudioUnitContainer, Toggleable {
 
     /// Specification details for dry wet mix
     public static let dryWetMixDef = NodeParameterDef(
-       identifier: "dryWetMix",
-       name: "Dry-Wet Mix",
-       address: akGetParameterAddress("StereoDelayParameterDryWetMix"),
-       range: 0.0 ... 1.0,
-       unit: .generic,
-       flags: .default)
+        identifier: "dryWetMix",
+        name: "Dry-Wet Mix",
+        address: akGetParameterAddress("StereoDelayParameterDryWetMix"),
+        defaultValue: 0.5,
+        range: 0.0 ... 1.0,
+        unit: .generic,
+        flags: .default)
 
     /// Dry/wet mix. Should be a value between 0-1.
     @Parameter(dryWetMixDef) public var dryWetMix: AUValue
 
     /// Specification details for ping pong mode
     public static let pingPongDef = NodeParameterDef(
-       identifier: "pingPong",
-       name: "Ping-Pong Mode",
-       address: akGetParameterAddress("StereoDelayParameterPingPong"),
-       range: 0.0...1.0,
-       unit: .boolean,
-       flags: [.flag_IsReadable, .flag_IsWritable])
+        identifier: "pingPong",
+        name: "Ping-Pong Mode",
+        address: akGetParameterAddress("StereoDelayParameterPingPong"),
+        defaultValue: 0,
+        range: 0.0...1.0,
+        unit: .boolean,
+        flags: [.flag_IsReadable, .flag_IsWritable])
 
     /// Ping-pong mode: true or false (stereo mode)
     @Parameter(pingPongDef) public var pingPong: AUValue
@@ -72,24 +76,23 @@ public class StereoDelay: Node, AudioUnitContainer, Toggleable {
     ///
     /// - Parameters:
     ///   - input: Input node to process
-    ///   - maximumDelayTime: The maximum delay time, in seconds.
     ///   - time: Delay time (in seconds) This value must not exceed the maximum delay time.
     ///   - feedback: Feedback amount. Should be a value between 0-1.
     ///   - dryWetMix: Dry/wet mix. Should be a value between 0-1.
     ///   - pingPong: true for ping-pong mode, false for stereo mode.
+    ///   - maximumDelayTime: The maximum delay time, in seconds.
     ///
     public init(
         _ input: Node,
-        maximumDelayTime: AUValue = 2.0,
-        time: AUValue = 0,
-        feedback: AUValue = 0,
-        dryWetMix: AUValue = 0.5,
-        pingPong: Bool = false
+        time: AUValue = timeDef.defaultValue,
+        feedback: AUValue = feedbackDef.defaultValue,
+        dryWetMix: AUValue = dryWetMixDef.defaultValue,
+        pingPong: Bool = (dryWetMixDef.defaultValue == 1.0),
+        maximumDelayTime: AUValue = 2.0
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType

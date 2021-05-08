@@ -17,6 +17,7 @@ open class LowPassFilter: Node, Toggleable {
         identifier: "cutoffFrequency",
         name: "Cutoff Frequency",
         address: 0,
+        defaultValue: 6900,
         range: 10 ... 22050,
         unit: .hertz,
         flags: .default)
@@ -29,6 +30,7 @@ open class LowPassFilter: Node, Toggleable {
         identifier: "resonance",
         name: "Resonance",
         address: 1,
+        defaultValue: 0,
         range: -20 ... 40,
         unit: .decibels,
         flags: .default)
@@ -47,13 +49,12 @@ open class LowPassFilter: Node, Toggleable {
     ///
     public init(
         _ input: Node,
-        cutoffFrequency: AUValue = 6900,
-        resonance: AUValue = 0) {
+        cutoffFrequency: AUValue = cutoffFrequencyDef.defaultValue,
+        resonance: AUValue = resonanceDef.defaultValue) {
         super.init(avAudioNode: effectAU)
         connections.append(input)
 
-        self.$cutoffFrequency.associate(with: effectAU)
-        self.$resonance.associate(with: effectAU)
+        associateParams(with: effectAU)
 
         self.cutoffFrequency = cutoffFrequency
         self.resonance = resonance

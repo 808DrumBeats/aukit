@@ -23,6 +23,7 @@ public class Panner: Node, AudioUnitContainer, Toggleable {
         identifier: "pan",
         name: "Panning. A value of -1 is hard left, and a value of 1 is hard right, and 0 is center.",
         address: akGetParameterAddress("PannerParameterPan"),
+        defaultValue: 0,
         range: -1 ... 1,
         unit: .generic,
         flags: .default)
@@ -40,12 +41,11 @@ public class Panner: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        pan: AUValue = 0
+        pan: AUValue = panDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

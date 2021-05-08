@@ -17,6 +17,7 @@ open class BandPassFilter: Node, Toggleable {
         identifier: "centerFrequency",
         name: "Center Frequency",
         address: 0,
+        defaultValue: 5000,
         range: 20 ... 22050,
         unit: .hertz,
         flags: .default)
@@ -29,6 +30,7 @@ open class BandPassFilter: Node, Toggleable {
         identifier: "bandwidth",
         name: "Bandwidth",
         address: 1,
+        defaultValue: 600,
         range: 100 ... 12000,
         unit: .cents,
         flags: .default)
@@ -47,13 +49,12 @@ open class BandPassFilter: Node, Toggleable {
     ///
     public init(
         _ input: Node,
-        centerFrequency: AUValue = 5000,
-        bandwidth: AUValue = 600) {
+        centerFrequency: AUValue = centerFrequencyDef.defaultValue,
+        bandwidth: AUValue = bandwidthDef.defaultValue) {
         super.init(avAudioNode: effectAU)
         connections.append(input)
 
-        self.$centerFrequency.associate(with: effectAU)
-        self.$bandwidth.associate(with: effectAU)
+        associateParams(with: effectAU)
 
         self.centerFrequency = centerFrequency
         self.bandwidth = bandwidth

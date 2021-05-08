@@ -27,6 +27,7 @@ public class MorphingOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "frequency",
         name: "Frequency (in Hz)",
         address: akGetParameterAddress("MorphingOscillatorParameterFrequency"),
+        defaultValue: 440,
         range: 0.0 ... 22_050.0,
         unit: .hertz,
         flags: .default)
@@ -39,6 +40,7 @@ public class MorphingOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "amplitude",
         name: "Amplitude (typically a value between 0 and 1).",
         address: akGetParameterAddress("MorphingOscillatorParameterAmplitude"),
+        defaultValue: 0.5,
         range: 0.0 ... 1.0,
         unit: .hertz,
         flags: .default)
@@ -51,6 +53,7 @@ public class MorphingOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "index",
         name: "Index of the wavetable to use (fractional are okay).",
         address: akGetParameterAddress("MorphingOscillatorParameterIndex"),
+        defaultValue: 0.0,
         range: 0.0 ... 3.0,
         unit: .hertz,
         flags: .default)
@@ -63,6 +66,7 @@ public class MorphingOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "detuningOffset",
         name: "Frequency offset (Hz)",
         address: akGetParameterAddress("MorphingOscillatorParameterDetuningOffset"),
+        defaultValue: 0,
         range: -1_000.0 ... 1_000.0,
         unit: .hertz,
         flags: .default)
@@ -75,6 +79,7 @@ public class MorphingOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "detuningMultiplier",
         name: "Frequency detuning multiplier",
         address: akGetParameterAddress("MorphingOscillatorParameterDetuningMultiplier"),
+        defaultValue: 1,
         range: 0.9 ... 1.11,
         unit: .generic,
         flags: .default)
@@ -96,16 +101,15 @@ public class MorphingOscillator: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         waveformArray: [Table] = [Table(.triangle), Table(.square), Table(.sine), Table(.sawtooth)],
-        frequency: AUValue = 440,
-        amplitude: AUValue = 0.5,
-        index: AUValue = 0.0,
-        detuningOffset: AUValue = 0,
-        detuningMultiplier: AUValue = 1
+        frequency: AUValue = frequencyDef.defaultValue,
+        amplitude: AUValue = amplitudeDef.defaultValue,
+        index: AUValue = indexDef.defaultValue,
+        detuningOffset: AUValue = detuningOffsetDef.defaultValue,
+        detuningMultiplier: AUValue = detuningMultiplierDef.defaultValue
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

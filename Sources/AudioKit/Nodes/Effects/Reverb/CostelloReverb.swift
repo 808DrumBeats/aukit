@@ -25,6 +25,7 @@ public class CostelloReverb: Node, AudioUnitContainer, Toggleable {
         identifier: "feedback",
         name: "Feedback",
         address: akGetParameterAddress("CostelloReverbParameterFeedback"),
+        defaultValue: 0.6,
         range: 0.0 ... 1.0,
         unit: .percent,
         flags: .default)
@@ -37,6 +38,7 @@ public class CostelloReverb: Node, AudioUnitContainer, Toggleable {
         identifier: "cutoffFrequency",
         name: "Cutoff Frequency",
         address: akGetParameterAddress("CostelloReverbParameterCutoffFrequency"),
+        defaultValue: 4_000.0,
         range: 12.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -55,13 +57,12 @@ public class CostelloReverb: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        feedback: AUValue = 0.6,
-        cutoffFrequency: AUValue = 4_000.0
+        feedback: AUValue = feedbackDef.defaultValue,
+        cutoffFrequency: AUValue = cutoffFrequencyDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

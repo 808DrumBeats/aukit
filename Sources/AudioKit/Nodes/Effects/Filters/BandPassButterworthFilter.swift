@@ -25,6 +25,7 @@ public class BandPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
         identifier: "centerFrequency",
         name: "Center Frequency (Hz)",
         address: akGetParameterAddress("BandPassButterworthFilterParameterCenterFrequency"),
+        defaultValue: 2_000.0,
         range: 12.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -37,6 +38,7 @@ public class BandPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
         identifier: "bandwidth",
         name: "Bandwidth (Hz)",
         address: akGetParameterAddress("BandPassButterworthFilterParameterBandwidth"),
+        defaultValue: 100.0,
         range: 0.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -55,13 +57,12 @@ public class BandPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        centerFrequency: AUValue = 2_000.0,
-        bandwidth: AUValue = 100.0
+        centerFrequency: AUValue = centerFrequencyDef.defaultValue,
+        bandwidth: AUValue = bandwidthDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

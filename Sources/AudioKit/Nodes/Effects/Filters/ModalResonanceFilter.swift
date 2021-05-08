@@ -25,6 +25,7 @@ public class ModalResonanceFilter: Node, AudioUnitContainer, Toggleable {
         identifier: "frequency",
         name: "Resonant Frequency (Hz)",
         address: akGetParameterAddress("ModalResonanceFilterParameterFrequency"),
+        defaultValue: 500.0,
         range: 12.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -37,6 +38,7 @@ public class ModalResonanceFilter: Node, AudioUnitContainer, Toggleable {
         identifier: "qualityFactor",
         name: "Quality Factor",
         address: akGetParameterAddress("ModalResonanceFilterParameterQualityFactor"),
+        defaultValue: 50.0,
         range: 0.0 ... 100.0,
         unit: .generic,
         flags: .default)
@@ -55,13 +57,12 @@ public class ModalResonanceFilter: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        frequency: AUValue = 500.0,
-        qualityFactor: AUValue = 50.0
+        frequency: AUValue = frequencyDef.defaultValue,
+        qualityFactor: AUValue = qualityFactorDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

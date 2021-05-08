@@ -17,6 +17,7 @@ open class Expander: Node, Toggleable {
         identifier: "expansionRatio",
         name: "Expansion Ratio",
         address: 2,
+        defaultValue: 2,
         range: 1 ... 50.0,
         unit: .rate,
         flags: .default)
@@ -29,6 +30,7 @@ open class Expander: Node, Toggleable {
         identifier: "expansionThreshold",
         name: "Expansion Threshold",
         address: 3,
+        defaultValue: 2,
         range: 1 ... 50.0,
         unit: .rate,
         flags: .default)
@@ -41,6 +43,7 @@ open class Expander: Node, Toggleable {
         identifier: "attackTime",
         name: "Attack Time",
         address: 4,
+        defaultValue: 0.001,
         range: 0.0001 ... 0.2,
         unit: .seconds,
         flags: .default)
@@ -53,6 +56,7 @@ open class Expander: Node, Toggleable {
         identifier: "releaseTime",
         name: "Release Time",
         address: 5,
+        defaultValue: 0.05,
         range: 0.01 ... 3,
         unit: .seconds,
         flags: .default)
@@ -65,6 +69,7 @@ open class Expander: Node, Toggleable {
         identifier: "masterGain",
         name: "Master Gain",
         address: 6,
+        defaultValue: 0,
         range: -40 ... 40,
         unit: .decibels,
         flags: .default)
@@ -101,20 +106,16 @@ open class Expander: Node, Toggleable {
     ///
     public init(
         _ input: Node,
-        expansionRatio: AUValue = 2,
-        expansionThreshold: AUValue = 2,
-        attackTime: AUValue = 0.001,
-        releaseTime: AUValue = 0.05,
-        masterGain: AUValue = 0) {
+        expansionRatio: AUValue = expansionRatioDef.defaultValue,
+        expansionThreshold: AUValue = expansionThresholdDef.defaultValue,
+        attackTime: AUValue = attackTimeDef.defaultValue,
+        releaseTime: AUValue = releaseTimeDef.defaultValue,
+        masterGain: AUValue = masterGainDef.defaultValue) {
 
         super.init(avAudioNode: effectAU)
         connections.append(input)
 
-        self.$expansionRatio.associate(with: effectAU)
-        self.$expansionThreshold.associate(with: effectAU)
-        self.$attackTime.associate(with: effectAU)
-        self.$releaseTime.associate(with: effectAU)
-        self.$masterGain.associate(with: effectAU)
+        associateParams(with: effectAU)
 
         self.expansionRatio = expansionRatio
         self.expansionThreshold = expansionThreshold

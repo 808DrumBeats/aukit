@@ -23,6 +23,7 @@ public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggl
         identifier: "centerFrequency",
         name: "Corner Frequency (Hz)",
         address: akGetParameterAddress("HighShelfParametricEqualizerFilterParameterCenterFrequency"),
+        defaultValue: 1_000,
         range: 12.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -35,6 +36,7 @@ public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggl
         identifier: "gain",
         name: "Gain",
         address: akGetParameterAddress("HighShelfParametricEqualizerFilterParameterGain"),
+        defaultValue: 1.0,
         range: 0.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -47,6 +49,7 @@ public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggl
         identifier: "q",
         name: "Q",
         address: akGetParameterAddress("HighShelfParametricEqualizerFilterParameterQ"),
+        defaultValue: 0.707,
         range: 0.0 ... 2.0,
         unit: .generic,
         flags: .default)
@@ -66,14 +69,13 @@ public class HighShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggl
     ///
     public init(
         _ input: Node,
-        centerFrequency: AUValue = 1_000,
-        gain: AUValue = 1.0,
-        q: AUValue = 0.707
+        centerFrequency: AUValue = centerFrequencyDef.defaultValue,
+        gain: AUValue = gainDef.defaultValue,
+        q: AUValue = qDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

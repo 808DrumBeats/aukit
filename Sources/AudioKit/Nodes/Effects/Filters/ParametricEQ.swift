@@ -17,6 +17,7 @@ open class ParametricEQ: Node, Toggleable {
         identifier: "centerFreq",
         name: "Center Freq",
         address: 0,
+        defaultValue: 2000,
         range: 20 ... 22050,
         unit: .hertz,
         flags: .default)
@@ -29,6 +30,7 @@ open class ParametricEQ: Node, Toggleable {
         identifier: "q",
         name: "Q",
         address: 1,
+        defaultValue: 1.0,
         range: 0.1 ... 20,
         unit: .hertz,
         flags: .default)
@@ -41,6 +43,7 @@ open class ParametricEQ: Node, Toggleable {
         identifier: "gain",
         name: "Gain",
         address: 2,
+        defaultValue: 0,
         range: -20 ... 20,
         unit: .decibels,
         flags: .default)
@@ -60,15 +63,13 @@ open class ParametricEQ: Node, Toggleable {
     ///
     public init(
         _ input: Node,
-        centerFreq: AUValue = 2000,
-        q: AUValue = 1.0,
-        gain: AUValue = 0) {
+        centerFreq: AUValue = centerFreqDef.defaultValue,
+        q: AUValue = qDef.defaultValue,
+        gain: AUValue = gainDef.defaultValue) {
         super.init(avAudioNode: effectAU)
         connections.append(input)
 
-        self.$centerFreq.associate(with: effectAU)
-        self.$q.associate(with: effectAU)
-        self.$gain.associate(with: effectAU)
+        associateParams(with: effectAU)
 
         self.centerFreq = centerFreq
         self.q = q

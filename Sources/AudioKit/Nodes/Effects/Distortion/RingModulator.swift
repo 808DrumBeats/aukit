@@ -17,6 +17,7 @@ open class RingModulator: Node, Toggleable {
         identifier: "ringModFreq1",
         name: "Ring Mod Freq1",
         address: 3,
+        defaultValue: 100,
         range: 0.5 ... 8000,
         unit: .hertz,
         flags: .default)
@@ -29,6 +30,7 @@ open class RingModulator: Node, Toggleable {
         identifier: "ringModFreq2",
         name: "Ring Mod Freq2",
         address: 4,
+        defaultValue: 100,
         range: 0.5 ... 8000,
         unit: .hertz,
         flags: .default)
@@ -41,6 +43,7 @@ open class RingModulator: Node, Toggleable {
         identifier: "ringModBalance",
         name: "Ring Mod Balance",
         address: 5,
+        defaultValue: 50,
         range: 0 ... 100,
         unit: .percent,
         flags: .default)
@@ -53,6 +56,7 @@ open class RingModulator: Node, Toggleable {
         identifier: "finalMix",
         name: "Final Mix",
         address: 15,
+        defaultValue: 50,
         range: 0 ... 100,
         unit: .percent,
         flags: .default)
@@ -73,17 +77,14 @@ open class RingModulator: Node, Toggleable {
     ///
     public init(
         _ input: Node,
-        ringModFreq1: AUValue = 100,
-        ringModFreq2: AUValue = 100,
-        ringModBalance: AUValue = 50,
-        finalMix: AUValue = 50) {
+        ringModFreq1: AUValue = ringModFreq1Def.defaultValue,
+        ringModFreq2: AUValue = ringModFreq2Def.defaultValue,
+        ringModBalance: AUValue = ringModBalanceDef.defaultValue,
+        finalMix: AUValue = finalMixDef.defaultValue) {
         super.init(avAudioNode: effectAU)
         connections.append(input)
 
-        self.$ringModFreq1.associate(with: effectAU)
-        self.$ringModFreq2.associate(with: effectAU)
-        self.$ringModBalance.associate(with: effectAU)
-        self.$finalMix.associate(with: effectAU)
+        associateParams(with: effectAU)
 
         self.ringModFreq1 = ringModFreq1
         self.ringModFreq2 = ringModFreq2

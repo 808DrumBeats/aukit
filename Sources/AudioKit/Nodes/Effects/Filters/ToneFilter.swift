@@ -23,6 +23,7 @@ public class ToneFilter: Node, AudioUnitContainer, Toggleable {
         identifier: "halfPowerPoint",
         name: "Half-Power Point (Hz)",
         address: akGetParameterAddress("ToneFilterParameterHalfPowerPoint"),
+        defaultValue: 1_000.0,
         range: 12.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -40,12 +41,11 @@ public class ToneFilter: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        halfPowerPoint: AUValue = 1_000.0
+        halfPowerPoint: AUValue = halfPowerPointDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

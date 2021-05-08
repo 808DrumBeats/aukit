@@ -23,6 +23,7 @@ public class AmplitudeEnvelope: Node, AudioUnitContainer, Toggleable {
         identifier: "attackDuration",
         name: "Attack time",
         address: akGetParameterAddress("AmplitudeEnvelopeParameterAttackDuration"),
+        defaultValue: 0.1,
         range: 0 ... 99,
         unit: .seconds,
         flags: .default)
@@ -35,6 +36,7 @@ public class AmplitudeEnvelope: Node, AudioUnitContainer, Toggleable {
         identifier: "decayDuration",
         name: "Decay time",
         address: akGetParameterAddress("AmplitudeEnvelopeParameterDecayDuration"),
+        defaultValue: 0.1,
         range: 0 ... 99,
         unit: .seconds,
         flags: .default)
@@ -47,6 +49,7 @@ public class AmplitudeEnvelope: Node, AudioUnitContainer, Toggleable {
         identifier: "sustainLevel",
         name: "Sustain Level",
         address: akGetParameterAddress("AmplitudeEnvelopeParameterSustainLevel"),
+        defaultValue: 1.0,
         range: 0 ... 99,
         unit: .generic,
         flags: .default)
@@ -59,6 +62,7 @@ public class AmplitudeEnvelope: Node, AudioUnitContainer, Toggleable {
         identifier: "releaseDuration",
         name: "Release time",
         address: akGetParameterAddress("AmplitudeEnvelopeParameterReleaseDuration"),
+        defaultValue: 0.1,
         range: 0 ... 99,
         unit: .seconds,
         flags: .default)
@@ -79,15 +83,14 @@ public class AmplitudeEnvelope: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        attackDuration: AUValue = 0.1,
-        decayDuration: AUValue = 0.1,
-        sustainLevel: AUValue = 1.0,
-        releaseDuration: AUValue = 0.1
+        attackDuration: AUValue = attackDurationDef.defaultValue,
+        decayDuration: AUValue = decayDurationDef.defaultValue,
+        sustainLevel: AUValue = sustainLevelDef.defaultValue,
+        releaseDuration: AUValue = releaseDurationDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

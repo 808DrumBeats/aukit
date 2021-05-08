@@ -23,6 +23,7 @@ public class Clipper: Node, AudioUnitContainer, Toggleable {
         identifier: "limit",
         name: "Threshold",
         address: akGetParameterAddress("ClipperParameterLimit"),
+        defaultValue: 1.0,
         range: 0.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -40,12 +41,11 @@ public class Clipper: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        limit: AUValue = 1.0
+        limit: AUValue = limitDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

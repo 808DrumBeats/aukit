@@ -23,6 +23,7 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         identifier: "frequency",
         name: "Frequency (Hz)",
         address: ModulatedDelayParameter.frequency.rawValue,
+        defaultValue: kFlanger_DefaultFrequency,
         range: kFlanger_MinFrequency ... kFlanger_MaxFrequency,
         unit: .hertz,
         flags: .default)
@@ -35,6 +36,7 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         identifier: "depth",
         name: "Depth 0-1",
         address: ModulatedDelayParameter.depth.rawValue,
+        defaultValue: kFlanger_DefaultDepth,
         range: kFlanger_MinDepth ... kFlanger_MaxDepth,
         unit: .generic,
         flags: .default)
@@ -47,6 +49,7 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         identifier: "feedback",
         name: "Feedback 0-1",
         address: ModulatedDelayParameter.feedback.rawValue,
+        defaultValue: kFlanger_DefaultFeedback,
         range: kFlanger_MinFeedback ... kFlanger_MaxFeedback,
         unit: .generic,
         flags: .default)
@@ -59,6 +62,7 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         identifier: "dryWetMix",
         name: "Dry Wet Mix 0-1",
         address: ModulatedDelayParameter.dryWetMix.rawValue,
+        defaultValue: kFlanger_DefaultDryWetMix,
         range: kFlanger_MinDryWetMix ... kFlanger_MaxDryWetMix,
         unit: .generic,
         flags: .default)
@@ -79,15 +83,14 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        frequency: AUValue = kFlanger_DefaultFrequency,
-        depth: AUValue = kFlanger_DefaultDepth,
-        feedback: AUValue = kFlanger_DefaultFeedback,
-        dryWetMix: AUValue = kFlanger_DefaultDryWetMix
+        frequency: AUValue = frequencyDef.defaultValue,
+        depth: AUValue = depthDef.defaultValue,
+        feedback: AUValue = feedbackDef.defaultValue,
+        dryWetMix: AUValue = dryWetMixDef.defaultValue
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType

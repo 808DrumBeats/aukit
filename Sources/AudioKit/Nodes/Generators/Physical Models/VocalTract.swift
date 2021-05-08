@@ -30,6 +30,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
         identifier: "frequency",
         name: "Glottal frequency.",
         address: akGetParameterAddress("VocalTractParameterFrequency"),
+        defaultValue: 160.0,
         range: 0.0 ... 22_050.0,
         unit: .hertz,
         flags: .default)
@@ -42,6 +43,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
         identifier: "tonguePosition",
         name: "Tongue position (0-1)",
         address: akGetParameterAddress("VocalTractParameterTonguePosition"),
+        defaultValue: 0.5,
         range: 0.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -54,6 +56,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
         identifier: "tongueDiameter",
         name: "Tongue diameter (0-1)",
         address: akGetParameterAddress("VocalTractParameterTongueDiameter"),
+        defaultValue: 1.0,
         range: 0.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -66,6 +69,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
         identifier: "tenseness",
         name: "Vocal tenseness. 0 = all breath. 1=fully saturated.",
         address: akGetParameterAddress("VocalTractParameterTenseness"),
+        defaultValue: 0.6,
         range: 0.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -78,6 +82,7 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
         identifier: "nasality",
         name: "Sets the velum size. Larger values of this creates more nasally sounds.",
         address: akGetParameterAddress("VocalTractParameterNasality"),
+        defaultValue: 0.0,
         range: 0.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -97,16 +102,15 @@ public class VocalTract: Node, AudioUnitContainer, Toggleable {
     ///   - nasality: Sets the velum size. Larger values of this creates more nasally sounds.
     ///
     public init(
-        frequency: AUValue = 160.0,
-        tonguePosition: AUValue = 0.5,
-        tongueDiameter: AUValue = 1.0,
-        tenseness: AUValue = 0.6,
-        nasality: AUValue = 0.0
+        frequency: AUValue = frequencyDef.defaultValue,
+        tonguePosition: AUValue = tonguePositionDef.defaultValue,
+        tongueDiameter: AUValue = tongueDiameterDef.defaultValue,
+        tenseness: AUValue = tensenessDef.defaultValue,
+        nasality: AUValue = nasalityDef.defaultValue
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

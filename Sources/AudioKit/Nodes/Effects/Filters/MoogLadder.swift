@@ -27,6 +27,7 @@ public class MoogLadder: Node, AudioUnitContainer, Toggleable {
         identifier: "cutoffFrequency",
         name: "Cutoff Frequency (Hz)",
         address: akGetParameterAddress("MoogLadderParameterCutoffFrequency"),
+        defaultValue: 1_000,
         range: 12.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -39,6 +40,7 @@ public class MoogLadder: Node, AudioUnitContainer, Toggleable {
         identifier: "resonance",
         name: "Resonance (%)",
         address: akGetParameterAddress("MoogLadderParameterResonance"),
+        defaultValue: 0.5,
         range: 0.0 ... 2.0,
         unit: .percent,
         flags: .default)
@@ -57,13 +59,12 @@ public class MoogLadder: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        cutoffFrequency: AUValue = 1_000,
-        resonance: AUValue = 0.5
+        cutoffFrequency: AUValue = cutoffFrequencyDef.defaultValue,
+        resonance: AUValue = resonanceDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

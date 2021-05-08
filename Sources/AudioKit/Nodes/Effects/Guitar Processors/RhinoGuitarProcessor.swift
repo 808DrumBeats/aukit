@@ -23,6 +23,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         identifier: "preGain",
         name: "PreGain",
         address: akGetParameterAddress("RhinoGuitarProcessorParameterPreGain"),
+        defaultValue: 5.0,
         range: 0.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -35,6 +36,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         identifier: "postGain",
         name: "PostGain",
         address: akGetParameterAddress("RhinoGuitarProcessorParameterPostGain"),
+        defaultValue: 0.7,
         range: 0.0 ... 1.0,
         unit: .linearGain,
         flags: .default)
@@ -47,6 +49,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         identifier: "lowGain",
         name: "Low Frequency Gain",
         address: akGetParameterAddress("RhinoGuitarProcessorParameterLowGain"),
+        defaultValue: 0.0,
         range: -1.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -59,6 +62,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         identifier: "midGain",
         name: "Mid Frequency Gain",
         address: akGetParameterAddress("RhinoGuitarProcessorParameterMidGain"),
+        defaultValue: 0.0,
         range: -1.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -71,6 +75,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         identifier: "highGain",
         name: "High Frequency Gain",
         address: akGetParameterAddress("RhinoGuitarProcessorParameterHighGain"),
+        defaultValue: 0.0,
         range: -1.0 ... 1.0,
         unit: .generic,
         flags: .default)
@@ -83,6 +88,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         identifier: "distortion",
         name: "Distortion",
         address: akGetParameterAddress("RhinoGuitarProcessorParameterDistortion"),
+        defaultValue: 1.0,
         range: 1.0 ... 20.0,
         unit: .generic,
         flags: .default)
@@ -105,17 +111,16 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        preGain: AUValue = 5.0,
-        postGain: AUValue = 0.7,
-        lowGain: AUValue = 0.0,
-        midGain: AUValue = 0.0,
-        highGain: AUValue = 0.0,
-        distortion: AUValue = 1.0
+        preGain: AUValue = preGainDef.defaultValue,
+        postGain: AUValue = postGainDef.defaultValue,
+        lowGain: AUValue = lowGainDef.defaultValue,
+        midGain: AUValue = midGainDef.defaultValue,
+        highGain: AUValue = highGainDef.defaultValue,
+        distortion: AUValue = distortionDef.defaultValue
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
             self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
 

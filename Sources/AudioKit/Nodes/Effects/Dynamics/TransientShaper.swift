@@ -22,6 +22,7 @@ public class TransientShaper: Node, AudioUnitContainer, Toggleable {
         identifier: "inputAmount",
         name: "Input",
         address: akGetParameterAddress("TransientShaperParameterInputAmount"),
+        defaultValue: 0.0,
         range: -60.0 ... 30.0,
         unit: .decibels,
         flags: .default)
@@ -34,6 +35,7 @@ public class TransientShaper: Node, AudioUnitContainer, Toggleable {
         identifier: "attackAmount",
         name: "Attack",
         address: akGetParameterAddress("TransientShaperParameterAttackAmount"),
+        defaultValue: 0.0,
         range: -40.0 ... 40.0,
         unit: .decibels,
         flags: .default)
@@ -46,6 +48,7 @@ public class TransientShaper: Node, AudioUnitContainer, Toggleable {
         identifier: "releaseAmount",
         name: "Release",
         address: akGetParameterAddress("TransientShaperParameterReleaseAmount"),
+        defaultValue: 0.0,
         range: -40.0 ... 40.0,
         unit: .decibels,
         flags: .default)
@@ -58,6 +61,7 @@ public class TransientShaper: Node, AudioUnitContainer, Toggleable {
         identifier: "outputAmount",
         name: "Output",
         address: akGetParameterAddress("TransientShaperParameterOutputAmount"),
+        defaultValue: 0.0,
         range: -60.0 ... 30.0,
         unit: .decibels,
         flags: .default)
@@ -76,15 +80,14 @@ public class TransientShaper: Node, AudioUnitContainer, Toggleable {
     ///     - output
     public init(
         _ input: Node,
-        inputAmount: AUValue = 0.0,
-        attackAmount: AUValue = 0.0,
-        releaseAmount: AUValue = 0.0,
-        outputAmount: AUValue = 0.0
+        inputAmount: AUValue = inputAmountDef.defaultValue,
+        attackAmount: AUValue = attackAmountDef.defaultValue,
+        releaseAmount: AUValue = releaseAmountDef.defaultValue,
+        outputAmount: AUValue = outputAmountDef.defaultValue
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType

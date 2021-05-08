@@ -10,12 +10,13 @@ public class Delay: Node, Toggleable {
 
     /// Specification details for dry wet mix
     public static let dryWetMixDef = NodeParameterDef(
-       identifier: "dryWetMix",
-       name: "Dry-Wet Mix",
-       address: 0,
-       range: 0.0 ... 1.0,
-       unit: .generic,
-       flags: .default)
+        identifier: "dryWetMix",
+        name: "Dry-Wet Mix",
+        address: 0,
+        defaultValue: 50,
+        range: 0.0 ... 1.0,
+        unit: .generic,
+        flags: .default)
 
     /// Dry/wet mix. Should be a value between 0-1.
     @Parameter(dryWetMixDef) public var dryWetMix: AUValue
@@ -25,6 +26,7 @@ public class Delay: Node, Toggleable {
         identifier: "time",
         name: "Delay time (Seconds)",
         address: 1,
+        defaultValue: 1,
         range: 0 ... 2.0,
         unit: .seconds,
         flags: .default)
@@ -37,6 +39,7 @@ public class Delay: Node, Toggleable {
         identifier: "feedback",
         name: "Feedback (%)",
         address: 2,
+        defaultValue: 50,
         range: -100 ... 100,
         unit: .generic,
         flags: .default)
@@ -49,6 +52,7 @@ public class Delay: Node, Toggleable {
         identifier: "lowPassCutoff",
         name: "Low Pass Cutoff Frequency",
         address: 3,
+        defaultValue: 15000,
         range: 10 ... 22050,
         unit: .hertz,
         flags: .default)
@@ -70,18 +74,15 @@ public class Delay: Node, Toggleable {
     ///
     public init(
         _ input: Node,
-        time: AUValue = 1,
-        feedback: AUValue = 50,
-        lowPassCutoff: AUValue = 15_000,
-        dryWetMix: AUValue = 50) {
+        time: AUValue = timeDef.defaultValue,
+        feedback: AUValue = feedbackDef.defaultValue,
+        lowPassCutoff: AUValue = lowPassCutoffDef.defaultValue,
+        dryWetMix: AUValue = dryWetMixDef.defaultValue) {
 
-        super.init(avAudioUnit: delayAU)
+        super.init(avAudioNode: delayAU)
         connections.append(input)
 
-        self.$dryWetMix.associate(with: delayAU)
-        self.$time.associate(with: delayAU)
-        self.$feedback.associate(with: delayAU)
-        self.$lowPassCutoff.associate(with: delayAU)
+        associateParams(with: delayAU)
 
         self.dryWetMix = dryWetMix
         self.time = time

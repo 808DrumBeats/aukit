@@ -17,7 +17,7 @@ size_t inputBusCountDSP(DSPRef pDSP)
 
 bool canProcessInPlaceDSP(DSPRef pDSP)
 {
-    return pDSP->canProcessInPlace();
+    return pDSP->bCanProcessInPlace;
 }
 
 void setBufferDSP(DSPRef pDSP, AudioBufferList* buffer, size_t busIndex)
@@ -70,10 +70,11 @@ void deleteDSP(DSPRef pDSP)
     delete pDSP;
 }
 
-DSPBase::DSPBase(int inputBusCount)
+DSPBase::DSPBase(int inputBusCount, bool canProcessInPlace)
 : channelCount(2)   // best guess
 , sampleRate(44100) // best guess
 , inputBufferLists(inputBusCount)
+, bCanProcessInPlace(canProcessInPlace)
 {
     std::fill(parameters, parameters+maxParameters, nullptr);
 }
@@ -112,11 +113,8 @@ AUInternalRenderBlock DSPBase::internalRenderBlock()
                     inputBufferLists[i] = internalBufferLists[i];
                     
                     UInt32 byteSize = frameCount * sizeof(float);
-                    inputBufferLists[i]->mNumberBuffers = internalBufferLists[i]->mNumberBuffers;
                     for (UInt32 ch = 0; ch < inputBufferLists[i]->mNumberBuffers; ch++) {
                         inputBufferLists[i]->mBuffers[ch].mDataByteSize = byteSize;
-                        inputBufferLists[i]->mBuffers[ch].mNumberChannels = internalBufferLists[i]->mBuffers[ch].mNumberChannels;
-                        inputBufferLists[i]->mBuffers[ch].mData = internalBufferLists[i]->mBuffers[ch].mData;
                     }
                     
                     AudioUnitRenderActionFlags inputFlags = 0;

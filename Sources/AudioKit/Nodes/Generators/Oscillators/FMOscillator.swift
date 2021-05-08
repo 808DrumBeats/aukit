@@ -25,6 +25,7 @@ public class FMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "baseFrequency",
         name: "Base Frequency (Hz)",
         address: akGetParameterAddress("FMOscillatorParameterBaseFrequency"),
+        defaultValue: 440.0,
         range: 0.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -37,6 +38,7 @@ public class FMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "carrierMultiplier",
         name: "Carrier Multiplier",
         address: akGetParameterAddress("FMOscillatorParameterCarrierMultiplier"),
+        defaultValue: 1.0,
         range: 0.0 ... 1_000.0,
         unit: .generic,
         flags: .default)
@@ -49,6 +51,7 @@ public class FMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "modulatingMultiplier",
         name: "Modulating Multiplier",
         address: akGetParameterAddress("FMOscillatorParameterModulatingMultiplier"),
+        defaultValue: 1.0,
         range: 0.0 ... 1_000.0,
         unit: .generic,
         flags: .default)
@@ -61,6 +64,7 @@ public class FMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "modulationIndex",
         name: "Modulation Index",
         address: akGetParameterAddress("FMOscillatorParameterModulationIndex"),
+        defaultValue: 1.0,
         range: 0.0 ... 1_000.0,
         unit: .generic,
         flags: .default)
@@ -73,6 +77,7 @@ public class FMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "amplitude",
         name: "Amplitude",
         address: akGetParameterAddress("FMOscillatorParameterAmplitude"),
+        defaultValue: 1.0,
         range: 0.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -94,16 +99,15 @@ public class FMOscillator: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         waveform: Table = Table(.sine),
-        baseFrequency: AUValue = 440.0,
-        carrierMultiplier: AUValue = 1.0,
-        modulatingMultiplier: AUValue = 1.0,
-        modulationIndex: AUValue = 1.0,
-        amplitude: AUValue = 1.0
+        baseFrequency: AUValue = baseFrequencyDef.defaultValue,
+        carrierMultiplier: AUValue = carrierMultiplierDef.defaultValue,
+        modulatingMultiplier: AUValue = modulatingMultiplierDef.defaultValue,
+        modulationIndex: AUValue = modulationIndexDef.defaultValue,
+        amplitude: AUValue = amplitudeDef.defaultValue
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

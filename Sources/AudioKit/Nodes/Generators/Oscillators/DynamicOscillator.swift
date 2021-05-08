@@ -29,6 +29,7 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "frequency",
         name: "Frequency (Hz)",
         address: akGetParameterAddress("DynamicOscillatorParameterFrequency"),
+        defaultValue: 440.0,
         range: 0.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -41,6 +42,7 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "amplitude",
         name: "Amplitude",
         address: akGetParameterAddress("DynamicOscillatorParameterAmplitude"),
+        defaultValue: 1.0,
         range: 0.0 ... 10.0,
         unit: .generic,
         flags: .default)
@@ -53,6 +55,7 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "detuningOffset",
         name: "Frequency offset (Hz)",
         address: akGetParameterAddress("DynamicOscillatorParameterDetuningOffset"),
+        defaultValue: 0.0,
         range: -1_000.0 ... 1_000.0,
         unit: .hertz,
         flags: .default)
@@ -65,6 +68,7 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "detuningMultiplier",
         name: "Frequency detuning multiplier",
         address: akGetParameterAddress("DynamicOscillatorParameterDetuningMultiplier"),
+        defaultValue: 1.0,
         range: 0.9 ... 1.11,
         unit: .generic,
         flags: .default)
@@ -79,23 +83,20 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
     /// - Parameters:
     ///   - waveform: The waveform of oscillation
     ///   - frequency: Frequency in cycles per second
-    ///   - tremoloFrequency: Tremolo frequency in cycles per second
     ///   - amplitude: Output Amplitude.
     ///   - detuningOffset: Frequency offset in Hz.
     ///   - detuningMultiplier: Frequency detuning multiplier
     ///
     public init(
         waveform: Table = Table(.sawtooth),
-        frequency: AUValue = 440.0,
-        tremoloFrequency: AUValue = 1.0,
-        amplitude: AUValue = 1.0,
-        detuningOffset: AUValue = 0.0,
-        detuningMultiplier: AUValue = 1.0)
+        frequency: AUValue = frequencyDef.defaultValue,
+        amplitude: AUValue = amplitudeDef.defaultValue,
+        detuningOffset: AUValue = detuningOffsetDef.defaultValue,
+        detuningMultiplier: AUValue = detuningMultiplierDef.defaultValue)
     {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

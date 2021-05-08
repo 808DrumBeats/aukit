@@ -28,6 +28,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "frequency",
         name: "Frequency (Hz)",
         address: akGetParameterAddress("PWMOscillatorParameterFrequency"),
+        defaultValue: 440,
         range: 0.0 ... 20_000.0,
         unit: .hertz,
         flags: .default)
@@ -40,6 +41,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "amplitude",
         name: "Amplitude",
         address: akGetParameterAddress("PWMOscillatorParameterAmplitude"),
+        defaultValue: 1.0,
         range: 0.0 ... 10.0,
         unit: .hertz,
         flags: .default)
@@ -52,6 +54,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "pulseWidth",
         name: "Pulse Width",
         address: akGetParameterAddress("PWMOscillatorParameterPulseWidth"),
+        defaultValue: 0.5,
         range: 0.0 ... 1.0,
         unit: .percent,
         flags: .default)
@@ -64,6 +67,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "detuningOffset",
         name: "Frequency offset (Hz)",
         address: akGetParameterAddress("PWMOscillatorParameterDetuningOffset"),
+        defaultValue: 0,
         range: -1_000.0 ... 1_000.0,
         unit: .hertz,
         flags: .default)
@@ -76,6 +80,7 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
         identifier: "detuningMultiplier",
         name: "Frequency detuning multiplier",
         address: akGetParameterAddress("PWMOscillatorParameterDetuningMultiplier"),
+        defaultValue: 1,
         range: 0.9 ... 1.11,
         unit: .generic,
         flags: .default)
@@ -95,16 +100,15 @@ public class PWMOscillator: Node, AudioUnitContainer, Toggleable {
     ///   - detuningMultiplier: Frequency detuning multiplier
     ///
     public init(
-        frequency: AUValue = 440,
-        amplitude: AUValue = 1.0,
-        pulseWidth: AUValue = 0.5,
-        detuningOffset: AUValue = 0,
-        detuningMultiplier: AUValue = 1
+        frequency: AUValue = frequencyDef.defaultValue,
+        amplitude: AUValue = amplitudeDef.defaultValue,
+        pulseWidth: AUValue = pulseWidthDef.defaultValue,
+        detuningOffset: AUValue = detuningOffsetDef.defaultValue,
+        detuningMultiplier: AUValue = detuningMultiplierDef.defaultValue
     ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

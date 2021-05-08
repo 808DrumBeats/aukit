@@ -23,6 +23,7 @@ public class PitchShifter: Node, AudioUnitContainer, Toggleable {
         identifier: "shift",
         name: "Pitch shift (in semitones)",
         address: akGetParameterAddress("PitchShifterParameterShift"),
+        defaultValue: 0,
         range: -24.0 ... 24.0,
         unit: .relativeSemiTones,
         flags: .default)
@@ -35,6 +36,7 @@ public class PitchShifter: Node, AudioUnitContainer, Toggleable {
         identifier: "windowSize",
         name: "Window size (in samples)",
         address: akGetParameterAddress("PitchShifterParameterWindowSize"),
+        defaultValue: 1_024,
         range: 0.0 ... 10_000.0,
         unit: .hertz,
         flags: .default)
@@ -47,6 +49,7 @@ public class PitchShifter: Node, AudioUnitContainer, Toggleable {
         identifier: "crossfade",
         name: "Crossfade (in samples)",
         address: akGetParameterAddress("PitchShifterParameterCrossfade"),
+        defaultValue: 512,
         range: 0.0 ... 10_000.0,
         unit: .hertz,
         flags: .default)
@@ -66,14 +69,13 @@ public class PitchShifter: Node, AudioUnitContainer, Toggleable {
     ///
     public init(
         _ input: Node,
-        shift: AUValue = 0,
-        windowSize: AUValue = 1_024,
-        crossfade: AUValue = 512
+        shift: AUValue = shiftDef.defaultValue,
+        windowSize: AUValue = windowSizeDef.defaultValue,
+        crossfade: AUValue = crossfadeDef.defaultValue
         ) {
         super.init(avAudioNode: AVAudioNode())
 
         instantiateAudioUnit { avAudioUnit in
-            self.avAudioUnit = avAudioUnit
             self.avAudioNode = avAudioUnit
 
             guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {

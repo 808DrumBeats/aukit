@@ -17,6 +17,7 @@ open class Compressor: Node, Toggleable {
         identifier: "threshold",
         name: "Threshold",
         address: 0,
+        defaultValue: -20,
         range: -40 ... 20,
         unit: .decibels,
         flags: .default)
@@ -29,6 +30,7 @@ open class Compressor: Node, Toggleable {
         identifier: "headRoom",
         name: "Head Room",
         address: 1,
+        defaultValue: 5,
         range: 0.1 ... 40.0,
         unit: .decibels,
         flags: .default)
@@ -41,6 +43,7 @@ open class Compressor: Node, Toggleable {
         identifier: "attackTime",
         name: "Attack Time",
         address: 4,
+        defaultValue: 0.001,
         range: 0.0001 ... 0.2,
         unit: .seconds,
         flags: .default)
@@ -53,6 +56,7 @@ open class Compressor: Node, Toggleable {
         identifier: "releaseTime",
         name: "Release Time",
         address: 5,
+        defaultValue: 0.05,
         range: 0.01 ... 3,
         unit: .seconds,
         flags: .default)
@@ -65,6 +69,7 @@ open class Compressor: Node, Toggleable {
         identifier: "masterGain",
         name: "Master Gain",
         address: 6,
+        defaultValue: 0,
         range: -40 ... 40,
         unit: .decibels,
         flags: .default)
@@ -101,20 +106,16 @@ open class Compressor: Node, Toggleable {
     ///
     public init(
         _ input: Node,
-        threshold: AUValue = -20,
-        headRoom: AUValue = 5,
-        attackTime: AUValue = 0.001,
-        releaseTime: AUValue = 0.05,
-        masterGain: AUValue = 0) {
+        threshold: AUValue = thresholdDef.defaultValue,
+        headRoom: AUValue = headRoomDef.defaultValue,
+        attackTime: AUValue = attackTimeDef.defaultValue,
+        releaseTime: AUValue = releaseTimeDef.defaultValue,
+        masterGain: AUValue = masterGainDef.defaultValue) {
 
         super.init(avAudioNode: effectAU)
         connections.append(input)
 
-        self.$threshold.associate(with: effectAU)
-        self.$headRoom.associate(with: effectAU)
-        self.$attackTime.associate(with: effectAU)
-        self.$releaseTime.associate(with: effectAU)
-        self.$masterGain.associate(with: effectAU)
+        associateParams(with: effectAU)
 
         self.threshold = threshold
         self.headRoom = headRoom
