@@ -5,16 +5,15 @@ import CAudioKit
 
 /// Guitar head and cab simulator.
 ///
-public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
+public class RhinoGuitarProcessor: Node {
 
-    /// Unique four-letter identifier "rhgp"
-    public static let ComponentDescription = AudioComponentDescription(effect: "rhgp")
+    let input: Node
+    
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "rhgp")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("RhinoGuitarProcessorParameterPreGain"),
         defaultValue: 5.0,
         range: 0.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Gain applied before processing.
     @Parameter(preGainDef) public var preGain: AUValue
@@ -38,8 +36,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("RhinoGuitarProcessorParameterPostGain"),
         defaultValue: 0.7,
         range: 0.0 ... 1.0,
-        unit: .linearGain,
-        flags: .default)
+        unit: .linearGain)
 
     /// Gain applied after processing.
     @Parameter(postGainDef) public var postGain: AUValue
@@ -51,8 +48,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("RhinoGuitarProcessorParameterLowGain"),
         defaultValue: 0.0,
         range: -1.0 ... 1.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Amount of Low frequencies.
     @Parameter(lowGainDef) public var lowGain: AUValue
@@ -64,8 +60,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("RhinoGuitarProcessorParameterMidGain"),
         defaultValue: 0.0,
         range: -1.0 ... 1.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Amount of Middle frequencies.
     @Parameter(midGainDef) public var midGain: AUValue
@@ -77,8 +72,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("RhinoGuitarProcessorParameterHighGain"),
         defaultValue: 0.0,
         range: -1.0 ... 1.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Amount of High frequencies.
     @Parameter(highGainDef) public var highGain: AUValue
@@ -90,8 +84,7 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("RhinoGuitarProcessorParameterDistortion"),
         defaultValue: 1.0,
         range: 1.0 ... 20.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Distortion Amount
     @Parameter(distortionDef) public var distortion: AUValue
@@ -118,21 +111,15 @@ public class RhinoGuitarProcessor: Node, AudioUnitContainer, Toggleable {
         highGain: AUValue = highGainDef.defaultValue,
         distortion: AUValue = distortionDef.defaultValue
     ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
+        
+        setupParameters()
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            self.preGain = preGain
-            self.postGain = postGain
-            self.lowGain = lowGain
-            self.midGain = midGain
-            self.highGain = highGain
-            self.distortion = distortion
-
-        }
-
-        connections.append(input)
+        self.preGain = preGain
+        self.postGain = postGain
+        self.lowGain = lowGain
+        self.midGain = midGain
+        self.highGain = highGain
+        self.distortion = distortion
     }
 }

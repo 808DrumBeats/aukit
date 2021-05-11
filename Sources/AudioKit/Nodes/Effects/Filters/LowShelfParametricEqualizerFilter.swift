@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// This is an implementation of Zoelzer's parametric equalizer filter.
-public class LowShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggleable {
+public class LowShelfParametricEqualizerFilter: Node {
 
-    /// Unique four-letter identifier "peq1"
-    public static let ComponentDescription = AudioComponentDescription(effect: "peq1")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "peq1")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class LowShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggle
         address: akGetParameterAddress("LowShelfParametricEqualizerFilterParameterCornerFrequency"),
         defaultValue: 1_000,
         range: 12.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Corner frequency.
     @Parameter(cornerFrequencyDef) public var cornerFrequency: AUValue
@@ -38,8 +36,7 @@ public class LowShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggle
         address: akGetParameterAddress("LowShelfParametricEqualizerFilterParameterGain"),
         defaultValue: 1.0,
         range: 0.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Amount at which the corner frequency value shall be changed. A value of 1 is a flat response.
     @Parameter(gainDef) public var gain: AUValue
@@ -51,8 +48,7 @@ public class LowShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggle
         address: akGetParameterAddress("LowShelfParametricEqualizerFilterParameterQ"),
         defaultValue: 0.707,
         range: 0.0 ... 2.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Q of the filter. sqrt(0.5) is no resonance.
     @Parameter(qDef) public var q: AUValue
@@ -73,20 +69,12 @@ public class LowShelfParametricEqualizerFilter: Node, AudioUnitContainer, Toggle
         gain: AUValue = gainDef.defaultValue,
         q: AUValue = qDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.cornerFrequency = cornerFrequency
-            self.gain = gain
-            self.q = q
-        }
-        connections.append(input)
-    }
+        self.cornerFrequency = cornerFrequency
+        self.gain = gain
+        self.q = q
+   }
 }

@@ -5,16 +5,15 @@ import CAudioKit
 
 /// Stereo Flanger
 ///
-public class Flanger: Node, AudioUnitContainer, Toggleable {
+public class Flanger: Node {
 
-    /// Unique four-letter identifier "flgr"
-    public static let ComponentDescription = AudioComponentDescription(effect: "flgr")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "flgr")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         address: ModulatedDelayParameter.frequency.rawValue,
         defaultValue: kFlanger_DefaultFrequency,
         range: kFlanger_MinFrequency ... kFlanger_MaxFrequency,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Modulation Frequency (Hz)
     @Parameter(frequencyDef) public var frequency: AUValue
@@ -38,8 +36,7 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         address: ModulatedDelayParameter.depth.rawValue,
         defaultValue: kFlanger_DefaultDepth,
         range: kFlanger_MinDepth ... kFlanger_MaxDepth,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Modulation Depth (fraction)
     @Parameter(depthDef) public var depth: AUValue
@@ -51,8 +48,7 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         address: ModulatedDelayParameter.feedback.rawValue,
         defaultValue: kFlanger_DefaultFeedback,
         range: kFlanger_MinFeedback ... kFlanger_MaxFeedback,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Feedback (fraction)
     @Parameter(feedbackDef) public var feedback: AUValue
@@ -64,8 +60,7 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         address: ModulatedDelayParameter.dryWetMix.rawValue,
         defaultValue: kFlanger_DefaultDryWetMix,
         range: kFlanger_MinDryWetMix ... kFlanger_MaxDryWetMix,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Dry Wet Mix (fraction)
     @Parameter(dryWetMixDef) public var dryWetMix: AUValue
@@ -88,19 +83,13 @@ public class Flanger: Node, AudioUnitContainer, Toggleable {
         feedback: AUValue = feedbackDef.defaultValue,
         dryWetMix: AUValue = dryWetMixDef.defaultValue
     ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
+        
+        setupParameters()
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            self.frequency = frequency
-            self.depth = depth
-            self.feedback = feedback
-            self.dryWetMix = dryWetMix
-        }
-
-        connections.append(input)
+        self.frequency = frequency
+        self.depth = depth
+        self.feedback = feedback
+        self.dryWetMix = dryWetMix
     }
 }

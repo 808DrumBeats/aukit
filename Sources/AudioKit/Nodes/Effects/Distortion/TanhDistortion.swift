@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// Distortion using a modified hyperbolic tangent function.
-public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
+public class TanhDistortion: Node {
 
-    /// Unique four-letter identifier "dist"
-    public static let ComponentDescription = AudioComponentDescription(effect: "dist")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "dist")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("TanhDistortionParameterPregain"),
         defaultValue: 2.0,
         range: 0.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Determines gain applied to the signal before waveshaping. A value of 1 gives slight distortion.
     @Parameter(pregainDef) public var pregain: AUValue
@@ -38,8 +36,7 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("TanhDistortionParameterPostgain"),
         defaultValue: 0.5,
         range: 0.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Gain applied after waveshaping
     @Parameter(postgainDef) public var postgain: AUValue
@@ -51,8 +48,7 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("TanhDistortionParameterPositiveShapeParameter"),
         defaultValue: 0.0,
         range: -10.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Shape of the positive part of the signal. A value of 0 gets a flat clip.
     @Parameter(positiveShapeParameterDef) public var positiveShapeParameter: AUValue
@@ -64,8 +60,7 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("TanhDistortionParameterNegativeShapeParameter"),
         defaultValue: 0.0,
         range: -10.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Like the positive shape parameter, only for the negative part.
     @Parameter(negativeShapeParameterDef) public var negativeShapeParameter: AUValue
@@ -88,21 +83,13 @@ public class TanhDistortion: Node, AudioUnitContainer, Toggleable {
         positiveShapeParameter: AUValue = positiveShapeParameterDef.defaultValue,
         negativeShapeParameter: AUValue = negativeShapeParameterDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.pregain = pregain
-            self.postgain = postgain
-            self.positiveShapeParameter = positiveShapeParameter
-            self.negativeShapeParameter = negativeShapeParameter
-        }
-        connections.append(input)
-    }
+        self.pregain = pregain
+        self.postgain = postgain
+        self.positiveShapeParameter = positiveShapeParameter
+        self.negativeShapeParameter = negativeShapeParameter
+   }
 }

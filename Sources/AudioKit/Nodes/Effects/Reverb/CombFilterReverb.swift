@@ -10,16 +10,15 @@ import CAudioKit
 /// or 60dB down from its original amplitude). Output from a comb filter will appear
 /// only after loopDuration seconds.
 /// 
-public class CombFilterReverb: Node, AudioUnitContainer, Toggleable {
+public class CombFilterReverb: Node {
 
-    /// Unique four-letter identifier "comb"
-    public static let ComponentDescription = AudioComponentDescription(effect: "comb")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "comb")
 
     // MARK: - Parameters
 
@@ -30,8 +29,7 @@ public class CombFilterReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("CombFilterReverbParameterReverbDuration"),
         defaultValue: 1.0,
         range: 0.0 ... 10.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// The time in seconds for a signal to decay to 1/1000, or 60dB from its original amplitude. (aka RT-60).
     @Parameter(reverbDurationDef) public var reverbDuration: AUValue
@@ -50,20 +48,12 @@ public class CombFilterReverb: Node, AudioUnitContainer, Toggleable {
         reverbDuration: AUValue = reverbDurationDef.defaultValue,
         loopDuration: AUValue = 0.1
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
+        akCombFilterReverbSetLoopDuration(auBase.dsp, loopDuration)
 
-            akCombFilterReverbSetLoopDuration(audioUnit.dsp, loopDuration)
-
-            self.reverbDuration = reverbDuration
-        }
-        connections.append(input)
-    }
+        self.reverbDuration = reverbDuration
+   }
 }

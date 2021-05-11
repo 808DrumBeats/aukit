@@ -6,17 +6,16 @@ import CAudioKit
 /// Clips a signal to a predefined limit, in a "soft" manner, using one of three
 /// methods.
 ///
-public class DiodeClipper: Node, AudioUnitContainer, Toggleable {
+public class DiodeClipper: Node {
+    
+    let input: Node
 
-    /// Unique four-letter identifier "dclp"
-    public static let ComponentDescription = AudioComponentDescription(effect: "dclp")
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
-
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "dclp")
+    
     // MARK: - Parameters
 
     /// Specification for the cutoff frequency
@@ -26,8 +25,7 @@ public class DiodeClipper: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DiodeClipperParameterCutoff"),
         defaultValue: 10_000.0,
         range: 12.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Filter cutoff frequency.
     @Parameter(cutoffFrequencyDef) public var cutoffFrequency: AUValue
@@ -39,8 +37,7 @@ public class DiodeClipper: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DiodeClipperParameterGaindB"),
         defaultValue: 20.0,
         range: 0.0 ... 40.0,
-        unit: .decibels,
-        flags: .default)
+        unit: .decibels)
 
     /// Determines the amount of gain applied to the signal before waveshaping. A value of 1 gives slight distortion.
     @Parameter(gainDef) public var gain: AUValue
@@ -58,17 +55,11 @@ public class DiodeClipper: Node, AudioUnitContainer, Toggleable {
                 cutoffFrequency: AUValue = cutoffFrequencyDef.defaultValue,
                 gain: AUValue = gainDef.defaultValue
     ) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            self.cutoffFrequency = cutoffFrequency
-            self.gain = gain
-        }
-
-        connections.append(input)
+        self.input = input
+        
+        setupParameters()
+        
+        self.cutoffFrequency = cutoffFrequency
+        self.gain = gain
     }
 }

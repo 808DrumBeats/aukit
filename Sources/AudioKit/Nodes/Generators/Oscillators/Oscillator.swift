@@ -7,18 +7,13 @@ import CAudioKit
 /// Reads from the table sequentially and repeatedly at given frequency.
 /// Linear interpolation is applied for table look up from internal phase values.
 /// 
-public class Oscillator: Node, AudioUnitContainer, Toggleable {
+public class Oscillator: Node {
 
-    /// Unique four-letter identifier "oscl"
-    public static let ComponentDescription = AudioComponentDescription(generator: "oscl")
+    /// Connected nodes
+    public var connections: [Node] { [] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
-
-    // MARK: - Parameters
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(instrument: "oscl")
 
     fileprivate var waveform: Table?
 
@@ -29,8 +24,7 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("OscillatorParameterFrequency"),
         defaultValue: 440.0,
         range: 0.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Frequency in cycles per second
     @Parameter(frequencyDef) public var frequency: AUValue
@@ -42,8 +36,7 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("OscillatorParameterAmplitude"),
         defaultValue: 1.0,
         range: 0.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Output Amplitude.
     @Parameter(amplitudeDef) public var amplitude: AUValue
@@ -55,8 +48,7 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("OscillatorParameterDetuningOffset"),
         defaultValue: 0.0,
         range: -1_000.0 ... 1_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Frequency offset in Hz.
     @Parameter(detuningOffsetDef) public var detuningOffset: AUValue
@@ -68,8 +60,7 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("OscillatorParameterDetuningMultiplier"),
         defaultValue: 1.0,
         range: 0.9 ... 1.11,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Frequency detuning multiplier
     @Parameter(detuningMultiplierDef) public var detuningMultiplier: AUValue
@@ -92,24 +83,16 @@ public class Oscillator: Node, AudioUnitContainer, Toggleable {
         detuningOffset: AUValue = detuningOffsetDef.defaultValue,
         detuningMultiplier: AUValue = detuningMultiplierDef.defaultValue
     ) {
-        super.init(avAudioNode: AVAudioNode())
+        setupParameters()
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        self.stop()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-            self.stop()
+        auBase.setWavetable(waveform.content)
 
-            audioUnit.setWavetable(waveform.content)
-
-            self.waveform = waveform
-            self.frequency = frequency
-            self.amplitude = amplitude
-            self.detuningOffset = detuningOffset
-            self.detuningMultiplier = detuningMultiplier
-        }
+        self.waveform = waveform
+        self.frequency = frequency
+        self.amplitude = amplitude
+        self.detuningOffset = detuningOffset
+        self.detuningMultiplier = detuningMultiplier
     }
 }

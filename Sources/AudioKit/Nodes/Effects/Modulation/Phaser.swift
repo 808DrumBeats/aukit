@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// This is a stereo phaser, generated from Faust code taken from the Guitarix project.
-public class Phaser: Node, AudioUnitContainer, Toggleable {
+public class Phaser: Node {
 
-    /// Unique four-letter identifier "phas"
-    public static let ComponentDescription = AudioComponentDescription(effect: "phas")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "phas")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterNotchMinimumFrequency"),
         defaultValue: 100,
         range: 20 ... 5_000,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Notch Minimum Frequency
     @Parameter(notchMinimumFrequencyDef) public var notchMinimumFrequency: AUValue
@@ -38,8 +36,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterNotchMaximumFrequency"),
         defaultValue: 800,
         range: 20 ... 10_000,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Notch Maximum Frequency
     @Parameter(notchMaximumFrequencyDef) public var notchMaximumFrequency: AUValue
@@ -51,8 +48,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterNotchWidth"),
         defaultValue: 1_000,
         range: 10 ... 5_000,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Between 10 and 5000
     @Parameter(notchWidthDef) public var notchWidth: AUValue
@@ -64,8 +60,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterNotchFrequency"),
         defaultValue: 1.5,
         range: 1.1 ... 4.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Between 1.1 and 4
     @Parameter(notchFrequencyDef) public var notchFrequency: AUValue
@@ -77,8 +72,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterVibratoMode"),
         defaultValue: 1,
         range: 0 ... 1,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Direct or Vibrato (default)
     @Parameter(vibratoModeDef) public var vibratoMode: AUValue
@@ -90,8 +84,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterDepth"),
         defaultValue: 1,
         range: 0 ... 1,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Between 0 and 1
     @Parameter(depthDef) public var depth: AUValue
@@ -103,8 +96,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterFeedback"),
         defaultValue: 0,
         range: 0 ... 1,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Between 0 and 1
     @Parameter(feedbackDef) public var feedback: AUValue
@@ -116,8 +108,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterInverted"),
         defaultValue: 0,
         range: 0 ... 1,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// 1 or 0
     @Parameter(invertedDef) public var inverted: AUValue
@@ -129,8 +120,7 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaserParameterLfoBPM"),
         defaultValue: 30,
         range: 24 ... 360,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Between 24 and 360
     @Parameter(lfoBPMDef) public var lfoBPM: AUValue
@@ -163,26 +153,18 @@ public class Phaser: Node, AudioUnitContainer, Toggleable {
         inverted: AUValue = invertedDef.defaultValue,
         lfoBPM: AUValue = lfoBPMDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.notchMinimumFrequency = notchMinimumFrequency
-            self.notchMaximumFrequency = notchMaximumFrequency
-            self.notchWidth = notchWidth
-            self.notchFrequency = notchFrequency
-            self.vibratoMode = vibratoMode
-            self.depth = depth
-            self.feedback = feedback
-            self.inverted = inverted
-            self.lfoBPM = lfoBPM
-        }
-        connections.append(input)
-    }
+        self.notchMinimumFrequency = notchMinimumFrequency
+        self.notchMaximumFrequency = notchMaximumFrequency
+        self.notchWidth = notchWidth
+        self.notchFrequency = notchFrequency
+        self.vibratoMode = vibratoMode
+        self.depth = depth
+        self.feedback = feedback
+        self.inverted = inverted
+        self.lfoBPM = lfoBPM
+   }
 }

@@ -7,16 +7,15 @@ import CAudioKit
 /// These filters are Butterworth second-order IIR filters. They offer an almost flat
 /// passband and very good precision and stopband attenuation.
 /// 
-public class LowPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
+public class LowPassButterworthFilter: Node {
 
-    /// Unique four-letter identifier "btlp"
-    public static let ComponentDescription = AudioComponentDescription(effect: "btlp")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "btlp")
 
     // MARK: - Parameters
 
@@ -27,8 +26,7 @@ public class LowPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("LowPassButterworthFilterParameterCutoffFrequency"),
         defaultValue: 1_000.0,
         range: 12.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Cutoff frequency. (in Hertz)
     @Parameter(cutoffFrequencyDef) public var cutoffFrequency: AUValue
@@ -45,18 +43,10 @@ public class LowPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
         _ input: Node,
         cutoffFrequency: AUValue = cutoffFrequencyDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.cutoffFrequency = cutoffFrequency
-        }
-        connections.append(input)
-    }
+        self.cutoffFrequency = cutoffFrequency
+   }
 }

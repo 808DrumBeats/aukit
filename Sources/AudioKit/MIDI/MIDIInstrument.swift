@@ -7,7 +7,12 @@ import CoreAudio
 
 /// A version of Instrument specifically targeted to instruments that
 /// should be triggerable via MIDI or sequenced with the sequencer.
-open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
+open class MIDIInstrument: Node, MIDIListener, NamedNode {
+
+    public var connections: [Node] { [] }
+
+    /// The internal AVAudioEngine AVAudioNode
+    public var avAudioNode: AVAudioNode
 
     // MARK: - Properties
 
@@ -25,7 +30,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
     /// - Parameter midiInputName: Name of the instrument's MIDI input
     ///
     public init(midiInputName: String? = nil) {
-        super.init(avAudioNode: AVAudioNode())
+        avAudioNode = AVAudioNode()
         name = midiInputName ?? MemoryAddress(of: self).description
         enableMIDI(name: name)
         hideVirtualMIDIPort()
@@ -216,7 +221,7 @@ open class MIDIInstrument: PolyphonicNode, MIDIListener, NamedNode {
                     velocity: MIDIVelocity,
                     channel: MIDIChannel,
                     timeStamp: MIDITimeStamp? = nil) {
-        play(noteNumber: noteNumber, velocity: velocity, channel: channel)
+        // Override in subclass
     }
 
     /// Stop a note

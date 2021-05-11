@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// A first-order recursive low-pass filter with variable frequency response.
-public class ToneFilter: Node, AudioUnitContainer, Toggleable {
+public class ToneFilter: Node {
 
-    /// Unique four-letter identifier "tone"
-    public static let ComponentDescription = AudioComponentDescription(effect: "tone")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "tone")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class ToneFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ToneFilterParameterHalfPowerPoint"),
         defaultValue: 1_000.0,
         range: 12.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Response curve's half-power point, in Hertz. Half power is defined as peak power / root 2.
     @Parameter(halfPowerPointDef) public var halfPowerPoint: AUValue
@@ -43,18 +41,10 @@ public class ToneFilter: Node, AudioUnitContainer, Toggleable {
         _ input: Node,
         halfPowerPoint: AUValue = halfPowerPointDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.halfPowerPoint = halfPowerPoint
-        }
-        connections.append(input)
-    }
+        self.halfPowerPoint = halfPowerPoint
+   }
 }

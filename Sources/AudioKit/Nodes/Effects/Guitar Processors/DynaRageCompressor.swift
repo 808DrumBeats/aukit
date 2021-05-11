@@ -6,17 +6,16 @@ import CAudioKit
 /// DynaRage Tube Compressor | Based on DynaRage Tube Compressor RE for Reason
 /// by Devoloop Srls
 ///
-public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
+public class DynaRageCompressor: Node {
 
-    /// Unique four-letter identifier "dyrc"
-    public static let ComponentDescription = AudioComponentDescription(effect: "dyrc")
+    let input: Node
+    
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
-
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "dyrc")
+    
     // MARK: - Parameters
 
     /// Specification details for ratio
@@ -26,8 +25,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynaRageCompressorParameterRatio"),
         defaultValue: 1,
         range: 1.0 ... 20.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Ratio to compress with, a value > 1 will compress
     @Parameter(ratioDef) public var ratio: AUValue
@@ -39,8 +37,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynaRageCompressorParameterThreshold"),
         defaultValue: 0.0,
         range: -100.0 ... 0.0,
-        unit: .decibels,
-        flags: .default)
+        unit: .decibels)
 
     /// Threshold (in dB) 0 = max
     @Parameter(thresholdDef) public var threshold: AUValue
@@ -52,8 +49,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynaRageCompressorParameterAttackDuration"),
         defaultValue: 0.1,
         range: 0.1 ... 500.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Attack dration
     @Parameter(attackDurationDef) public var attackDuration: AUValue
@@ -65,8 +61,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynaRageCompressorParameterReleaseDuration"),
         defaultValue: 0.1,
         range: 1.0 ... 20.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Release duration
     @Parameter(releaseDurationDef) public var releaseDuration: AUValue
@@ -78,8 +73,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynaRageCompressorParameterRage"),
         defaultValue: 0.1,
         range: 0.1 ... 20.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Rage Amount
     @Parameter(rageDef) public var rage: AUValue
@@ -91,8 +85,7 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynaRageCompressorParameterRageEnabled"),
         defaultValue: 1.0,
         range: 0.0 ... 1.0,
-        unit: .boolean,
-        flags: .default)
+        unit: .boolean)
 
     /// Rage ON/OFF Switch
     @Parameter(rageEnabledDef) public var rageEnabled: Bool
@@ -117,22 +110,15 @@ public class DynaRageCompressor: Node, AudioUnitContainer, Toggleable {
         rage: AUValue = rageDef.defaultValue,
         rageEnabled: Bool = rageEnabledDef.defaultValue == 1.0
     ) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            self.ratio = ratio
-            self.threshold = threshold
-            self.attackDuration = attackDuration
-            self.releaseDuration = releaseDuration
-            self.rage = rage
-            self.rageEnabled = rageEnabled
-
-        }
-
-        connections.append(input)
+        self.input = input
+        
+        setupParameters()
+        
+        self.ratio = ratio
+        self.threshold = threshold
+        self.attackDuration = attackDuration
+        self.releaseDuration = releaseDuration
+        self.rage = rage
+        self.rageEnabled = rageEnabled
     }
 }

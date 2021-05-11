@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// Dynamic range compressor from Faust
-public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
+public class DynamicRangeCompressor: Node {
 
-    /// Unique four-letter identifier "cpsr"
-    public static let ComponentDescription = AudioComponentDescription(effect: "cpsr")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "cpsr")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynamicRangeCompressorParameterRatio"),
         defaultValue: 1,
         range: 0.01 ... 100.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Ratio to compress with, a value > 1 will compress
     @Parameter(ratioDef) public var ratio: AUValue
@@ -38,8 +36,7 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynamicRangeCompressorParameterThreshold"),
         defaultValue: 0.0,
         range: -100.0 ... 0.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Threshold (in dB) 0 = max
     @Parameter(thresholdDef) public var threshold: AUValue
@@ -51,8 +48,7 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynamicRangeCompressorParameterAttackDuration"),
         defaultValue: 0.1,
         range: 0.0 ... 1.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Attack duration
     @Parameter(attackDurationDef) public var attackDuration: AUValue
@@ -64,8 +60,7 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynamicRangeCompressorParameterReleaseDuration"),
         defaultValue: 0.1,
         range: 0.0 ... 1.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Release Duration
     @Parameter(releaseDurationDef) public var releaseDuration: AUValue
@@ -88,21 +83,13 @@ public class DynamicRangeCompressor: Node, AudioUnitContainer, Toggleable {
         attackDuration: AUValue = attackDurationDef.defaultValue,
         releaseDuration: AUValue = releaseDurationDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.ratio = ratio
-            self.threshold = threshold
-            self.attackDuration = attackDuration
-            self.releaseDuration = releaseDuration
-        }
-        connections.append(input)
-    }
+        self.ratio = ratio
+        self.threshold = threshold
+        self.attackDuration = attackDuration
+        self.releaseDuration = releaseDuration
+   }
 }

@@ -5,16 +5,14 @@ import CAudioKit
 
 /// Stereo delay-line with stereo (linked dual mono) and ping-pong modes
 /// TODO: This node needs tests
-public class StereoDelay: Node, AudioUnitContainer, Toggleable {
+public class StereoDelay: Node {
+    let input: Node
 
-    /// Unique four-letter identifier "sdly"
-    public static let ComponentDescription = AudioComponentDescription(effect: "sdly")
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "sdly")
 
     // MARK: - Parameters
 
@@ -25,8 +23,7 @@ public class StereoDelay: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("StereoDelayParameterTime"),
         defaultValue: 0,
         range: 0 ... 2.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Delay time (in seconds) This value must not exceed the maximum delay time.
     @Parameter(timeDef) public var time: AUValue
@@ -38,8 +35,7 @@ public class StereoDelay: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("StereoDelayParameterFeedback"),
         defaultValue: 0,
         range: 0.0 ... 1.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Feedback amount. Should be a value between 0-1.
     @Parameter(feedbackDef) public var feedback: AUValue
@@ -51,8 +47,7 @@ public class StereoDelay: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("StereoDelayParameterDryWetMix"),
         defaultValue: 0.5,
         range: 0.0 ... 1.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Dry/wet mix. Should be a value between 0-1.
     @Parameter(dryWetMixDef) public var dryWetMix: AUValue
@@ -90,19 +85,13 @@ public class StereoDelay: Node, AudioUnitContainer, Toggleable {
         pingPong: Bool = (dryWetMixDef.defaultValue == 1.0),
         maximumDelayTime: AUValue = 2.0
     ) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            self.time = time
-            self.feedback = feedback
-            self.dryWetMix = dryWetMix
-            self.pingPong = pingPong ? 1.0 : 0.0
-        }
-
-        connections.append(input)
+        self.input = input
+        
+        setupParameters()
+        
+        self.time = time
+        self.feedback = feedback
+        self.dryWetMix = dryWetMix
+        self.pingPong = pingPong ? 1.0 : 0.0
     }
 }

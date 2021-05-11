@@ -5,18 +5,13 @@ import AVFoundation
 import CAudioKit
 
 /// Brownian noise generator
-public class BrownianNoise: Node, AudioUnitContainer, Toggleable {
+public class BrownianNoise: Node {
 
-    /// Unique four-letter identifier "bron"
-    public static let ComponentDescription = AudioComponentDescription(generator: "bron")
+    /// Connected nodes
+    public var connections: [Node] { [] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
-
-    // MARK: - Parameters
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(instrument: "bron")
 
     /// Specification details for amplitude
     public static let amplitudeDef = NodeParameterDef(
@@ -25,8 +20,7 @@ public class BrownianNoise: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("BrownianNoiseParameterAmplitude"),
         defaultValue: 1.0,
         range: 0.0 ... 1.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Amplitude. (Value between 0-1).
     @Parameter(amplitudeDef) public var amplitude: AUValue
@@ -41,18 +35,10 @@ public class BrownianNoise: Node, AudioUnitContainer, Toggleable {
     public init(
         amplitude: AUValue = amplitudeDef.defaultValue
     ) {
-        super.init(avAudioNode: AVAudioNode())
+        setupParameters()
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        self.stop()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-            self.stop()
-
-            self.amplitude = amplitude
-        }
+        self.amplitude = amplitude
     }
 }

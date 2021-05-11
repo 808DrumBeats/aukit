@@ -10,16 +10,15 @@ import CAudioKit
 /// of the “string” is controlled by the fundamentalFrequency.  
 /// This operation can be used to simulate sympathetic resonances to an input signal.
 /// 
-public class StringResonator: Node, AudioUnitContainer, Toggleable {
+public class StringResonator: Node {
 
-    /// Unique four-letter identifier "stre"
-    public static let ComponentDescription = AudioComponentDescription(effect: "stre")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "stre")
 
     // MARK: - Parameters
 
@@ -30,8 +29,7 @@ public class StringResonator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("StringResonatorParameterFundamentalFrequency"),
         defaultValue: 100,
         range: 12.0 ... 10_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Fundamental frequency of string.
     @Parameter(fundamentalFrequencyDef) public var fundamentalFrequency: AUValue
@@ -43,8 +41,7 @@ public class StringResonator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("StringResonatorParameterFeedback"),
         defaultValue: 0.95,
         range: 0.0 ... 1.0,
-        unit: .percent,
-        flags: .default)
+        unit: .percent)
 
     /// Feedback amount (value between 0-1). A value close to 1 creates a slower decay and a more pronounced resonance. Small values may leave the input signal unaffected. Depending on the filter frequency, typical values are > .9.
     @Parameter(feedbackDef) public var feedback: AUValue
@@ -63,19 +60,11 @@ public class StringResonator: Node, AudioUnitContainer, Toggleable {
         fundamentalFrequency: AUValue = fundamentalFrequencyDef.defaultValue,
         feedback: AUValue = feedbackDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.fundamentalFrequency = fundamentalFrequency
-            self.feedback = feedback
-        }
-        connections.append(input)
-    }
+        self.fundamentalFrequency = fundamentalFrequency
+        self.feedback = feedback
+   }
 }

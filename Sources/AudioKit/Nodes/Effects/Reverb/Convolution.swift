@@ -7,16 +7,15 @@ import CAudioKit
 /// ftable as an impulse response.
 /// TOOD: This node needs to be tested
 ///
-public class Convolution: Node, AudioUnitContainer, Toggleable {
+public class Convolution: Node {
 
-    /// Unique four-letter identifier "conv"
-    public static let ComponentDescription = AudioComponentDescription(effect: "conv")
+    let input: Node
+    
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "conv")
 
     // MARK: - Parameters
 
@@ -35,24 +34,16 @@ public class Convolution: Node, AudioUnitContainer, Toggleable {
                 impulseResponseFileURL: URL,
                 partitionLength: Int = 2_048
     ) {
+        self.input = input
         self.impulseResponseFileURL = impulseResponseFileURL as CFURL
         self.partitionLength = partitionLength
-
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            if let dsp = self.internalAU?.dsp {
-                akConvolutionSetPartitionLength(dsp, Int32(partitionLength))
-            }
-            self.readAudioFile()
-            self.internalAU?.start()
-        }
-
-        connections.append(input)
+        
+        setupParameters()
+        
+        akConvolutionSetPartitionLength(auBase.dsp, Int32(partitionLength))
+        
+        self.readAudioFile()
+        self.start()
     }
 
     private func readAudioFile() {
@@ -134,7 +125,7 @@ public class Convolution: Node, AudioUnitContainer, Toggleable {
                     let data = UnsafeMutablePointer<Float>(
                         bufferList.mBuffers.mData?.assumingMemoryBound(to: Float.self)
                     )
-                    internalAU?.setWavetable(data: data, size: Int(ioNumberFrames))
+                    auBase.setWavetable(data: data, size: Int(ioNumberFrames))
                 } else {
                     // failure
                     theData?.deallocate()

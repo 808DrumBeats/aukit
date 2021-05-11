@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// This will digitally degrade a signal.
-public class BitCrusher: Node, AudioUnitContainer, Toggleable {
+public class BitCrusher: Node {
 
-    /// Unique four-letter identifier "btcr"
-    public static let ComponentDescription = AudioComponentDescription(effect: "btcr")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "btcr")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class BitCrusher: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("BitCrusherParameterBitDepth"),
         defaultValue: 8,
         range: 1 ... 24,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// The bit depth of signal output. Typically in range (1-24). Non-integer values are OK.
     @Parameter(bitDepthDef) public var bitDepth: AUValue
@@ -38,8 +36,7 @@ public class BitCrusher: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("BitCrusherParameterSampleRate"),
         defaultValue: 10_000,
         range: 0.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// The sample rate of signal output.
     @Parameter(sampleRateDef) public var sampleRate: AUValue
@@ -58,19 +55,11 @@ public class BitCrusher: Node, AudioUnitContainer, Toggleable {
         bitDepth: AUValue = bitDepthDef.defaultValue,
         sampleRate: AUValue = sampleRateDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.bitDepth = bitDepth
-            self.sampleRate = sampleRate
-        }
-        connections.append(input)
-    }
+        self.bitDepth = bitDepth
+        self.sampleRate = sampleRate
+   }
 }

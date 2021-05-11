@@ -5,16 +5,16 @@ import CAudioKit
 
 /// Balanceable Mix between two signals, usually used for a dry signal and wet signal
 ///
-public class DryWetMixer: Node, AudioUnitContainer, Toggleable {
+public class DryWetMixer: Node {
 
-    /// Unique four-letter identifier "dwmx"
-   public static let ComponentDescription = AudioComponentDescription(mixer: "dwmx")
+    let input1: Node
+    let input2: Node
+    
+    /// Connected nodes
+    public var connections: [Node] { [input1, input2] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(mixer: "dwmx")
 
     // MARK: - Parameters
 
@@ -25,8 +25,7 @@ public class DryWetMixer: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DryWetMixerParameterBalance"),
         defaultValue: 0.5,
         range: 0.0...1.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Balance between input signals
     @Parameter(balanceDef) public var balance: AUValue
@@ -39,18 +38,12 @@ public class DryWetMixer: Node, AudioUnitContainer, Toggleable {
     ///   - balance: Balance Point (0 = all input1, 1 = all input2)
     ///
     public init(_ input1: Node, _ input2: Node, balance: AUValue = balanceDef.defaultValue) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            self.balance = balance
-        }
-
-        connections.append(input1)
-        connections.append(input2)
+        self.input1 = input1
+        self.input2 = input2
+        
+        setupParameters()
+        
+        self.balance = balance
     }
 
     /// Initializer with dry wet labels

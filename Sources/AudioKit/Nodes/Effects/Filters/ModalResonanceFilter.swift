@@ -7,16 +7,15 @@ import CAudioKit
 /// A modal resonance filter used for modal synthesis. Plucked and bell sounds can be created
 /// using  passing an impulse through a combination of modal filters.
 /// 
-public class ModalResonanceFilter: Node, AudioUnitContainer, Toggleable {
+public class ModalResonanceFilter: Node {
 
-    /// Unique four-letter identifier "modf"
-    public static let ComponentDescription = AudioComponentDescription(effect: "modf")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "modf")
 
     // MARK: - Parameters
 
@@ -27,8 +26,7 @@ public class ModalResonanceFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ModalResonanceFilterParameterFrequency"),
         defaultValue: 500.0,
         range: 12.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Resonant frequency of the filter.
     @Parameter(frequencyDef) public var frequency: AUValue
@@ -40,8 +38,7 @@ public class ModalResonanceFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ModalResonanceFilterParameterQualityFactor"),
         defaultValue: 50.0,
         range: 0.0 ... 100.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Quality factor of the filter. Roughly equal to Q/frequency.
     @Parameter(qualityFactorDef) public var qualityFactor: AUValue
@@ -60,19 +57,11 @@ public class ModalResonanceFilter: Node, AudioUnitContainer, Toggleable {
         frequency: AUValue = frequencyDef.defaultValue,
         qualityFactor: AUValue = qualityFactorDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.frequency = frequency
-            self.qualityFactor = qualityFactor
-        }
-        connections.append(input)
-    }
+        self.frequency = frequency
+        self.qualityFactor = qualityFactor
+   }
 }

@@ -1,12 +1,19 @@
 // Copyright AudioKit. All Rights Reserved. Revision History at http://github.com/AudioKit/AudioKit/
 
 import AVFoundation
-import CAudioKit
 
 /// AudioKit version of Apple's Delay Audio Unit
 ///
-public class Delay: Node, Toggleable {
+public class Delay: Node {
     let delayAU = AVAudioUnitDelay()
+
+    let input: Node
+    
+    /// Connected nodes
+    public var connections: [Node] { [input] }
+    
+    /// Underlying AVAudioNode
+    public var avAudioNode: AVAudioNode { return delayAU }
 
     /// Specification details for dry wet mix
     public static let dryWetMixDef = NodeParameterDef(
@@ -15,8 +22,7 @@ public class Delay: Node, Toggleable {
         address: 0,
         defaultValue: 50,
         range: 0.0 ... 1.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Dry/wet mix. Should be a value between 0-1.
     @Parameter(dryWetMixDef) public var dryWetMix: AUValue
@@ -28,8 +34,7 @@ public class Delay: Node, Toggleable {
         address: 1,
         defaultValue: 1,
         range: 0 ... 2.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Delay time (in seconds) This value must not exceed the maximum delay time.
     @Parameter(timeDef) public var time: AUValue
@@ -41,8 +46,7 @@ public class Delay: Node, Toggleable {
         address: 2,
         defaultValue: 50,
         range: -100 ... 100,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Feedback amount. Should be a value between 0-1.
     @Parameter(feedbackDef) public var feedback: AUValue
@@ -54,8 +58,7 @@ public class Delay: Node, Toggleable {
         address: 3,
         defaultValue: 15000,
         range: 10 ... 22050,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Low-pass cutoff frequency Cutoff Frequency (Hertz) ranges from 10 to 200 (Default: 80)
     @Parameter(lowPassCutoffDef) public var lowPassCutoff: AUValue
@@ -79,8 +82,7 @@ public class Delay: Node, Toggleable {
         lowPassCutoff: AUValue = lowPassCutoffDef.defaultValue,
         dryWetMix: AUValue = dryWetMixDef.defaultValue) {
 
-        super.init(avAudioNode: delayAU)
-        connections.append(input)
+        self.input = input
 
         associateParams(with: delayAU)
 

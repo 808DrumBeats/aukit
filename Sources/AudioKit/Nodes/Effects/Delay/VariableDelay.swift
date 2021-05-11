@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// A delay line with cubic interpolation.
-public class VariableDelay: Node, AudioUnitContainer, Toggleable {
+public class VariableDelay: Node {
 
-    /// Unique four-letter identifier "vdla"
-    public static let ComponentDescription = AudioComponentDescription(effect: "vdla")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "vdla")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class VariableDelay: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("VariableDelayParameterTime"),
         defaultValue: 0,
         range: 0 ... 10,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Delay time (in seconds) This value must not exceed the maximum delay time.
     @Parameter(timeDef) public var time: AUValue
@@ -38,8 +36,7 @@ public class VariableDelay: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("VariableDelayParameterFeedback"),
         defaultValue: 0,
         range: 0 ... 1,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Feedback amount. Should be a value between 0-1.
     @Parameter(feedbackDef) public var feedback: AUValue
@@ -60,21 +57,13 @@ public class VariableDelay: Node, AudioUnitContainer, Toggleable {
         feedback: AUValue = feedbackDef.defaultValue,
         maximumTime: AUValue = 5
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
+        akVariableDelaySetMaximumTime(auBase.dsp, maximumTime)
 
-            akVariableDelaySetMaximumTime(audioUnit.dsp, maximumTime)
-
-            self.time = time
-            self.feedback = feedback
-        }
-        connections.append(input)
-    }
+        self.time = time
+        self.feedback = feedback
+   }
 }

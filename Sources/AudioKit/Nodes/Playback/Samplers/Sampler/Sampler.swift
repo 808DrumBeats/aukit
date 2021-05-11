@@ -4,12 +4,18 @@ import AVFoundation
 import CAudioKit
 
 /// Sampler
-public class Sampler: PolyphonicNode, AudioUnitContainer {
+public class Sampler: Node, AudioUnitContainer {
     /// Unique four-letter identifier "samp"
     public static let ComponentDescription = AudioComponentDescription(instrument: "samp")
 
     /// Internal type of audio unit for this node
     public typealias AudioUnitType = SamplerAudioUnit
+
+    /// Nodes providing input to this node.
+    public var connections: [Node] { [] }
+
+    /// The internal AVAudioEngine AVAudioNode
+    public var avAudioNode: AVAudioNode
 
     // MARK: - Properties
 
@@ -276,7 +282,7 @@ public class Sampler: PolyphonicNode, AudioUnitContainer {
 
     /// Initialize without any descriptors
     public init() {
-        super.init(avAudioNode: AVAudioNode())
+        avAudioNode = AVAudioNode()
 
         instantiateAudioUnit { avAudioUnit in
             self.avAudioNode = avAudioUnit
@@ -406,15 +412,15 @@ public class Sampler: PolyphonicNode, AudioUnitContainer {
     ///   - noteNumber: MIDI Note Number
     ///   - velocity: Velocity of the note
     ///   - channel: MIDI Channel
-    public override func play(noteNumber: MIDINoteNumber,
-                              velocity: MIDIVelocity,
-                              channel: MIDIChannel = 0) {
+    public func play(noteNumber: MIDINoteNumber,
+                     velocity: MIDIVelocity,
+                     channel: MIDIChannel = 0) {
         internalAU?.playNote(noteNumber: noteNumber, velocity: velocity)
     }
 
     /// Stop the sampler playback of a specific note
     /// - Parameter noteNumber: MIDI Note number
-    public override func stop(noteNumber: MIDINoteNumber, channel: MIDIChannel = 0) {
+    public func stop(noteNumber: MIDINoteNumber, channel: MIDIChannel = 0) {
         internalAU?.stopNote(noteNumber: noteNumber, immediate: false)
     }
 

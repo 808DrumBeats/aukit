@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// 8 FDN stereo zitareverb algorithm, imported from Faust.
-public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
+public class ZitaReverb: Node {
 
-    /// Unique four-letter identifier "zita"
-    public static let ComponentDescription = AudioComponentDescription(effect: "zita")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "zita")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterPredelay"),
         defaultValue: 60.0,
         range: 0.0 ... 200.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Delay in ms before reverberation begins.
     @Parameter(predelayDef) public var predelay: AUValue
@@ -38,8 +36,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterCrossoverFrequency"),
         defaultValue: 200.0,
         range: 10.0 ... 1_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Crossover frequency separating low and middle frequencies (Hz).
     @Parameter(crossoverFrequencyDef) public var crossoverFrequency: AUValue
@@ -51,8 +48,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterLowReleaseTime"),
         defaultValue: 3.0,
         range: 0.0 ... 10.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Time (in seconds) to decay 60db in low-frequency band.
     @Parameter(lowReleaseTimeDef) public var lowReleaseTime: AUValue
@@ -64,8 +60,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterMidReleaseTime"),
         defaultValue: 2.0,
         range: 0.0 ... 10.0,
-        unit: .seconds,
-        flags: .default)
+        unit: .seconds)
 
     /// Time (in seconds) to decay 60db in mid-frequency band.
     @Parameter(midReleaseTimeDef) public var midReleaseTime: AUValue
@@ -77,8 +72,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterDampingFrequency"),
         defaultValue: 6_000.0,
         range: 10.0 ... 22_050.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Frequency (Hz) at which the high-frequency T60 is half the middle-band's T60.
     @Parameter(dampingFrequencyDef) public var dampingFrequency: AUValue
@@ -90,8 +84,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterEqualizerFrequency1"),
         defaultValue: 315.0,
         range: 10.0 ... 1_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Center frequency of second-order Regalia Mitra peaking equalizer section 1.
     @Parameter(equalizerFrequency1Def) public var equalizerFrequency1: AUValue
@@ -103,8 +96,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterEqualizerLevel1"),
         defaultValue: 0.0,
         range: -100.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Peak level in dB of second-order Regalia-Mitra peaking equalizer section 1
     @Parameter(equalizerLevel1Def) public var equalizerLevel1: AUValue
@@ -116,8 +108,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterEqualizerFrequency2"),
         defaultValue: 1_500.0,
         range: 10.0 ... 22_050.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Center frequency of second-order Regalia Mitra peaking equalizer section 2.
     @Parameter(equalizerFrequency2Def) public var equalizerFrequency2: AUValue
@@ -129,8 +120,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterEqualizerLevel2"),
         defaultValue: 0.0,
         range: -100.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Peak level in dB of second-order Regalia-Mitra peaking equalizer section 2
     @Parameter(equalizerLevel2Def) public var equalizerLevel2: AUValue
@@ -142,8 +132,7 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("ZitaReverbParameterDryWetMix"),
         defaultValue: 1.0,
         range: 0.0 ... 1.0,
-        unit: .percent,
-        flags: .default)
+        unit: .percent)
 
     /// 0 = all dry, 1 = all wet
     @Parameter(dryWetMixDef) public var dryWetMix: AUValue
@@ -178,27 +167,19 @@ public class ZitaReverb: Node, AudioUnitContainer, Toggleable {
         equalizerLevel2: AUValue = equalizerLevel2Def.defaultValue,
         dryWetMix: AUValue = dryWetMixDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.predelay = predelay
-            self.crossoverFrequency = crossoverFrequency
-            self.lowReleaseTime = lowReleaseTime
-            self.midReleaseTime = midReleaseTime
-            self.dampingFrequency = dampingFrequency
-            self.equalizerFrequency1 = equalizerFrequency1
-            self.equalizerLevel1 = equalizerLevel1
-            self.equalizerFrequency2 = equalizerFrequency2
-            self.equalizerLevel2 = equalizerLevel2
-            self.dryWetMix = dryWetMix
-        }
-        connections.append(input)
-    }
+        self.predelay = predelay
+        self.crossoverFrequency = crossoverFrequency
+        self.lowReleaseTime = lowReleaseTime
+        self.midReleaseTime = midReleaseTime
+        self.dampingFrequency = dampingFrequency
+        self.equalizerFrequency1 = equalizerFrequency1
+        self.equalizerLevel1 = equalizerLevel1
+        self.equalizerFrequency2 = equalizerFrequency2
+        self.equalizerLevel2 = equalizerLevel2
+        self.dryWetMix = dryWetMix
+   }
 }

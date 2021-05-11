@@ -4,15 +4,15 @@ import AVFoundation
 import CAudioKit
 
 /// Stereo Fader.
-public class Fader: Node, AudioUnitContainer, Toggleable {
-    /// Unique four-letter identifier "fder"
-    public static let ComponentDescription = AudioComponentDescription(effect: "fder")
+public class Fader: Node {
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    let input: Node
+    
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "fder")
 
     // MARK: - Parameters
 
@@ -34,8 +34,7 @@ public class Fader: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("FaderParameterLeftGain"),
         defaultValue: 1,
         range: Fader.gainRange,
-        unit: .linearGain,
-        flags: .default)
+        unit: .linearGain)
 
     /// Left Channel Amplification Factor
     @Parameter(leftGainDef) public var leftGain: AUValue
@@ -47,8 +46,7 @@ public class Fader: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("FaderParameterRightGain"),
         defaultValue: 1,
         range: Fader.gainRange,
-        unit: .linearGain,
-        flags: .default)
+        unit: .linearGain)
 
     /// Right Channel Amplification Factor
     @Parameter(rightGainDef) public var rightGain: AUValue
@@ -66,8 +64,7 @@ public class Fader: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("FaderParameterFlipStereo"),
         defaultValue: 0,
         range: 0.0 ... 1.0,
-        unit: .boolean,
-        flags: .default)
+        unit: .boolean)
 
     /// Flip left and right signal
     @Parameter(flipStereoDef) public var flipStereo: Bool
@@ -79,8 +76,7 @@ public class Fader: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("FaderParameterMixToMono"),
         defaultValue: 0,
         range: 0.0 ... 1.0,
-        unit: .boolean,
-        flags: .default)
+        unit: .boolean)
 
     /// Make the output on left and right both be the same combination of incoming left and mixed equally
     @Parameter(mixToMonoDef) public var mixToMono: Bool
@@ -94,20 +90,14 @@ public class Fader: Node, AudioUnitContainer, Toggleable {
     ///   - gain: Amplification factor (Default: 1, Minimum: 0)
     ///
     public init(_ input: Node, gain: AUValue = 1) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            self.leftGain = gain
-            self.rightGain = gain
-            self.flipStereo = false
-            self.mixToMono = false
-        }
-
-        connections.append(input)
+        self.input = input
+        
+        setupParameters()
+        
+        self.leftGain = gain
+        self.rightGain = gain
+        self.flipStereo = false
+        self.mixToMono = false
     }
 
     deinit {

@@ -7,19 +7,14 @@ import CAudioKit
 /// file loaded into an ftable like a sampler would. Unlike a typical sampler,
 /// mincer allows time and pitch to be controlled separately.
 ///
-public class PhaseLockedVocoder: Node, AudioUnitContainer, Toggleable {
+public class PhaseLockedVocoder: Node {
+    
+    /// Connected nodes
+    public var connections: [Node] { [] }
 
-    /// Unique four-letter identifier "minc"
-    public static let ComponentDescription = AudioComponentDescription(generator: "minc")
-
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
-
-    // MARK: - Parameters
-
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(instrument: "minc")
+    
     /// Specification for position
     public static let positionDef = NodeParameterDef(
         identifier: "position",
@@ -27,8 +22,7 @@ public class PhaseLockedVocoder: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaseLockedVocoderParameterPosition"),
         defaultValue: 0,
         range: 0 ... 100_000,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Position in time. When non-changing it will do a spectral freeze of a the current point in time.
     @Parameter(positionDef) public var position: AUValue
@@ -40,8 +34,7 @@ public class PhaseLockedVocoder: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaseLockedVocoderParameterAmplitude"),
         defaultValue: 1,
         range: 0 ... 1,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Amplitude.
     @Parameter(amplitudeDef) public var amplitude: AUValue
@@ -53,8 +46,7 @@ public class PhaseLockedVocoder: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PhaseLockedVocoderParameterPitchRatio"),
         defaultValue: 1,
         range: 0 ... 1_000,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Pitch ratio. A value of. 1  normal, 2 is double speed, 0.5 is halfspeed, etc.
     @Parameter(pitchRatioDef) public var pitchRatio: AUValue
@@ -74,23 +66,14 @@ public class PhaseLockedVocoder: Node, AudioUnitContainer, Toggleable {
         position: AUValue = positionDef.defaultValue,
         amplitude: AUValue = amplitudeDef.defaultValue,
         pitchRatio: AUValue = pitchRatioDef.defaultValue
-        ) {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-            self.loadFile(file)
-
-            self.position = position
-            self.amplitude = amplitude
-            self.pitchRatio = pitchRatio
-
-        }
+    ) {
+        setupParameters()
+        
+        loadFile(file)
+        
+        self.position = position
+        self.amplitude = amplitude
+        self.pitchRatio = pitchRatio
     }
 
     internal func loadFile(_ avAudioFile: AVAudioFile) {
@@ -170,7 +153,7 @@ public class PhaseLockedVocoder: Node, AudioUnitContainer, Toggleable {
                     let data = UnsafeMutablePointer<Float>(
                         bufferList.mBuffers.mData?.assumingMemoryBound(to: Float.self)
                     )
-                    internalAU?.setWavetable(data: data, size: Int(ioNumberFrames))
+                    auBase.setWavetable(data: data, size: Int(ioNumberFrames))
                 } else {
                     // failure
                     theData?.deallocate()
@@ -181,13 +164,4 @@ public class PhaseLockedVocoder: Node, AudioUnitContainer, Toggleable {
         }
     }
 
-    /// Start the node
-    @objc open func start() {
-        internalAU?.start()
-    }
-
-    /// Function to stop or bypass the node, both are equivalent
-    @objc open func stop() {
-        internalAU?.stop()
-    }
 }

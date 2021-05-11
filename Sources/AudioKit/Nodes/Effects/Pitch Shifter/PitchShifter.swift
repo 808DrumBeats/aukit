@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// Faust-based pitch shfiter
-public class PitchShifter: Node, AudioUnitContainer, Toggleable {
+public class PitchShifter: Node {
 
-    /// Unique four-letter identifier "pshf"
-    public static let ComponentDescription = AudioComponentDescription(effect: "pshf")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "pshf")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class PitchShifter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PitchShifterParameterShift"),
         defaultValue: 0,
         range: -24.0 ... 24.0,
-        unit: .relativeSemiTones,
-        flags: .default)
+        unit: .relativeSemiTones)
 
     /// Pitch shift (in semitones)
     @Parameter(shiftDef) public var shift: AUValue
@@ -38,8 +36,7 @@ public class PitchShifter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PitchShifterParameterWindowSize"),
         defaultValue: 1_024,
         range: 0.0 ... 10_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Window size (in samples)
     @Parameter(windowSizeDef) public var windowSize: AUValue
@@ -51,8 +48,7 @@ public class PitchShifter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("PitchShifterParameterCrossfade"),
         defaultValue: 512,
         range: 0.0 ... 10_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Crossfade (in samples)
     @Parameter(crossfadeDef) public var crossfade: AUValue
@@ -73,20 +69,12 @@ public class PitchShifter: Node, AudioUnitContainer, Toggleable {
         windowSize: AUValue = windowSizeDef.defaultValue,
         crossfade: AUValue = crossfadeDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.shift = shift
-            self.windowSize = windowSize
-            self.crossfade = crossfade
-        }
-        connections.append(input)
-    }
+        self.shift = shift
+        self.windowSize = windowSize
+        self.crossfade = crossfade
+   }
 }

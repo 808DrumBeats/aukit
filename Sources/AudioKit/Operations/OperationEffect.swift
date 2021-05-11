@@ -6,23 +6,11 @@ import CAudioKit
 let floatRange = -Float.greatestFiniteMagnitude ... Float.greatestFiniteMagnitude
 
 /// Operation-based effect
-public class OperationEffect: Node, AudioUnitContainer, Toggleable {
+public class OperationEffect: Node {
 
-    /// Internal audio unit type
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Four letter unique description "cstm"
-    public static let ComponentDescription = AudioComponentDescription(effect: "cstm")
-
-    // MARK: - Properties
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
-
-    /// Tells whether the node is processing (ie. started, playing, or active)
-    public var isStarted: Bool {
-        return internalAU?.isStarted ?? false
-    }
+    let input: Node
+    public var connections: [Node] { [input] }
+    public var avAudioNode: AVAudioNode
 
     // MARK: - Parameters
 
@@ -151,18 +139,10 @@ public class OperationEffect: Node, AudioUnitContainer, Toggleable {
     ///
     public init(_ input: Node, sporth: String) {
 
-        super.init(avAudioNode: AVAudioNode())
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
+        self.input = input
+        avAudioNode = instantiate(effect: "cstm")
+        setupParameters()
 
-            if let dsp = self.internalAU?.dsp {
-                sporth.withCString { str -> Void in
-                    akOperationEffectSetSporth(dsp, str, Int32(sporth.utf8CString.count))
-                }
-            }
-        }
-
-        connections.append(input)
+        akOperationSetSporth(auBase.dsp, sporth)
     }
 }

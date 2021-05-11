@@ -4,31 +4,16 @@ import AVFoundation
 import CAudioKit
 
 /// Operation-based generator
-public class OperationGenerator: Node, AudioUnitContainer, Toggleable {
+public class OperationGenerator: Node {
 
-    /// Internal audio unit type
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Four letter unique description "cstg"
-    public static let ComponentDescription = AudioComponentDescription(instrument: "cstg")
-
-    // MARK: - Properties
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
-
-    /// Tells whether the node is processing (ie. started, playing, or active)
-    public var isStarted: Bool {
-        return internalAU?.isStarted ?? false
-    }
-
-    // MARK: - Parameters
+    public var connections: [Node] { [] }
+    public var avAudioNode: AVAudioNode
 
     internal static func makeParam(_ number: Int) -> NodeParameterDef {
         return NodeParameterDef(
             identifier: "parameter\(number)",
             name: "Parameter \(number)",
-            address: akGetParameterAddress("OperationGeneratorParameter\(number)"),
+            address: akGetParameterAddress("OperationParameter\(number)"),
             defaultValue: 0,
             range: floatRange,
             unit: .generic,
@@ -150,22 +135,15 @@ public class OperationGenerator: Node, AudioUnitContainer, Toggleable {
     ///
     public init(sporth: String = "") {
 
-        super.init(avAudioNode: AVAudioNode())
-        instantiateAudioUnit { avAudioUnit in
-
-            self.avAudioNode = avAudioUnit
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-            
-            if let dsp = self.internalAU?.dsp {
-                sporth.withCString { str -> Void in
-                    akOperationGeneratorSetSporth(dsp, str, Int32(sporth.utf8CString.count))
-                }
-            }
-        }
+        avAudioNode = instantiate(generator: "cstg")
+        setupParameters()
+        
+        akOperationSetSporth(auBase.dsp, sporth)
     }
 
     /// Trigger the sound with current parameters
     open func trigger() {
-        internalAU?.trigger()
+        auBase.trigger()
     }
+
 }

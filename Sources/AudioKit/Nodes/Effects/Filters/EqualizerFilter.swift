@@ -10,16 +10,15 @@ import CAudioKit
 /// with a width dependent on bandwidth. If gain is less than 1, a notch is
 /// formed around the center frequency.
 /// 
-public class EqualizerFilter: Node, AudioUnitContainer, Toggleable {
+public class EqualizerFilter: Node {
 
-    /// Unique four-letter identifier "eqfl"
-    public static let ComponentDescription = AudioComponentDescription(effect: "eqfl")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "eqfl")
 
     // MARK: - Parameters
 
@@ -30,8 +29,7 @@ public class EqualizerFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("EqualizerFilterParameterCenterFrequency"),
         defaultValue: 1_000.0,
         range: 12.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Center frequency. (in Hertz)
     @Parameter(centerFrequencyDef) public var centerFrequency: AUValue
@@ -43,8 +41,7 @@ public class EqualizerFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("EqualizerFilterParameterBandwidth"),
         defaultValue: 100.0,
         range: 0.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// The peak/notch bandwidth in Hertz
     @Parameter(bandwidthDef) public var bandwidth: AUValue
@@ -56,8 +53,7 @@ public class EqualizerFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("EqualizerFilterParameterGain"),
         defaultValue: 10.0,
         range: -100.0 ... 100.0,
-        unit: .percent,
-        flags: .default)
+        unit: .percent)
 
     /// The peak/notch gain
     @Parameter(gainDef) public var gain: AUValue
@@ -78,20 +74,12 @@ public class EqualizerFilter: Node, AudioUnitContainer, Toggleable {
         bandwidth: AUValue = bandwidthDef.defaultValue,
         gain: AUValue = gainDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.centerFrequency = centerFrequency
-            self.bandwidth = bandwidth
-            self.gain = gain
-        }
-        connections.append(input)
-    }
+        self.centerFrequency = centerFrequency
+        self.bandwidth = bandwidth
+        self.gain = gain
+   }
 }

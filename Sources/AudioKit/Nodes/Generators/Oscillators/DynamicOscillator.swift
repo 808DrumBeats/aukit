@@ -7,17 +7,13 @@ import CAudioKit
 /// Reads from the table sequentially and repeatedly at given frequency.
 /// Linear interpolation is applied for table look up from internal phase values.
 ///
-public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
-    /// Unique four-letter identifier "csto"
-    public static let ComponentDescription = AudioComponentDescription(generator: "csto")
+public class DynamicOscillator: Node {
+    
+    /// Connected nodes
+    public var connections: [Node] { [] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
-
-    // MARK: - Parameters
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(instrument: "csto")
 
     fileprivate var waveform: Table?
 
@@ -31,8 +27,7 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynamicOscillatorParameterFrequency"),
         defaultValue: 440.0,
         range: 0.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Frequency in cycles per second
     @Parameter(frequencyDef) public var frequency: AUValue
@@ -44,8 +39,7 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynamicOscillatorParameterAmplitude"),
         defaultValue: 1.0,
         range: 0.0 ... 10.0,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Output Amplitude.
     @Parameter(amplitudeDef) public var amplitude: AUValue
@@ -57,8 +51,7 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynamicOscillatorParameterDetuningOffset"),
         defaultValue: 0.0,
         range: -1_000.0 ... 1_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Frequency offset in Hz.
     @Parameter(detuningOffsetDef) public var detuningOffset: AUValue
@@ -70,8 +63,7 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("DynamicOscillatorParameterDetuningMultiplier"),
         defaultValue: 1.0,
         range: 0.9 ... 1.11,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Frequency detuning multiplier
     @Parameter(detuningMultiplierDef) public var detuningMultiplier: AUValue
@@ -94,26 +86,18 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
         detuningOffset: AUValue = detuningOffsetDef.defaultValue,
         detuningMultiplier: AUValue = detuningMultiplierDef.defaultValue)
     {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-            self.stop()
-            audioUnit.setWavetable(waveform.content)
-
-            self.waveform = waveform
-            self.frequency = frequency
-            self.amplitude = amplitude
-            self.detuningOffset = detuningOffset
-            self.detuningMultiplier = detuningMultiplier
-        }
+        setupParameters()
+        
+        auBase.setWavetable(waveform.content)
+        
+        self.waveform = waveform
+        self.frequency = frequency
+        self.amplitude = amplitude
+        self.detuningOffset = detuningOffset
+        self.detuningMultiplier = detuningMultiplier
+        
     }
-
+    
     // MARK: - Public Methods
 
     /// Sets the wavetable of the oscillator node
@@ -121,13 +105,13 @@ public class DynamicOscillator: Node, AudioUnitContainer, Toggleable {
     /// - Parameters:
     ///   - waveform: The waveform of oscillation
     public func setWaveTable(waveform: Table) {
-        self.internalAU!.setWavetable(waveform.content)
+        auBase.setWavetable(waveform.content)
         self.waveform = waveform
-        self.wavetableUpdateHandler(waveform.content)
+        wavetableUpdateHandler(waveform.content)
     }
 
     /// Gets the floating point values stored in the oscillator's wavetable
     public func getWavetableValues() -> [Float] {
-        return self.waveform?.content ?? []
+        return waveform?.content ?? []
     }
 }

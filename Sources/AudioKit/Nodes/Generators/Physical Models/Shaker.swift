@@ -3,8 +3,6 @@
 import AVFoundation
 import CAudioKit
 
-#if !os(tvOS)
-
 /// Type of shaker to use
 public enum ShakerType: MIDIByte {
 
@@ -80,44 +78,25 @@ public enum ShakerType: MIDIByte {
 
 /// STK Shaker
 ///
-public class Shaker: Node, AudioUnitContainer, Toggleable {
-    /// Four letter unique description "shak"
-    public static let ComponentDescription = AudioComponentDescription(instrument: "shak")
+public class Shaker: Node {
+    
+    /// Connected nodes
+    public var connections: [Node] { [] }
+    
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(instrument: "shak")
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = STKAudioUnit
+    /// Initialize the STK Flute model
+    public init() {}
 
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
-
-    // MARK: - Parameters
-
-    /// Tells whether the node is processing (ie. started, playing, or active)
-    open var isStarted: Bool {
-        return internalAU?.isStarted ?? false
-    }
-
-    // MARK: - Initialization
-
-    /// Initialize the STK Shaker model
-    public init() {
-        super.init(avAudioNode: AVAudioNode())
-
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-        }
-    }
-
-    /// Trigger the sound with an optional set of parameters
+    /// Trigger the sound with a set of parameters
     ///
     /// - Parameters:
     ///   - type: various shaker types are supported
     ///   - amplitude: how hard to shake
     public func trigger(type: ShakerType, amplitude: Double = 0.5) {
-        internalAU?.start()
-        internalAU?.trigger(type: AUValue(type.rawValue), amplitude: AUValue(amplitude))
+        let velocity = MIDIVelocity(amplitude * 127.0)
+        auBase.trigger(note: type.rawValue, velocity: velocity)
     }
 }
 
-#endif

@@ -5,16 +5,15 @@ import AVFoundation
 import CAudioKit
 
 /// An automatic wah effect, ported from Guitarix via Faust.
-public class AutoWah: Node, AudioUnitContainer, Toggleable {
+public class AutoWah: Node {
 
-    /// Unique four-letter identifier "awah"
-    public static let ComponentDescription = AudioComponentDescription(effect: "awah")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "awah")
 
     // MARK: - Parameters
 
@@ -25,8 +24,7 @@ public class AutoWah: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("AutoWahParameterWah"),
         defaultValue: 0.0,
         range: 0.0 ... 1.0,
-        unit: .percent,
-        flags: .default)
+        unit: .percent)
 
     /// Wah Amount
     @Parameter(wahDef) public var wah: AUValue
@@ -38,8 +36,7 @@ public class AutoWah: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("AutoWahParameterMix"),
         defaultValue: 1.0,
         range: 0.0 ... 1.0,
-        unit: .percent,
-        flags: .default)
+        unit: .percent)
 
     /// Dry/Wet Mix
     @Parameter(mixDef) public var mix: AUValue
@@ -51,8 +48,7 @@ public class AutoWah: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("AutoWahParameterAmplitude"),
         defaultValue: 0.1,
         range: 0.0 ... 1.0,
-        unit: .percent,
-        flags: .default)
+        unit: .percent)
 
     /// Overall level
     @Parameter(amplitudeDef) public var amplitude: AUValue
@@ -73,20 +69,12 @@ public class AutoWah: Node, AudioUnitContainer, Toggleable {
         mix: AUValue = mixDef.defaultValue,
         amplitude: AUValue = amplitudeDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.wah = wah
-            self.mix = mix
-            self.amplitude = amplitude
-        }
-        connections.append(input)
-    }
+        self.wah = wah
+        self.mix = mix
+        self.amplitude = amplitude
+   }
 }

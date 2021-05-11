@@ -5,19 +5,18 @@ import CAudioKit
 
 /// Shane's Chorus
 ///
-public class Chorus: Node, AudioUnitContainer, Toggleable {
+public class Chorus: Node {
 
-    /// Unique four-letter identifier "chrs"
-    public static let ComponentDescription = AudioComponentDescription(effect: "chrs")
+    let input: Node
+    
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
-
-    /// Internal audio unit
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "chrs")
 
     // MARK: - Parameters
-
+    
     /// Specification details for frequency
     public static let frequencyDef = NodeParameterDef(
         identifier: "frequency",
@@ -25,8 +24,7 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
         address: ModulatedDelayParameter.frequency.rawValue,
         defaultValue: kChorus_DefaultFrequency,
         range: kChorus_MinFrequency ... kChorus_MaxFrequency,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Modulation Frequency (Hz)
     @Parameter(frequencyDef) public var frequency: AUValue
@@ -38,8 +36,7 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
         address: ModulatedDelayParameter.depth.rawValue,
         defaultValue: kChorus_DefaultDepth,
         range: kChorus_MinDepth ... kChorus_MaxDepth,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Modulation Depth (fraction)
     @Parameter(depthDef) public var depth: AUValue
@@ -51,8 +48,7 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
         address: ModulatedDelayParameter.feedback.rawValue,
         defaultValue: kChorus_DefaultFeedback,
         range: kChorus_MinFeedback ... kChorus_MaxFeedback,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Feedback (fraction)
     @Parameter(feedbackDef) public var feedback: AUValue
@@ -64,8 +60,7 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
         address: ModulatedDelayParameter.dryWetMix.rawValue,
         defaultValue: kChorus_DefaultDryWetMix,
         range: kChorus_MinDryWetMix ... kChorus_MaxDryWetMix,
-        unit: .generic,
-        flags: .default)
+        unit: .generic)
 
     /// Dry Wet Mix (fraction)
     @Parameter(dryWetMixDef) public var dryWetMix: AUValue
@@ -88,19 +83,13 @@ public class Chorus: Node, AudioUnitContainer, Toggleable {
         feedback: AUValue = feedbackDef.defaultValue,
         dryWetMix: AUValue = dryWetMixDef.defaultValue
     ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
+        
+        setupParameters()
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
-
-            self.internalAU = avAudioUnit.auAudioUnit as? AudioUnitType
-
-            self.frequency = frequency
-            self.depth = depth
-            self.feedback = feedback
-            self.dryWetMix = dryWetMix
-        }
-
-        connections.append(input)
+        self.frequency = frequency
+        self.depth = depth
+        self.feedback = feedback
+        self.dryWetMix = dryWetMix
     }
 }

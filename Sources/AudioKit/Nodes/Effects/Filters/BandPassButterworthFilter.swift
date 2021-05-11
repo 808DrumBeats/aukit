@@ -7,16 +7,15 @@ import CAudioKit
 /// These filters are Butterworth second-order IIR filters. They offer an almost flat
 /// passband and very good precision and stopband attenuation.
 /// 
-public class BandPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
+public class BandPassButterworthFilter: Node {
 
-    /// Unique four-letter identifier "btbp"
-    public static let ComponentDescription = AudioComponentDescription(effect: "btbp")
+    let input: Node
 
-    /// Internal type of audio unit for this node
-    public typealias AudioUnitType = AudioUnitBase
+    /// Connected nodes
+    public var connections: [Node] { [input] }
 
-    /// Internal audio unit 
-    public private(set) var internalAU: AudioUnitType?
+    /// Underlying AVAudioNode
+    public var avAudioNode = instantiate(effect: "btbp")
 
     // MARK: - Parameters
 
@@ -27,8 +26,7 @@ public class BandPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("BandPassButterworthFilterParameterCenterFrequency"),
         defaultValue: 2_000.0,
         range: 12.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Center frequency. (in Hertz)
     @Parameter(centerFrequencyDef) public var centerFrequency: AUValue
@@ -40,8 +38,7 @@ public class BandPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
         address: akGetParameterAddress("BandPassButterworthFilterParameterBandwidth"),
         defaultValue: 100.0,
         range: 0.0 ... 20_000.0,
-        unit: .hertz,
-        flags: .default)
+        unit: .hertz)
 
     /// Bandwidth. (in Hertz)
     @Parameter(bandwidthDef) public var bandwidth: AUValue
@@ -60,19 +57,11 @@ public class BandPassButterworthFilter: Node, AudioUnitContainer, Toggleable {
         centerFrequency: AUValue = centerFrequencyDef.defaultValue,
         bandwidth: AUValue = bandwidthDef.defaultValue
         ) {
-        super.init(avAudioNode: AVAudioNode())
+        self.input = input
 
-        instantiateAudioUnit { avAudioUnit in
-            self.avAudioNode = avAudioUnit
+        setupParameters()
 
-            guard let audioUnit = avAudioUnit.auAudioUnit as? AudioUnitType else {
-                fatalError("Couldn't create audio unit")
-            }
-            self.internalAU = audioUnit
-
-            self.centerFrequency = centerFrequency
-            self.bandwidth = bandwidth
-        }
-        connections.append(input)
-    }
+        self.centerFrequency = centerFrequency
+        self.bandwidth = bandwidth
+   }
 }
