@@ -6,7 +6,10 @@ import CAudioKit
 /// Operation-based generator
 public class OperationGenerator: Node {
 
+    /// Connected nodes
     public var connections: [Node] { [] }
+    
+    /// Underlying AVAudioNode
     public var avAudioNode: AVAudioNode
 
     internal static func makeParam(_ number: Int) -> NodeParameterDef {
@@ -138,12 +141,12 @@ public class OperationGenerator: Node {
         avAudioNode = instantiate(generator: "cstg")
         setupParameters()
         
-        akOperationSetSporth(auBase.dsp, sporth)
+        akOperationSetSporth(au.dsp, sporth)
     }
 
     /// Trigger the sound with current parameters
     open func trigger() {
-        auBase.trigger()
+        au.trigger()
     }
 
 }

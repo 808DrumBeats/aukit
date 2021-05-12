@@ -9,7 +9,11 @@ let floatRange = -Float.greatestFiniteMagnitude ... Float.greatestFiniteMagnitud
 public class OperationEffect: Node {
 
     let input: Node
+    
+    /// Connected nodes
     public var connections: [Node] { [input] }
+    
+    /// Underlying AVAudioNode
     public var avAudioNode: AVAudioNode
 
     // MARK: - Parameters
@@ -143,6 +147,6 @@ public class OperationEffect: Node {
         avAudioNode = instantiate(effect: "cstm")
         setupParameters()
 
-        akOperationSetSporth(auBase.dsp, sporth)
+        akOperationSetSporth(au.dsp, sporth)
     }
 }

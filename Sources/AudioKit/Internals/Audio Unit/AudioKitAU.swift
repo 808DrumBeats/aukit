@@ -5,7 +5,7 @@ import AVFoundation
 import CAudioKit
 
 /// AudioUnit which instantiates a DSP kernel based on the componentSubType.
-open class AudioUnitBase: AUAudioUnit {
+open class AudioKitAU: AUAudioUnit {
     // MARK: AUAudioUnit Overrides
 
     private var inputBusArray: [AUAudioUnitBus] = []
@@ -100,6 +100,7 @@ open class AudioUnitBase: AUAudioUnit {
         return canProcessInPlaceDSP(dsp)
     }
 
+    /// Set in order to bypass processing
     override public var shouldBypassEffect: Bool {
         get { return getBypassDSP(dsp) }
         set { setBypassDSP(dsp, newValue) }
@@ -142,10 +143,9 @@ open class AudioUnitBase: AUAudioUnit {
 
     // MARK: AudioKit
 
-
-    #if !os(tvOS)
     /// Trigger something within the audio unit
     public func trigger(note: MIDINoteNumber, velocity: MIDIVelocity) {
+        #if !os(tvOS)
         guard let midiBlock = scheduleMIDIEventBlock else {
             fatalError("Attempt to trigger audio unit which doesn't respond to MIDI.")
         }
@@ -154,8 +154,8 @@ open class AudioUnitBase: AUAudioUnit {
             guard let ptr = ptr.baseAddress else { return }
             midiBlock(AUEventSampleTimeImmediate, 0, event.data.count, ptr)
         }
+        #endif
     }
-    #endif
 
     /// Trigger something within the audio unit
     public func trigger() {
