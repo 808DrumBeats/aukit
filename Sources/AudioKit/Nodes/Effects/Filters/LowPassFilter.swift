@@ -9,10 +9,10 @@ public class LowPassFilter: Node {
 
     fileprivate let effectAU = AVAudioUnitEffect(appleEffect: kAudioUnitSubType_LowPassFilter)
 
-    let input: Node
+    var input: Node?
 
     /// Connected nodes
-    public var connections: [Node] { [input] }
+    public var connections: [Node] { [input].compactMap({$0}) }
 
     /// Underlying AVAudioNode
     public var avAudioNode: AVAudioNode { effectAU }
@@ -51,7 +51,7 @@ public class LowPassFilter: Node {
     /// - parameter resonance: Resonance (decibels) ranges from -20 to 40 (Default: 0)
     ///
     public init(
-        _ input: Node,
+        _ input: Node? = nil,
         cutoffFrequency: AUValue = cutoffFrequencyDef.defaultValue,
         resonance: AUValue = resonanceDef.defaultValue) {
         self.input = input
@@ -60,6 +60,11 @@ public class LowPassFilter: Node {
 
         self.cutoffFrequency = cutoffFrequency
         self.resonance = resonance
+    }
+
+    public func connect(input: Node) {
+        self.input = input
+        makeAVConnections()
     }
 
     /// Function to start, play, or activate the node, all do the same thing

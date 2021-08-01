@@ -432,4 +432,22 @@ class NodeTests: XCTestCase {
         """)
     }
     #endif
+
+    func testDeferredConnection() {
+
+        let engine = AudioEngine()
+
+        let filter = LowPassFilter()
+
+        let osc = PlaygroundOscillator()
+
+        filter.connect(input: osc)
+
+        engine.output = filter
+        try! engine.start()
+        osc.start()
+
+        sleep(1)
+
+    }
 }
