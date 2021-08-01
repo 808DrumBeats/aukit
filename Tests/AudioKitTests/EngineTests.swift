@@ -7,6 +7,7 @@ class EngineTests: XCTestCase {
     // Changing Settings.audioFormat will change subsequent node connections
     // from 44_100 which the MD5's were created with so be sure to change it back at the end of a test
 
+    /*
     func testEngineSampleRateGraphConsistency() {
         let previousFormat = Settings.audioFormat
 
@@ -48,6 +49,7 @@ class EngineTests: XCTestCase {
         // restore
         Settings.audioFormat = previousFormat
     }
+
 
     func testEngineSampleRateChanged() {
         let previousFormat = Settings.audioFormat
@@ -109,7 +111,8 @@ class EngineTests: XCTestCase {
 
         XCTAssertTrue(isConnected, "AudioPlayer isn't in the mainMixerNode's inputs")
     }
-
+     */
+    
     /*
     func testEngineSwitchOutputWhileRunning() {
         let engine = AudioEngine()

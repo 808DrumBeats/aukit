@@ -6,10 +6,10 @@ extension AudioEngine {
 
     /// Nice printout of all the node connections
     public var connectionTreeDescription: String {
-        if let rootNode = mainMixerNode {
+        if let rootNode = output {
             return rootNode.connectionTreeDescription
         } else {
-            return "\(connectionTreeLinePrefix)mainMixerNode is nil"
+            return "\(connectionTreeLinePrefix)output is nil"
         }
     }
 
