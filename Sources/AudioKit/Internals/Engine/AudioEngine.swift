@@ -99,12 +99,12 @@ public class AudioEngine {
     public var output: Node? {
         didSet {
 
+            avEngine.disconnectNodeInput(avEngine.mainMixerNode)
+
             if let node = output {
                 avEngine.attach(node.avAudioNode)
                 avEngine.connect(node.avAudioNode, to: avEngine.mainMixerNode, format: nil)
                 node.makeAVConnections()
-            } else {
-                avEngine.disconnectNodeInput(avEngine.mainMixerNode)
             }
 
         }
