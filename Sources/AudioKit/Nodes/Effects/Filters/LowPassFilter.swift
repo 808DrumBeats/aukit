@@ -63,8 +63,11 @@ public class LowPassFilter: Node {
     }
 
     public func connect(input: Node) {
+        if avAudioNode.engine != nil {
+            Log("🛑 Error: Cannot make connection while node is attached.")
+            return
+        }
         self.input = input
-        makeAVConnections()
     }
 
     /// Function to start, play, or activate the node, all do the same thing

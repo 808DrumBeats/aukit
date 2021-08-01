@@ -449,5 +449,11 @@ class NodeTests: XCTestCase {
 
         sleep(1)
 
+        let osc2 = PlaygroundOscillator(frequency: 880)
+
+        filter.connect(input: osc2)
+
+        sleep(5)
+
     }
 }
